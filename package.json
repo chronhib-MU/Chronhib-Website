@@ -1,0 +1,22 @@
+{
+  "name": "chronhib2020",
+  "version": "1.0.0",
+  "description": "The Chronologicon Hibernicum Website | ChronHib",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon --experimental-modules index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^8.2.0",
+    "es-module-shims": "^0.4.6",
+    "express": "^4.17.1",
+    "mysql": "^2.18.1"
+  },
+  "type": "module",
+  "devDependencies": {}
+}
