@@ -16,12 +16,12 @@
 
 */
 import Index from './views/Index.js';
-import Profile from './views/examples/Profile.js';
-import Maps from './views/examples/Maps.js';
-import Register from './views/examples/Register.js';
-import Login from './views/examples/Login.js';
-import Tables from './views/examples/Tables.js';
-import Icons from './views/examples/Icons.js';
+import Profile from './views/Profile/Profile.js';
+import Maps from './views/Maps/Maps.js';
+import Register from './views/Register/Register.js';
+import Login from './views/Login/Login.js';
+import Tables from './views/Tables/Tables.js';
+import Icons from './views/Icons/Icons.js';
 
 var routes = [
   {
@@ -53,12 +53,30 @@ var routes = [
     layout: '/admin'
   },
   {
+    path: '/tables/:table/:id',
+    name: 'Tables',
+    icon: 'ni ni-bullet-list-67 text-red',
+    component: Tables,
+    exact: true,
+    layout: '/admin'
+  },
+  {
+    path: '/tables/:table/',
+    name: 'Tables',
+    icon: 'ni ni-bullet-list-67 text-red',
+    component: Tables,
+    exact: true,
+    layout: '/admin'
+  },
+  {
     path: '/tables',
     name: 'Tables',
     icon: 'ni ni-bullet-list-67 text-red',
     component: Tables,
+    exact: true,
     layout: '/admin'
   },
+
   {
     path: '/login',
     name: 'Login',

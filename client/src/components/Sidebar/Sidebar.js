@@ -99,9 +99,9 @@ class Sidebar extends React.Component {
         to: logo.innerLink,
         tag: Link
       };
-    } else if (logo && logo.outterLink) {
+    } else if (logo && logo.outerLink) {
       navbarBrandProps = {
-        href: logo.outterLink,
+        href: logo.outerLink,
         target: '_blank'
       };
     }
@@ -113,29 +113,21 @@ class Sidebar extends React.Component {
             <span className="navbar-toggler-icon" />
           </button>
           {/* Brand */}
-          {logo ? (
+          {/*logo ? (
             <NavbarBrand className="pt-0" {...navbarBrandProps}>
               <img alt={logo.imgAlt} className="navbar-brand-img" src={logo.imgSrc} />
             </NavbarBrand>
-          ) : null}
+          ) : null*/}
           {/* User */}
           <Nav className="align-items-center d-md-none">
-            <UncontrolledDropdown nav>
-              <DropdownToggle nav className="nav-link-icon">
-                <i className="ni ni-bell-55" />
-              </DropdownToggle>
-              <DropdownMenu aria-labelledby="navbar-default_dropdown_1" className="dropdown-menu-arrow" right>
-                <DropdownItem>Action</DropdownItem>
-                <DropdownItem>Another action</DropdownItem>
-                <DropdownItem divider />
-                <DropdownItem>Something else here</DropdownItem>
-              </DropdownMenu>
-            </UncontrolledDropdown>
             <UncontrolledDropdown nav>
               <DropdownToggle nav>
                 <Media className="align-items-center">
                   <span className="avatar avatar-sm rounded-circle">
-                    <img alt="..." src={require('../../assets/img/theme/team-1-800x800.jpg')} />
+                    <img
+                      alt="..."
+                      src={require('@creative-tim-official/argon-dashboard-free/assets/img/theme/team-1-800x800.jpg')}
+                    />
                   </span>
                 </Media>
               </DropdownToggle>
@@ -179,7 +171,7 @@ class Sidebar extends React.Component {
                         <img alt={logo.imgAlt} src={logo.imgSrc} />
                       </Link>
                     ) : (
-                      <a href={logo.outterLink}>
+                      <a href={logo.outerLink}>
                         <img alt={logo.imgAlt} src={logo.imgSrc} />
                       </a>
                     )}
@@ -236,14 +228,6 @@ class Sidebar extends React.Component {
                 </NavLink>
               </NavItem>
             </Nav>
-            <Nav className="mb-md-3" navbar>
-              <NavItem className="active-pro active">
-                <NavLink href="https://www.creative-tim.com/product/argon-dashboard-pro-react?ref=adr-admin-sidebar">
-                  <i className="ni ni-spaceship" />
-                  Upgrade to PRO
-                </NavLink>
-              </NavItem>
-            </Nav>
           </Collapse>
         </Container>
       </Navbar>
@@ -262,9 +246,9 @@ Sidebar.propTypes = {
     // innerLink is for links that will direct the user within the app
     // it will be rendered as <Link to="...">...</Link> tag
     innerLink: PropTypes.string,
-    // outterLink is for links that will direct the user outside the app
+    // outerLink is for links that will direct the user outside the app
     // it will be rendered as simple <a href="...">...</a> tag
-    outterLink: PropTypes.string,
+    outerLink: PropTypes.string,
     // the image src of the logo
     imgSrc: PropTypes.string.isRequired,
     // the alt for the img

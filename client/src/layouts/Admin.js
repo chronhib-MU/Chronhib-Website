@@ -15,65 +15,80 @@
 * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
 */
-import React from 'react';
-import { Route, Switch, Redirect } from 'react-router-dom';
+import React, { useEffect, useRef } from 'react';
+import { BrowserRouter as Router, Route, Switch, Redirect } from 'react-router-dom';
 // reactstrap components
-import { Container } from 'reactstrap';
+// import { Container } from 'reactstrap';
 // core components
 import AdminNavbar from '../components/Navbars/AdminNavbar.js';
-import AdminFooter from '../components/Footers/AdminFooter.js';
+// import AdminFooter from '../components/Footers/AdminFooter.js';
 import Sidebar from '../components/Sidebar/Sidebar.js';
 
 import routes from '../routes.js';
 
-class Admin extends React.Component {
-  componentDidUpdate(e) {
-    document.documentElement.scrollTop = 0;
-    document.scrollingElement.scrollTop = 0;
-    this.refs.mainContent.scrollTop = 0;
-  }
-  getRoutes = routes => {
-    return routes.map((prop, key) => {
-      if (prop.layout === '/admin') {
-        return <Route path={prop.layout + prop.path} component={prop.component} key={key} />;
-      } else {
-        return null;
-      }
-    });
-  };
-  getBrandText = path => {
+function Admin(props) {
+  // console.log(routes);
+  // Used to target the body -  to set the page position to the top
+  const mainContentRef = useRef(null);
+
+  // A special wrapper for <Route> that knows how to
+  // handle "sub"-routes by passing them in a `routes`
+  // prop to the component it renders.
+
+  const getBrandText = path => {
+    // gets route name
     for (let i = 0; i < routes.length; i++) {
-      if (this.props.location.pathname.indexOf(routes[i].layout + routes[i].path) !== -1) {
+      if (props.location.pathname.indexOf(routes[i].layout + routes[i].path) !== -1) {
         return routes[i].name;
       }
     }
     return 'Brand';
   };
-  render() {
-    return (
-      <>
-        <Sidebar
-          {...this.props}
-          routes={routes}
-          logo={{
-            innerLink: '/admin/index',
-            imgSrc: require('../assets/img/brand/argon-react.png'),
-            imgAlt: '...'
-          }}
-        />
-        <div className="main-content" ref="mainContent">
-          <AdminNavbar {...this.props} brandText={this.getBrandText(this.props.location.pathname)} />
-          <Switch>
-            {this.getRoutes(routes)}
-            <Redirect from="*" to="/admin/index" />
-          </Switch>
+  useEffect(e => {
+    document.documentElement.scrollTop = 0;
+    document.scrollingElement.scrollTop = 0;
+    mainContentRef.current.scrollTop = 0;
+  }, []);
+  return (
+    <Router>
+      <Sidebar
+        {...props}
+        routes={routes}
+        logo={{
+          innerLink: '/admin/index',
+          imgSrc: require('@creative-tim-official/argon-dashboard-free/assets/img/brand/blue.png'),
+          imgAlt: '...'
+        }}
+      />
+      <div className="main-content" ref={mainContentRef}>
+        <AdminNavbar {...props} brandText={getBrandText(props.location.pathname)} />
+        <Switch>
+          {routes
+            .filter(route => {
+              return route.layout === '/admin';
+            })
+            .map((route, i) => {
+              return (
+                <Route
+                  key={i}
+                  path={route.layout + route.path}
+                  render={props => (
+                    // pass the sub-routes down to keep nesting
+                    <route.component {...props} />
+                  )}
+                />
+              );
+            })}
+          <Redirect from="*" to="/admin/index" />
+        </Switch>
+        {/*
           <Container fluid>
-            <AdminFooter />
+          <AdminFooter />
           </Container>
-        </div>
-      </>
-    );
-  }
+        */}
+      </div>
+    </Router>
+  );
 }
 
 export default Admin;

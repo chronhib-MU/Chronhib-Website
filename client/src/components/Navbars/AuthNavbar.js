@@ -27,7 +27,7 @@ class AdminNavbar extends React.Component {
         <Navbar className="navbar-top navbar-horizontal navbar-dark" expand="md">
           <Container className="px-4">
             <NavbarBrand to="/" tag={Link}>
-              <img alt="..." src={require('../../assets/img/brand/argon-react-white.png')} />
+              <img alt="..." src={require('@creative-tim-official/argon-dashboard-free/assets/img/brand/white.png')} />
             </NavbarBrand>
             <button className="navbar-toggler" id="navbar-collapse-main">
               <span className="navbar-toggler-icon" />
@@ -37,7 +37,10 @@ class AdminNavbar extends React.Component {
                 <Row>
                   <Col className="collapse-brand" xs="6">
                     <Link to="/">
-                      <img alt="..." src={require('../../assets/img/brand/argon-react.png')} />
+                      <img
+                        alt="..."
+                        src={require('@creative-tim-official/argon-dashboard-free/assets/img/brand/blue.png')}
+                      />
                     </Link>
                   </Col>
                   <Col className="collapse-close" xs="6">

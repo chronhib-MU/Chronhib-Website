@@ -1,0 +1,12 @@
+.bg-header {
+  background-image: linear-gradient(
+      rgba(0, 0, 0, 0.75) 0%,
+      rgba(0, 0, 0, 0.5) 50%,
+      rgba(0, 0, 0, 0.1) 75%,
+      rgba(0, 0, 0, 0) 100%
+    ),
+    url('../../assets/img/theme/Iontas_Daylight.jpg');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+}
