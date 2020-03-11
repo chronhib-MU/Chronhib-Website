@@ -1,34 +1,41 @@
-.col {
+.col,
+.table-card-container {
   margin-top: 1.5rem;
-
-  .card-body {
-    padding: 0.5rem;
-    text-align: center;
-    color: #000000;
-    background-color: #fff;
-  }
-  #img-container {
-    position: relative;
-    margin: 0 auto;
-    width: 100%;
-    height: 100%;
-    img {
-      -webkit-transition: opacity 0.3s ease-in-out;
-      -moz-transition: opacity 0.3s ease-in-out;
-      -o-transition: opacity 0.3s ease-in-out;
-      transition: opacity 0.3s ease-in-out;
+  .card {
+    > table {
     }
-    .top {
-      display: none;
+    .card-body {
+      padding: 0.5rem;
+      text-align: center;
+      color: #000000;
+      background-color: #fff;
     }
-    &:hover {
-      cursor: pointer;
-      .top {
-        display: inherit;
+    .selection-row {
+      background-color: rgba(0, 0, 0, 0.075);
+    }
+    #img-container {
+      position: relative;
+      margin: 0 auto;
+      width: 100%;
+      height: 100%;
+      img {
+        -webkit-transition: opacity 0.3s ease-in-out;
+        -moz-transition: opacity 0.3s ease-in-out;
+        -o-transition: opacity 0.3s ease-in-out;
+        transition: opacity 0.3s ease-in-out;
       }
-      .bottom {
-        opacity: 0;
+      .top {
         display: none;
+      }
+      &:hover {
+        cursor: pointer;
+        .top {
+          display: inherit;
+        }
+        .bottom {
+          opacity: 0;
+          display: none;
+        }
       }
     }
   }

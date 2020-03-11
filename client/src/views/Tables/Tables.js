@@ -1,137 +1,196 @@
-/*!
-
-=========================================================
-* Argon Dashboard React - v1.1.0
-=========================================================
-
-* Product Page: https://www.creative-tim.com/product/argon-dashboard-react
-* Copyright 2019 Creative Tim (https://www.creative-tim.com)
-* Licensed under MIT (https://github.com/creativetimofficial/argon-dashboard-react/blob/master/LICENSE.md)
-
-* Coded by Creative Tim
-
-=========================================================
-
-* The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-*/
-import React from 'react';
+import React, { useContext, useState } from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
+import { Redirect } from 'react-router-dom';
+import ReactDataGrid from 'react-data-grid';
+import ReactPaginate from 'react-paginate';
+import { Toolbar, Data } from 'react-data-grid-addons';
+import PropTypes from 'prop-types';
 
 // reactstrap components
-import {
-  Card,
-  Container,
-  Row,
-  CardBody,
-  CardTitle,
-  Col,
-  CardHeader,
-  Table,
-  CardFooter,
-  Pagination,
-  PaginationItem,
-  PaginationLink
-} from 'reactstrap';
-// core components
+import { Card, Container, Row, CardBody, CardTitle, Col, CardHeader } from 'reactstrap';
+
+// core components and styles
 import Header from '../../components/Headers/Header.js';
 import './Tables.scss';
+import { tables, DataTableContext, tableBodies, tableHeaders } from '../../variables/tableData';
+
 import _ from 'lodash';
-import { Redirect } from 'react-router-dom';
-import { tables, tableBodies, tableHeaders } from '../../variables/tableData';
-import { data } from '../../App.js';
+const {
+  Draggable: { Container: DraggableContainer, RowActionsCell, DropTargetRowContainer }
+} = require('react-data-grid-addons');
+const RowRenderer = DropTargetRowContainer(ReactDataGrid.Row);
+
+const selectors = Data.Selectors;
+const getRows = (rows, filters) => selectors.getRows({ rows, filters });
+
 function useQuery() {
   return new URLSearchParams(useLocation().search);
 }
+Tables.propTypes = {
+  rowKey: PropTypes.string.isRequired
+};
+
+Tables.defaultProps = { rowKey: 'id' };
 function Tables(props) {
+  const [dataTables, setDataTables] = useContext(DataTableContext);
+  const [filters, setFilters] = useState({});
+  const [selectedIds, setSelectedIds] = useState([1, 2]);
+  // const [rowKey, setRowKey] = useState('id');
+  let rowKey = 'ID_unique_number';
+  // const [filteredRows, setFilteredRows] = useState([]);
   let { table, id } = useParams();
+  let filteredRows = [];
   console.log(table);
-  // let currentPage = useQuery().get('page') || '1';
-  // console.log(currentPage);
-  // let params = useParams();
-  // console.log(params);
+  let currentPage = parseInt(useQuery().get('page'), 10) || 1;
+
   const renderTables = () => {
-    if (table && id) {
-      console.log(table, id);
-    } else if (table) {
+    if (table) {
+      // check if theres a table parameter
       if (tables.includes(table)) {
+        // checks that its a valid table
+        // rowKey = tableBodies[table + 'Bodies'][0];
+        console.log('rowKey:', rowKey);
+        let mode = 'view';
+        let columns = _.zip(tableBodies[table + 'Bodies'], tableHeaders[table + 'Headers']).map(header => {
+          const res = {
+            key: header[0],
+            name: header[1],
+            editable: mode === 'edit' ? true : false,
+            resizable: true,
+            filterable: true
+          };
+          // console.table(res);
+          return res;
+        });
+
+        const columnKeys = columns.map(column => column.key);
+        let rows = dataTables[table].map(row =>
+          _.zipObject(
+            columnKeys,
+            columnKeys.map(columnKey => row[columnKey])
+          )
+        );
+        // console.log('rowsjkhui', rows);
+        filteredRows = getRows(rows, filters);
+        const onGridRowsUpdated = ({ fromRow, toRow, updated, fromRowData }) => {
+          // updates the grid rows
+          let newRows = _.slice(filteredRows, fromRow, toRow + 1); // the rows to be changed
+          let loc = _.findIndex(dataTables[table], fromRowData);
+          // console.log('*************');
+          // console.log('fromRow', fromRow);
+          // console.log('toRow', toRow);
+          console.table(newRows);
+          console.log('updated', updated);
+          console.log('fromRowData', fromRowData);
+          console.log(dataTables[table][loc]);
+          newRows.forEach(newRow => {
+            loc = _.findIndex(dataTables[table], newRow);
+            let newDataRow = _.mergeWith(dataTables[table][loc], updated, (objValue, srcValue) => {
+              if (_.isArray(objValue)) {
+                return srcValue;
+              }
+            });
+            setDataTables({ ...dataTables, [table + '.' + loc]: newDataRow });
+          });
+          // console.log(dataTables[table][loc]);
+          // console.log('tables', dataTables[table]);
+          // console.log('*************');
+        };
+
+        const handleFilterChange = filter => filters => {
+          // handles the filters changing
+          const newFilters = { ...filters };
+          if (filter.filterTerm) {
+            newFilters[filter.column.key] = filter;
+          } else {
+            delete newFilters[filter.column.key];
+          }
+          return newFilters;
+        };
+
+        const isDraggedRowSelected = (selectedRows, rowDragSource) => {
+          console.log('DraggedSelected: this is fine');
+
+          if (selectedRows && selectedRows.length > 0) {
+            let key = rowKey;
+            return selectedRows.filter(r => r[key] === rowDragSource.data[key]).length > 0;
+          }
+          return false;
+        };
+
+        const reorderRows = e => {
+          console.log('reorderRows: this is fine');
+          let selectedRows = selectors.getSelectedRowsByKey({
+            rowKey: rowKey,
+            selectedKeys: selectedIds,
+            rows: filteredRows
+          });
+          let draggedRows = isDraggedRowSelected(selectedRows, e.rowSource) ? selectedRows : [e.rowSource.data];
+          let undraggedRows = filteredRows.filter(function(r) {
+            return draggedRows.indexOf(r) === -1;
+          });
+          let args = [e.rowTarget.idx, 0].concat(draggedRows);
+          Array.prototype.splice.apply(undraggedRows, args);
+          filteredRows = undraggedRows;
+        };
+
+        const onRowsSelected = rows => {
+          console.log('Selected: this is fine');
+          setSelectedIds(selectedIds.concat(rows.map(r => r.row[rowKey])));
+        };
+
+        const onRowsDeselected = rows => {
+          console.log('Deselected: this is fine');
+          let rowIds = rows.map(r => r.row[rowKey]);
+          setSelectedIds(selectedIds.filter(i => rowIds.indexOf(i) === -1));
+        };
+        console.log('columns', columns);
+        console.log('filteredRows', filteredRows);
+
         return (
-          <div>
-            <Container className="mt--7" fluid>
-              {/* Table */}
-              <Row>
-                <div className="col">
-                  <Card className="shadow">
-                    <CardHeader className="border-0">
-                      <h2 className="mb-0">{_.capitalize(table)}</h2>
-                    </CardHeader>
-                    <Table className="align-items-center table-flush" responsive hover>
-                      <thead className="thead-light">
-                        <tr>
-                          {tableHeaders[table + 'Headers'].map((header, i) => {
-                            return (
-                              <th key={i} scope="col">
-                                {header}
-                              </th>
-                            );
-                          })}
-                          <th scope="col" />
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {data[table].map((rows, i) => {
-                          return (
-                            <tr key={i}>
-                              {tableBodies[table + 'Bodies'].map((column, i) => {
-                                return <td key={i}>{rows[column]}</td>;
-                              })}
-                              <td />
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </Table>
-                    <CardFooter className="py-4">
-                      <nav aria-label="...">
-                        <Pagination
-                          className="pagination justify-content-end mb-0"
-                          listClassName="justify-content-end mb-0"
-                        >
-                          <PaginationItem className="disabled">
-                            <PaginationLink href="#pablo" onClick={e => e.preventDefault()} tabIndex="-1">
-                              <i className="fas fa-angle-left" />
-                              <span className="sr-only">Previous</span>
-                            </PaginationLink>
-                          </PaginationItem>
-                          <PaginationItem className="active">
-                            <PaginationLink href="#pablo" onClick={e => e.preventDefault()}>
-                              1
-                            </PaginationLink>
-                          </PaginationItem>
-                          <PaginationItem>
-                            <PaginationLink href="#pablo" onClick={e => e.preventDefault()}>
-                              2 <span className="sr-only">(current)</span>
-                            </PaginationLink>
-                          </PaginationItem>
-                          <PaginationItem>
-                            <PaginationLink href="#pablo" onClick={e => e.preventDefault()}>
-                              3
-                            </PaginationLink>
-                          </PaginationItem>
-                          <PaginationItem>
-                            <PaginationLink href="#pablo" onClick={e => e.preventDefault()}>
-                              <i className="fas fa-angle-right" />
-                              <span className="sr-only">Next</span>
-                            </PaginationLink>
-                          </PaginationItem>
-                        </Pagination>
-                      </nav>
-                    </CardFooter>
-                  </Card>
-                </div>
-              </Row>
-            </Container>
-          </div>
+          <Col>
+            <Card className="shadow">
+              {/* Table Header */}
+              <CardHeader className="border-0">
+                <h2 className="mb-0">{_.capitalize(table)}</h2>
+              </CardHeader>
+              {/* Table Body */}
+              {id ? (
+                () => {
+                  // checks if it only wants a subset of the data
+                  return <div />;
+                }
+              ) : (
+                // otherwise shows all the data
+                <DraggableContainer>
+                  <ReactDataGrid
+                    enableCellSelection={true}
+                    rowActionsCell={RowActionsCell}
+                    columns={columns}
+                    rowGetter={i => filteredRows[i]}
+                    rowsCount={filteredRows.length}
+                    onGridRowsUpdated={onGridRowsUpdated}
+                    toolbar={<Toolbar enableFilter={true} />}
+                    onAddFilter={filter => setFilters(handleFilterChange(filter))}
+                    onClearFilters={() => setFilters({})}
+                    rowRenderer={<RowRenderer onRowDrop={reorderRows} />}
+                    rowSelection={{
+                      showCheckbox: true,
+                      enableShiftSelect: true,
+                      onRowsSelected: onRowsSelected,
+                      onRowsDeselected: onRowsDeselected,
+                      selectBy: {
+                        keys: {
+                          rowKey: rowKey,
+                          values: selectedIds
+                        }
+                      }
+                    }}
+                  />
+                </DraggableContainer>
+              )}
+            </Card>
+          </Col>
         );
       } else {
         return <Redirect to={'/admin/tables'} />;
@@ -139,7 +198,7 @@ function Tables(props) {
     } else {
       return tables.map((table, key) => {
         return (
-          <Col key={key} className="mb-4">
+          <Col key={key} className="table-card-container mb-4" xs="12" sm="6" lg="3">
             <Card>
               <CardBody>
                 <CardTitle className="text-uppercase font-weight-bold mb-0">{_.capitalize(table)}</CardTitle>{' '}
@@ -151,22 +210,22 @@ function Tables(props) {
                     height="100%"
                     alt="..."
                     className="bottom"
-                    src={require('../../assets/img/' +
+                    src={require('../../assets/img/icons/common/' +
                       _.capitalize(table.charAt(0)) +
                       ' for ' +
                       _.capitalize(table) +
-                      '.png')}
+                      '.svg')}
                   />
                   <img
                     width="100%"
                     height="100%"
                     className="top"
                     alt="..."
-                    src={require('../../assets/img/' +
+                    src={require('../../assets/img/icons/common/' +
                       _.capitalize(table.charAt(0)) +
                       ' for ' +
                       _.capitalize(table) +
-                      ' - fill.png')}
+                      ' - fill.svg')}
                   />
                 </div>
               </Link>

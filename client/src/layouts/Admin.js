@@ -25,12 +25,12 @@ import AdminNavbar from '../components/Navbars/AdminNavbar.js';
 import Sidebar from '../components/Sidebar/Sidebar.js';
 
 import routes from '../routes.js';
-
 function Admin(props) {
   // console.log(routes);
   // Used to target the body -  to set the page position to the top
-  const mainContentRef = useRef(null);
 
+  const mainContentRef = useRef(null);
+  // console.table(props);
   // A special wrapper for <Route> that knows how to
   // handle "sub"-routes by passing them in a `routes`
   // prop to the component it renders.
@@ -72,9 +72,9 @@ function Admin(props) {
                 <Route
                   key={i}
                   path={route.layout + route.path}
-                  render={props => (
+                  render={routeProps => (
                     // pass the sub-routes down to keep nesting
-                    <route.component {...props} />
+                    <route.component {...routeProps} />
                   )}
                 />
               );
