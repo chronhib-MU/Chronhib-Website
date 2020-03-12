@@ -4,7 +4,7 @@ import { Redirect } from 'react-router-dom';
 import ReactDataGrid from 'react-data-grid';
 import ReactPaginate from 'react-paginate';
 import { Toolbar, Data } from 'react-data-grid-addons';
-import PropTypes from 'prop-types';
+// import PropTypes from 'prop-types';
 
 // reactstrap components
 import { Card, Container, Row, CardBody, CardTitle, Col, CardHeader } from 'reactstrap';
@@ -26,21 +26,21 @@ const getRows = (rows, filters) => selectors.getRows({ rows, filters });
 function useQuery() {
   return new URLSearchParams(useLocation().search);
 }
-Tables.propTypes = {
-  rowKey: PropTypes.string.isRequired
-};
+// Tables.propTypes = {
+//   rowKey: PropTypes.string.isRequired
+// };
 
-Tables.defaultProps = { rowKey: 'id' };
+// Tables.defaultProps = { rowKey: 'id' };
 function Tables(props) {
   const [dataTables, setDataTables] = useContext(DataTableContext);
   const [filters, setFilters] = useState({});
-  const [selectedIds, setSelectedIds] = useState([1, 2]);
-  // const [rowKey, setRowKey] = useState('id');
-  let rowKey = 'ID_unique_number';
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [rowKey, setRowKey] = useState('ID_unique_number');
+  // let rowKey = 'ID_unique_number';
   // const [filteredRows, setFilteredRows] = useState([]);
   let { table, id } = useParams();
   let filteredRows = [];
-  console.log(table);
+  // console.log(table);
   let currentPage = parseInt(useQuery().get('page'), 10) || 1;
 
   const renderTables = () => {
@@ -48,14 +48,13 @@ function Tables(props) {
       // check if theres a table parameter
       if (tables.includes(table)) {
         // checks that its a valid table
-        // rowKey = tableBodies[table + 'Bodies'][0];
-        console.log('rowKey:', rowKey);
-        let mode = 'view';
+        // console.log('rowKey:', rowKey);
+        let mode = 'edit';
         let columns = _.zip(tableBodies[table + 'Bodies'], tableHeaders[table + 'Headers']).map(header => {
           const res = {
             key: header[0],
             name: header[1],
-            editable: mode === 'edit' ? true : false,
+            editable: _.eq(mode, 'edit') ? true : false,
             resizable: true,
             filterable: true
           };
@@ -126,12 +125,11 @@ function Tables(props) {
             rows: filteredRows
           });
           let draggedRows = isDraggedRowSelected(selectedRows, e.rowSource) ? selectedRows : [e.rowSource.data];
-          let undraggedRows = filteredRows.filter(function(r) {
-            return draggedRows.indexOf(r) === -1;
-          });
+          let undraggedRows = filteredRows.filter(r => draggedRows.indexOf(r) === -1);
           let args = [e.rowTarget.idx, 0].concat(draggedRows);
+          console.log('args', args);
           Array.prototype.splice.apply(undraggedRows, args);
-          filteredRows = undraggedRows;
+          filteredRows = getRows(undraggedRows, filters);
         };
 
         const onRowsSelected = rows => {
@@ -144,8 +142,8 @@ function Tables(props) {
           let rowIds = rows.map(r => r.row[rowKey]);
           setSelectedIds(selectedIds.filter(i => rowIds.indexOf(i) === -1));
         };
-        console.log('columns', columns);
-        console.log('filteredRows', filteredRows);
+        // console.log('columns', columns);
+        // console.log('filteredRows', filteredRows);
 
         return (
           <Col>
@@ -164,6 +162,7 @@ function Tables(props) {
                 // otherwise shows all the data
                 <DraggableContainer>
                   <ReactDataGrid
+                    enableCellSelect={true}
                     enableCellSelection={true}
                     rowActionsCell={RowActionsCell}
                     columns={columns}
@@ -186,6 +185,7 @@ function Tables(props) {
                         }
                       }
                     }}
+                    minHeight={750}
                   />
                 </DraggableContainer>
               )}
@@ -237,9 +237,10 @@ function Tables(props) {
   };
   return (
     <div>
+      {/*<Header />*/}
       <Header />
       {/* Page content */}
-      <Container fluid>
+      <Container className="mt--9 mb-3" fluid>
         <Row>{renderTables()}</Row>
       </Container>
     </div>
