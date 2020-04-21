@@ -9,11 +9,10 @@ import { AdminLayoutComponent } from './layouts/admin-layout/admin-layout.compon
 import { AuthLayoutComponent } from './layouts/auth-layout/auth-layout.component';
 
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { HotTableModule } from '@handsontable/angular';
 
 import { AppRoutingModule } from './app.routing';
 import { ComponentsModule } from './components/components.module';
-
+import { TableDataService } from './services/table-data.service';
 @NgModule({
   imports: [
     BrowserAnimationsModule,
@@ -21,12 +20,11 @@ import { ComponentsModule } from './components/components.module';
     HttpClientModule,
     ComponentsModule,
     NgbModule,
-    HotTableModule,
     RouterModule,
     AppRoutingModule
   ],
   declarations: [AppComponent, AdminLayoutComponent, AuthLayoutComponent],
-  providers: [],
+  providers: [TableDataService],
   bootstrap: [AppComponent]
 })
 export class AppModule {}

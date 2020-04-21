@@ -29,6 +29,7 @@
     "clipboard": "2.0.6",
     "core-js": "3.6.5",
     "handsontable": "^7.4.2",
+    "jquery": "^3.5.0",
     "ngx-clipboard": "13.0.0",
     "ngx-toastr": "12.0.1",
     "nouislider": "14.2.0",

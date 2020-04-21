@@ -37,7 +37,7 @@ connection.connect(err => {
   }
 });
 // console.log(connection);
-// Serve the static files from the React app
+// Serve the static files from the Angular app
 // app.use(express.static(join(__dirname, "client/build")));
 app.use(cors());
 
@@ -51,7 +51,7 @@ app.get('/', (req, res) => {
   res.send('go to ' + Object.keys(tables).map(path => ' /' + path + ' to see the ' + path + ' table'));
 });
 
-app.get('/:path', function(req, res) {
+app.get('/:path', function (req, res) {
   // console.log(req.params.path);
   const path = req.params.path;
   console.log(tables[path]);
