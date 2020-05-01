@@ -31,5 +31,5 @@ coverage
 benchmarks/graphs
 
 # references
-argon-dashboard-angular
-argon-dashboard-react
+argon-dashboard-angular/*
+argon-dashboard-react/*
