@@ -1,16 +1,14 @@
 import express from 'express';
 import cors from 'cors';
 import mysql from 'mysql';
-// import { join } from 'path';
 import dotenv from 'dotenv';
-// dotenv.config();K
-console.log(dotenv);
 const result = dotenv.config();
 if (result.error) {
   throw result.error;
 }
-// console.log(result.parsed);
-
+console.log(result.parsed);
+// Make .env file that has all these variables in the form: KEY=VALUE, e.g. PORT=4000
+const { NODE_ENV, PORT, USER, PASSWORD } = result.parsed;
 const app = express();
 // mysql table queries
 const SELECT_ALL_TEXT_QUERY = 'SELECT * FROM text';
@@ -26,8 +24,8 @@ const tables = {
 };
 const connection = mysql.createConnection({
   host: '127.0.0.1',
-  user: 'root',
-  password: 'Ch31$3a3',
+  user: USER,
+  password: PASSWORD,
   database: 'test'
 });
 
@@ -74,7 +72,7 @@ app.get('/:path', function (req, res) {
 // app.get("*", (req, res) => {
 //   res.sendFile(join(__dirname + "/client/build/index.html"));
 // });
-const port = process.env.PORT || 4000;
+const port = PORT || 4000;
 app.listen(port, () => {
   console.log('Chronhib server listening on port ' + port);
 });
