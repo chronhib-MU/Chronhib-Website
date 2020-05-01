@@ -17,6 +17,7 @@ export class TablesComponent implements OnInit {
     stretchH: 'all',
     width: '100%',
     height: 500,
+    bindRowsWithHeaders: true,
     manualColumnResize: true,
     manualRowResize: true,
     manualRowMove: true,
