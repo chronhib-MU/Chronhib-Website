@@ -49,34 +49,7 @@
       </div>
     </div>
   </ng-container>
-  <ng-container *ngFor="let name of tableData.tables.names">
-    <div class="row" *ngIf="name === table">
-      <div class="card shadow w-100">
-        <div class="card-header border-0">
-          <div class="card-title text-uppercase font-weight-bold mb-0">
-            <h3>
-              {{ table | titlecase }}
-            </h3>
-          </div>
-        </div>
-        <hot-table
-          class="hot"
-          [data]="tableData.tables[name].data"
-          [colHeaders]="true"
-          [rowHeaders]="true"
-          licenseKey="non-commercial-and-evaluation"
-          [settings]="hotSettings"
-          [hotId]="id"
-          className="htCenter"
-        >
-          <hot-column
-            *ngFor="let header of tableData.tables[name].headers"
-            [data]="header"
-            [title]="header.replace('_', ' ')"
-          >
-          </hot-column>
-        </hot-table>
-      </div>
-    </div>
-  </ng-container>
+  <!-- <ng-container *ngFor="let name of tableData.tables.names"> -->
+  <app-table *ngIf="table" [name]="table" [table]="table"></app-table>
+  <!-- </ng-container> -->
 </div>

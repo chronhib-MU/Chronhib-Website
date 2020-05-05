@@ -1,0 +1,46 @@
+<div class="row mb-3 mt-3">
+  <div class="col">
+    <div class="card shadow w-100 h-25">
+      <div class="card-header border-0">
+        <div class="card-title text-uppercase font-weight-bold mb-0">
+          <h3 class="mb-0">
+            {{ table | titlecase }}
+          </h3>
+        </div>
+      </div>
+      <hot-table
+        class="hot"
+        [data]="tableData.tables[name].data"
+        [colHeaders]="true"
+        [rowHeaders]="true"
+        licenseKey="non-commercial-and-evaluation"
+        [settings]="hotSettings"
+        [hotId]="id"
+        className="htCenter"
+      >
+        <hot-column
+          *ngFor="let header of tableData.tables[name].headers"
+          [data]="header"
+          [title]="header.replace('_', ' ')"
+        >
+        </hot-column>
+      </hot-table>
+      <!-- <div class="table-responsive">
+        <table class="table align-items-center table-flush">
+          <thead class="thead-light">
+            <tr>
+              <th *ngFor="let header of tableData.tables[name].headers" scope="col">{{ header }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of tableData.tables[name].data">
+              <td *ngFor="let header of tableData.tables[name].headers">
+                <span>{{ row[header] }}</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div> -->
+    </div>
+  </div>
+</div>

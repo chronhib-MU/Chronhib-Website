@@ -1,6 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import Handsontable from 'handsontable';
 import { TableDataService } from '../../services/table-data.service';
 import $ from 'jquery';
 @Component({
@@ -8,31 +7,10 @@ import $ from 'jquery';
   templateUrl: './tables.component.html',
   styleUrls: ['./tables.component.scss']
 })
-export class TablesComponent implements OnInit {
-  hotSettings: Handsontable.GridSettings = {
-    startRows: 0,
-    startCols: 0,
-    colHeaders: true,
-    rowHeaders: true,
-    stretchH: 'all',
-    width: '100%',
-    height: 500,
-    bindRowsWithHeaders: true,
-    manualColumnResize: true,
-    manualRowResize: true,
-    manualRowMove: true,
-    dropdownMenu: ['freeze_column', 'unfreeze_column', '---------', 'alignment', '---------', 'undo', 'redo']
-    // contextMenu: {}
-  };
-  id = 'data-table';
+export class TablesComponent implements OnInit, OnDestroy {
   routeParams: any;
   table: string;
-  constructor(public tableData: TableDataService, private route: ActivatedRoute) {
-    Handsontable.hooks.add('afterInit', () => {
-      const table = $('#data-table');
-      table.find('.htCore').addClass('table');
-    });
-  }
+  constructor(public tableData: TableDataService, private route: ActivatedRoute) {}
 
   ngOnInit() {
     this.routeParams = this.route.paramMap.subscribe(params => {
@@ -40,6 +18,12 @@ export class TablesComponent implements OnInit {
       // 'table' is the variable name from 'admin-layout-routing'
       this.table = params.get('table');
       console.log(this.table);
+      if (this.table) {
+        this.tableData.fetchTables(this.table);
+      }
     });
+  }
+  ngOnDestroy() {
+    this.routeParams.unsubscribe();
   }
 }
