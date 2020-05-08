@@ -38,7 +38,7 @@ export class TableComponent implements OnInit {
     //     $('#data-table').bootstrapTable({
     //       columns: tableData.tables[name].headers.map(header => ({
     //         field: header,
-    //         title: _.capitalize(header)
+    //         title: _.capitalize(header.replace('_', ' '))
     //       })),
     //       data: tableData.tables[name].data
     //     });
