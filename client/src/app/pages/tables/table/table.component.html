@@ -1,11 +1,13 @@
 <div class="row mb-3 mt-3">
   <div class="col">
-    <div class="card shadow w-100 h-25">
+    <div class="card shadow w-100">
       <div class="card-header border-0">
         <div class="card-title text-uppercase font-weight-bold mb-0">
           <h3 class="mb-0">
             {{ table | titlecase }}
           </h3>
+          <!-- <h5>{{ tableData.tables[name].data[0] }}</h5> -->
+          <!-- <h5>Lugdag</h5> -->
         </div>
       </div>
       <hot-table
@@ -16,6 +18,7 @@
         licenseKey="non-commercial-and-evaluation"
         [settings]="hotSettings"
         [hotId]="id"
+        [maxRows]="100"
         className="htCenter"
       >
         <hot-column
@@ -25,22 +28,6 @@
         >
         </hot-column>
       </hot-table>
-      <!-- <div class="table-responsive">
-        <table class="table align-items-center table-flush">
-          <thead class="thead-light">
-            <tr>
-              <th *ngFor="let header of tableData.tables[name].headers" scope="col">{{ header }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let row of tableData.tables[name].data">
-              <td *ngFor="let header of tableData.tables[name].headers">
-                <span>{{ row[header] }}</span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div> -->
     </div>
   </div>
 </div>

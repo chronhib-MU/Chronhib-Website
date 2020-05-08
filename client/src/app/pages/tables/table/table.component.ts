@@ -1,10 +1,9 @@
-import { Component, OnInit, Input, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
 import { TableDataService } from '../../../services/table-data.service';
 import Handsontable from 'handsontable';
-import $ from 'jquery';
+declare const $: any;
 @Component({
   selector: 'app-table',
-  // changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './table.component.html',
   styleUrls: ['./table.component.css']
 })
@@ -32,6 +31,36 @@ export class TableComponent implements OnInit {
       const table = $('#data-table');
       table.find('.htCore').addClass('table');
     });
+    // $(() => {
+    //   $('#data-table').bootstrapTable({
+    //     columns: [
+    //       {
+    //         field: 'id',
+    //         title: 'Item ID'
+    //       },
+    //       {
+    //         field: 'name',
+    //         title: 'Item Name'
+    //       },
+    //       {
+    //         field: 'price',
+    //         title: 'Item Price'
+    //       }
+    //     ],
+    //     data: [
+    //       {
+    //         id: 1,
+    //         name: 'Item 1',
+    //         price: '$1'
+    //       },
+    //       {
+    //         id: 2,
+    //         name: 'Item 2',
+    //         price: '$2'
+    //       }
+    //     ]
+    //   });
+    // });
   }
 
   ngOnInit(): void {}

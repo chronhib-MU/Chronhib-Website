@@ -15,7 +15,10 @@
     "dotenv": "^8.2.0",
     "es-module-shims": "^0.4.6",
     "express": "^4.17.1",
-    "mysql": "^2.18.1"
+    "http": "0.0.1-security",
+    "mysql": "^2.18.1",
+    "nodemon": "^2.0.3",
+    "path": "^0.12.7"
   },
   "type": "module",
   "devDependencies": {}

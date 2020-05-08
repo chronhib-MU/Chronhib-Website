@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { TableDataService } from '../../services/table-data.service';
-import $ from 'jquery';
+import * as $ from 'jquery';
 @Component({
   selector: 'app-tables',
   templateUrl: './tables.component.html',

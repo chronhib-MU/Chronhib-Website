@@ -25,10 +25,16 @@
             "assets": ["src/favicon.ico", "src/assets"],
             "styles": [
               "src/styles.scss",
+              "src/assets/scss/argon.scss",
               "node_modules/handsontable/dist/handsontable.full.css",
-              "src/assets/scss/argon.scss"
+              "node_modules/bootstrap-table/dist/bootstrap-table.min.css"
             ],
-            "scripts": ["node_modules/chart.js/dist/Chart.min.js", "node_modules/clipboard/dist/clipboard.min.js"]
+            "scripts": [
+              "node_modules/jquery/dist/jquery.min.js",
+              "node_modules/chart.js/dist/Chart.min.js",
+              "node_modules/clipboard/dist/clipboard.min.js",
+              "node_modules/bootstrap-table/dist/bootstrap-table.min.js"
+            ]
           },
           "configurations": {
             "production": {
