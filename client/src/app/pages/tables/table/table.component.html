@@ -6,7 +6,7 @@
           <h3 class="mb-0">
             {{ table | titlecase }}
           </h3>
-          <!-- <h5>{{ tableData.tables[name].data[0] }}</h5> -->
+          <h5>{{ tableData.tables[name].data[0] }}</h5>
           <!-- <h5>Lugdag</h5> -->
         </div>
       </div>
@@ -28,6 +28,9 @@
         >
         </hot-column>
       </hot-table>
+      <div class="table-responsive">
+        <table [id]="id"></table>
+      </div>
     </div>
   </div>
 </div>

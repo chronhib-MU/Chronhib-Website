@@ -1,11 +1,13 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { TableDataService } from '../../../services/table-data.service';
 import Handsontable from 'handsontable';
+import * as _ from 'lodash';
+
 declare const $: any;
 @Component({
   selector: 'app-table',
   templateUrl: './table.component.html',
-  styleUrls: ['./table.component.css']
+  styleUrls: ['./table.component.scss']
 })
 export class TableComponent implements OnInit {
   @Input() table: any;
@@ -22,8 +24,9 @@ export class TableComponent implements OnInit {
     manualColumnResize: true,
     manualRowResize: true,
     manualRowMove: true,
-    dropdownMenu: ['freeze_column', 'unfreeze_column', '---------', 'alignment', '---------', 'undo', 'redo']
-    // contextMenu: {}
+    manualColumnFreeze: true,
+    dropdownMenu: ['freeze_column', 'unfreeze_column', '---------', 'alignment', '---------', 'undo', 'redo'],
+    contextMenu: true
   };
   id = 'data-table';
   constructor(public tableData: TableDataService) {
@@ -31,36 +34,15 @@ export class TableComponent implements OnInit {
       const table = $('#data-table');
       table.find('.htCore').addClass('table');
     });
-    // $(() => {
-    //   $('#data-table').bootstrapTable({
-    //     columns: [
-    //       {
-    //         field: 'id',
-    //         title: 'Item ID'
-    //       },
-    //       {
-    //         field: 'name',
-    //         title: 'Item Name'
-    //       },
-    //       {
-    //         field: 'price',
-    //         title: 'Item Price'
-    //       }
-    //     ],
-    //     data: [
-    //       {
-    //         id: 1,
-    //         name: 'Item 1',
-    //         price: '$1'
-    //       },
-    //       {
-    //         id: 2,
-    //         name: 'Item 2',
-    //         price: '$2'
-    //       }
-    //     ]
+    //   $(() => {
+    //     $('#data-table').bootstrapTable({
+    //       columns: tableData.tables[name].headers.map(header => ({
+    //         field: header,
+    //         title: _.capitalize(header)
+    //       })),
+    //       data: tableData.tables[name].data
+    //     });
     //   });
-    // });
   }
 
   ngOnInit(): void {}
