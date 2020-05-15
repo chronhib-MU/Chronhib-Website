@@ -4,9 +4,9 @@
       <div class="card-header border-0">
         <div class="card-title text-uppercase font-weight-bold mb-0">
           <h3 class="mb-0">
-            {{ table | titlecase }}
+            {{ name | titlecase }}
           </h3>
-          <h5>{{ tableData.tables[name].data[0] }}</h5>
+          <h5>{{ (tableData.tables[name]?.data)[0] }}</h5>
           <!-- <h5>Lugdag</h5> -->
         </div>
       </div>

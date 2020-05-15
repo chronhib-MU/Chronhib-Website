@@ -10,7 +10,6 @@ declare const $: any;
   styleUrls: ['./table.component.scss']
 })
 export class TableComponent implements OnInit {
-  @Input() table: any;
   @Input() name: any;
   hotSettings: Handsontable.GridSettings = {
     startRows: 0,

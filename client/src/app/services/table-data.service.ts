@@ -28,6 +28,6 @@ export class TableDataService {
     });
   };
   getTable = table => {
-    return this.http.get(`http://localhost:4001/${table}`) as Observable<{ data: [] }>;
+    return this.http.get(`http://localhost:4000/${table}`) as Observable<{ data: [] }>;
   };
 }

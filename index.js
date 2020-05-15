@@ -57,10 +57,10 @@ connection.connect(err => {
 // console.log(connection);
 
 // Serve the static files from the Angular app
-// app.use(express.static(__dirname + '/client/dist'));
+app.use(express.static(__dirname + '/client/dist'));
 app.use(cors());
 // Handles any requests that don't match the ones above
-// app.get('/*', (req, res) => res.sendFile(path.join(__dirname)));
+app.get('/*', (req, res) => res.sendFile(path.join(__dirname)));
 
 app.get('/', (req, res) => {
   res.send('go to ' + Object.keys(tables).map(path => ' /' + path + ' to see the ' + path + ' table'));
