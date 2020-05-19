@@ -4,22 +4,26 @@
   "description": "The Chronologicon Hibernicum Website | ChronHib",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon --experimental-modules index.js"
+    "test": "echo \"Success! Test worked.\" && exit 0",
+    "start": "nodemon index.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "compression": "^1.7.4",
     "cors": "^2.8.5",
     "dotenv": "^8.2.0",
     "es-module-shims": "^0.4.6",
     "express": "^4.17.1",
+    "helmet": "3.22.0",
     "http": "0.0.1-security",
     "mysql": "^2.18.1",
-    "nodemon": "^2.0.3",
-    "path": "^0.12.7"
+    "nodemon": "^2.0.4",
+    "path": "0.12.7",
+    "server-static": "2.0.5"
   },
-  "type": "module",
-  "devDependencies": {}
+  "devDependencies": {
+    "@types/node": "^12.12.39"
+  }
 }

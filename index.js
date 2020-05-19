@@ -1,16 +1,14 @@
-import express from 'express';
-import http from 'http';
-import path from 'path';
-import cors from 'cors';
-import mysql from 'mysql';
-import dotenv from 'dotenv';
-console.log(JSON.stringify(import.meta));
-
-const moduleURL = new URL(import.meta.url);
-console.log(`pathname ${moduleURL.pathname}`);
-console.log(`dirname ${path.dirname(moduleURL.pathname)}`);
-
-const __dirname = path.dirname(moduleURL.pathname);
+const express = require('express');
+// const serveStatic = require("serve-static");
+const http = require('http');
+const path = require('path');
+const cors = require('cors');
+const mysql = require('mysql');
+const dotenv = require('dotenv');
+const compression = require('compression');
+const helmet = require('helmet');
+console.log(`pathname ${__filename}`);
+console.log(`dirname ${path.dirname(__filename)}`);
 
 console.log(__dirname);
 
@@ -18,17 +16,17 @@ const result = dotenv.config();
 if (result.error) {
   throw result.error;
 }
-console.log(result.parsed);
+
 // Make .env file that has all these variables in the form: KEY=VALUE, e.g. PORT=4000
 const { NODE_ENV, PORT, HOST, USER, PASSWORD, DATABASE } = result.parsed;
 
 const port = process.env.PORT || PORT;
 const host = process.env.HOST || HOST;
-const user = process.env.USER || USER;
 const password = process.env.PASSWORD || PASSWORD;
 const database = process.env.DATABASE || DATABASE;
 const node_env = process.env.NODE_ENV || NODE_ENV;
-
+const user = node_env === 'production' ? process.env.USER : USER;
+console.log({ node_env, port, host, user, password, database });
 const app = express();
 // mysql table queries
 const SELECT_ALL_TEXT_QUERY = 'SELECT * FROM text';
@@ -43,10 +41,10 @@ const tables = {
   sentences: SELECT_ALL_SENTENCES_QUERY
 };
 const connection = mysql.createConnection({
-  host: HOST,
-  user: USER,
-  password: PASSWORD,
-  database: DATABASE
+  host,
+  user,
+  password,
+  database
 });
 
 connection.connect(err => {
@@ -55,19 +53,42 @@ connection.connect(err => {
   }
 });
 // console.log(connection);
+// connection.query(tables['text'], (err, results) => {
+//   if (err) {
+//     console.log(err);
+//   } else {
+//     console.log('TEXT TABLE: ', {
+//       data: results
+//     });
+//   }
+// });
+console.log('Static Folder:', path.join(__dirname, 'client/dist/'));
 
+// const appName = __dirname.split(path.sep).pop();
+const appName = 'chronhibWebsite';
+console.log('App Name:', appName);
+app.use(compression()); // Compress all routes
+app.use(helmet()); // Protect against well known vulnerabilities
 // Serve the static files from the Angular app
-app.use(express.static(__dirname + '/client/dist'));
+app.use(`/${appName}/`, express.static(path.join(__dirname, 'client/dist/')));
+app.use(`/${appName}/assets/`, express.static(path.join(__dirname, 'client/dist/assets/')));
 app.use(cors());
-// Handles any requests that don't match the ones above
-app.get('/*', (req, res) => res.sendFile(path.join(__dirname)));
-
-app.get('/', (req, res) => {
-  res.send('go to ' + Object.keys(tables).map(path => ' /' + path + ' to see the ' + path + ' table'));
+app.get(`/${appName}/api/`, (req, res) => {
+  console.log(
+    'Go to:\n' +
+      Object.keys(tables)
+        .map(path => `/${appName}/api/${path} to see the ${path} table,`)
+        .join('\n')
+  );
+  res.send(
+    'Go to:<br/>' +
+      Object.keys(tables)
+        .map(path => `/${appName}/api/${path} to see the ${path} table,`)
+        .join('<br/>')
+  );
 });
-
-app.get('/:path', (req, res) => {
-  // console.log(req.params.path);
+app.get(`/${appName}/api/:path`, (req, res) => {
+  console.log(req.params.path);
   const path = req.params.path;
   console.log(tables[path]);
   if (path in tables) {
@@ -81,12 +102,14 @@ app.get('/:path', (req, res) => {
       }
     });
   } else {
-    res.redirect('/');
+    // Handles any requests that don't match the ones above
+    return redirect(`/${appName}/*`);
   }
 });
-
-// const server = http.createServer(app);
-// server.listen(port, () => console.log(`Chronhib server is running at http://${HOST}:${port}/`));
-app.listen(port, () => {
-  console.log('Chronhib server listening on port ' + port);
+app.get(`/${appName}/*`, (req, res) => {
+  console.log();
+  res.sendFile(path.resolve(__dirname, 'client/dist/index.html'));
 });
+
+const server = http.createServer(app);
+server.listen(port, () => console.log(`Chronhib server is running at ${host}/`));
