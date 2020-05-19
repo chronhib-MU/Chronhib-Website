@@ -21,7 +21,8 @@ package-lock.json
 *.gz
 
 # VSCode
-.history/*
+.history
+.vscode
 
 # Coveralls
 coverage
@@ -30,5 +31,5 @@ coverage
 benchmarks/graphs
 
 # references
-argon-dashboard-angular/*
-argon-dashboard-react/*
+argon-dashboard-angular
+argon-dashboard-react
