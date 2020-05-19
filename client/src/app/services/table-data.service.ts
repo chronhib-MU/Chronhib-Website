@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, retry } from 'rxjs/operators';
-
+import { environment } from '../../environments/environment';
 @Injectable({
   providedIn: 'root'
 })
@@ -28,6 +28,7 @@ export class TableDataService {
     });
   };
   getTable = table => {
-    return this.http.get(`http://localhost:4000/${table}`) as Observable<{ data: [] }>;
+    console.log(window.location.origin);
+    return this.http.get(`${environment.apiUrl}${table}`) as Observable<{ data: [] }>;
   };
 }
