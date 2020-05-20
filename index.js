@@ -62,7 +62,8 @@ connection.connect(err => {
 //     });
 //   }
 // });
-console.log('Static Folder:', path.join(__dirname, 'client/dist/'));
+const folderLoc = 'client/dist/';
+console.log('Static Folder:', path.join(__dirname, folderLoc));
 
 // const appName = __dirname.split(path.sep).pop();
 const appName = 'chronhibWebsite';
@@ -70,8 +71,8 @@ console.log('App Name:', appName);
 app.use(compression()); // Compress all routes
 app.use(helmet()); // Protect against well known vulnerabilities
 // Serve the static files from the Angular app
-app.use(`/${appName}/`, express.static(path.join(__dirname, 'client/dist/')));
-app.use(`/${appName}/assets/`, express.static(path.join(__dirname, 'client/dist/assets/')));
+app.use(`/${appName}/`, express.static(path.join(__dirname, folderLoc)));
+app.use(`/${appName}/assets/`, express.static(path.join(__dirname, folderLoc + 'assets/')));
 app.use(cors());
 app.get(`/${appName}/api/`, (req, res) => {
   console.log(
@@ -108,7 +109,7 @@ app.get(`/${appName}/api/:path`, (req, res) => {
 });
 app.get(`/${appName}/*`, (req, res) => {
   console.log();
-  res.sendFile(path.resolve(__dirname, 'client/dist/index.html'));
+  res.sendFile(path.resolve(__dirname, folderLoc + 'index.html'));
 });
 
 const server = http.createServer(app);

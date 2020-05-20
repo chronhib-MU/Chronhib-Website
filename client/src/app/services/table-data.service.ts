@@ -20,11 +20,12 @@ export class TableDataService {
   constructor(private http: HttpClient) {}
 
   fetchTables = table => {
-    this.getTable(table).subscribe(({ data }) => {
+    const getTableSub = this.getTable(table).subscribe(({ data }) => {
       this.tables[table] = data;
-      console.log(`${table}: `, this.tables[table]);
+      // console.log(`${table}: `, this.tables[table]);
       this.tables[table].headers = Object.keys(this.tables[table][0]);
       this.tables[table].data = this.tables[table].filter(row => row.ID_unique_number);
+      getTableSub.unsubscribe();
     });
   };
   getTable = table => {
