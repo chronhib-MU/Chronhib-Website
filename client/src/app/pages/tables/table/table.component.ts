@@ -30,9 +30,14 @@ export class TableComponent implements OnInit {
   id = 'data-table';
   constructor(public tableData: TableDataService) {
     Handsontable.hooks.add('afterInit', () => {
-      const table = $('#data-table');
-      table.find('.htCore').addClass('table');
+      $('.htCore').addClass('table');
     });
+    // Handsontable.hooks.add('afterChange', changes => {
+    //   changes.forEach(([row, prop, oldValue, newValue]) => {
+    //     // Some logic...
+    //   });
+    // });
+
     //   $(() => {
     //     $('#data-table').bootstrapTable({
     //       columns: tableData.tables[name].headers.map(header => ({

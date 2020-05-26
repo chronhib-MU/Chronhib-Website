@@ -13,18 +13,31 @@ export class TableDataService {
       headers: [],
       data: []
     },
-    sentences: [],
-    morphology: [],
-    lemmata: []
+    sentences: {
+      headers: [],
+      data: []
+    },
+    morphology: {
+      headers: [],
+      data: []
+    },
+    lemmata: {
+      headers: [],
+      data: []
+    }
   };
   constructor(private http: HttpClient) {}
 
   fetchTables = table => {
     this.getTable(table).subscribe(({ data }) => {
-      this.tables[table] = data;
+      // this.tables[table] = data;
       // console.log(`${table}: `, this.tables[table]);
-      this.tables[table].headers = Object.keys(this.tables[table][0]);
-      this.tables[table].data = this.tables[table].filter(row => row.ID_unique_number);
+      // this.tables[table].headers.push(Object.keys(this.tables[table][0]));
+      // this.tables[table].data.push(this.tables[table]);
+      console.log(`${table}: `, data);
+      this.tables[table].data.push(...data);
+      this.tables[table].headers.push(...Object.keys(this.tables[table].data[0]));
+      console.log(this.tables[table].headers);
     });
   };
   getTable = table => {

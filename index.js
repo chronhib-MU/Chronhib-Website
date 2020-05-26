@@ -3,6 +3,7 @@ const express = require('express');
 const http = require('http');
 const path = require('path');
 const cors = require('cors');
+const bodyParser = require('body-parser');
 const mysql = require('mysql');
 const dotenv = require('dotenv');
 const compression = require('compression');
@@ -29,10 +30,10 @@ const user = node_env === 'production' ? process.env.USER : USER;
 console.log({ node_env, port, host, user, password, database });
 const app = express();
 // mysql table queries
-const SELECT_ALL_TEXT_QUERY = 'SELECT * FROM text';
-const SELECT_ALL_LEMMATA_QUERY = 'SELECT * FROM lemmata';
-const SELECT_ALL_MORPHOLOGY_QUERY = 'SELECT * FROM morphology';
-const SELECT_ALL_SENTENCES_QUERY = 'SELECT * FROM sentences';
+const SELECT_ALL_TEXT_QUERY = 'SELECT * FROM text LIMIT 100';
+const SELECT_ALL_LEMMATA_QUERY = 'SELECT * FROM lemmata LIMIT 100';
+const SELECT_ALL_MORPHOLOGY_QUERY = 'SELECT * FROM morphology LIMIT 100';
+const SELECT_ALL_SENTENCES_QUERY = 'SELECT * FROM sentences LIMIT 100';
 
 const tables = {
   text: SELECT_ALL_TEXT_QUERY,
@@ -73,7 +74,7 @@ app.use(helmet()); // Protect against well known vulnerabilities
 // Serve the static files from the Angular app
 app.use(`/${appName}/`, express.static(path.join(__dirname, folderLoc)));
 app.use(`/${appName}/assets/`, express.static(path.join(__dirname, folderLoc + 'assets/')));
-app.use(cors());
+app.use(cors()).use(bodyParser.json());
 app.get(`/${appName}/api/`, (req, res) => {
   console.log(
     'Go to:\n' +
