@@ -30,10 +30,10 @@ const user = node_env === 'production' ? process.env.USER : USER;
 console.log({ node_env, port, host, user, password, database });
 const app = express();
 // mysql table queries
-const SELECT_ALL_TEXT_QUERY = 'SELECT * FROM text LIMIT 100';
-const SELECT_ALL_LEMMATA_QUERY = 'SELECT * FROM lemmata LIMIT 100';
-const SELECT_ALL_MORPHOLOGY_QUERY = 'SELECT * FROM morphology LIMIT 100';
-const SELECT_ALL_SENTENCES_QUERY = 'SELECT * FROM sentences LIMIT 100';
+const SELECT_ALL_TEXT_QUERY = 'SELECT * FROM TEXT LIMIT 100';
+const SELECT_ALL_LEMMATA_QUERY = 'SELECT * FROM LEMMATA LIMIT 100';
+const SELECT_ALL_MORPHOLOGY_QUERY = 'SELECT * FROM MORPHOLOGY LIMIT 100';
+const SELECT_ALL_SENTENCES_QUERY = 'SELECT * FROM SENTENCES LIMIT 100';
 
 const tables = {
   text: SELECT_ALL_TEXT_QUERY,
@@ -114,4 +114,8 @@ app.get(`/${appName}/*`, (req, res) => {
 });
 
 const server = http.createServer(app);
-server.listen(port, () => console.log(`Chronhib server is running at ${host}/`));
+if (node_env.toLowerCase() === 'production') {
+  server.listen(() => console.log(`Chronhib server is running at http://chronhib.mucampus.net/${appName}/`));
+} else {
+  server.listen(port, () => console.log(`Chronhib server is running at ${host}:${port}/${appName}/`));
+}
