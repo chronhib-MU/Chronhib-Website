@@ -1,1 +1,25 @@
 /* You can add global styles to this file, and also import other style files */
+.bg-gradient-image {
+  background-image: linear-gradient(
+  rgba(0, 0, 0, .3) 0%,
+  rgba(0, 0, 0, .2) 50%,
+  rgba(0, 0, 0, .1) 75%,
+  rgba(0, 0, 0, 0) 100%
+  ),
+  url('./assets/img/theme/Iontas_Daylight.jpg');
+  background-repeat: no-repeat;
+  background-position: bottom;
+  background-size: cover;
+
+  // filter: blur(15px);
+}
+
+.navbar-vertical .navbar-brand-img, .navbar-vertical .navbar-brand > img {
+  max-height: 4rem;
+}
+@media (min-width: 768px) {
+  .navbar-vertical.navbar-expand-md .navbar-brand, .navbar-brand-img {
+    max-height: 4rem;
+    padding-bottom: 0rem;
+  }
+}

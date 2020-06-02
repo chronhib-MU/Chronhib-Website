@@ -110,6 +110,7 @@ app.get(`/${appName}/api/:path`, (req, res) => {
 });
 app.get(`/${appName}/*`, (req, res) => {
   console.log();
+
   res.sendFile(path.resolve(__dirname, folderLoc + 'index.html'));
 });
 

@@ -37,11 +37,12 @@ export class TableDataService {
       console.log(`${table}: `, data);
       this.tables[table].data.push(...data);
       this.tables[table].headers.push(...Object.keys(this.tables[table].data[0]));
-      console.log(this.tables[table].headers);
+      // console.log(this.tables[table].headers);
     });
   };
   getTable = table => {
     console.log(window.location.origin);
     return this.http.get(`${environment.apiUrl}${table}`) as Observable<{ data: [] }>;
   };
+
 }

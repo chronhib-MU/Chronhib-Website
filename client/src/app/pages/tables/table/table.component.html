@@ -11,24 +11,19 @@
       </div>
       <hot-table
         class="hot"
-        [data]="tableData.tables[name].data"
-        [colHeaders]="true"
-        [rowHeaders]="true"
+        [colHeaders]="getColumns()"
+        [rowHeaders]="getRows()"
         licenseKey="non-commercial-and-evaluation"
         [settings]="hotSettings"
         [hotId]="id"
         [maxRows]="100"
         className="htCenter"
+        [id]="id"
+        [data]="getTableData()"
       >
-        <hot-column
-          *ngFor="let header of tableData.tables[name].headers"
-          [data]="header"
-          [title]="header.replace('_', ' ')"
-        >
-        </hot-column>
       </hot-table>
       <div class="table-responsive">
-        <table [id]="id"></table>
+        <table></table>
       </div>
     </div>
   </div>

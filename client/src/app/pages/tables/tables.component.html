@@ -1,4 +1,4 @@
-<div class="header bg-gradient-danger pb-8 pt-5 pt-md-8"></div>
+<div class="header bg-gradient-image pb-8 pt-5 pt-md-8"></div>
 <!-- Page content -->
 <div class="container-fluid mt--7">
   <!-- Table -->
@@ -50,6 +50,6 @@
     </div>
   </ng-container>
   <ng-container *ngFor="let name of tableData.tables.names">
-    <app-table [name]="name"></app-table>
+    <app-table *ngIf="table == name" [name]="name"></app-table>
   </ng-container>
 </div>
