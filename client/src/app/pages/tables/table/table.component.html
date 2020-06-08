@@ -8,18 +8,27 @@
           </h3>
           <h5>Sample Textual Unit</h5>
         </div>
+        <div class="btn-group">
+          <label class="btn btn-link text-dark" (click)="undo()">
+            Undo
+          </label>
+          <label class="btn btn-link text-dark" (click)="redo()">
+            Redo
+          </label>
+        </div>
       </div>
       <hot-table
-        class="hot"
-        [colHeaders]="getColumns()"
+        #hot
+        [hotId]="instance"
+        [columns]="columns"
         [rowHeaders]="getRows()"
-        licenseKey="non-commercial-and-evaluation"
+        [colHeaders]="true"
+        [data]="getTableData()"
         [settings]="hotSettings"
-        [hotId]="id"
         [maxRows]="100"
         className="htCenter"
-        [id]="id"
-        [data]="getTableData()"
+        licenseKey="non-commercial-and-evaluation"
+        [id]="instance"
       >
       </hot-table>
       <div class="table-responsive">

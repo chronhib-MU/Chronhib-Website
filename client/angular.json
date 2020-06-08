@@ -24,10 +24,10 @@
             "tsConfig": "src/tsconfig.app.json",
             "assets": ["src/favicon.ico", "src/assets"],
             "styles": [
-              "src/styles.scss",
-              "src/assets/scss/argon.scss",
               "node_modules/handsontable/dist/handsontable.full.css",
-              "node_modules/bootstrap-table/dist/bootstrap-table.min.css"
+              "node_modules/bootstrap-table/dist/bootstrap-table.min.css",
+              "src/assets/scss/argon.scss",
+              "src/styles.scss"
             ],
             "scripts": [
               "node_modules/jquery/dist/jquery.min.js",

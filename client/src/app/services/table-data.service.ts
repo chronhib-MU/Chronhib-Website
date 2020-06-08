@@ -35,8 +35,8 @@ export class TableDataService {
       // this.tables[table].headers.push(Object.keys(this.tables[table][0]));
       // this.tables[table].data.push(this.tables[table]);
       console.log(`${table}: `, data);
-      this.tables[table].data.push(...data);
-      this.tables[table].headers.push(...Object.keys(this.tables[table].data[0]));
+      this.tables[table].data = data;
+      this.tables[table].headers = Object.keys(this.tables[table].data[0]);
       // console.log(this.tables[table].headers);
     });
   };

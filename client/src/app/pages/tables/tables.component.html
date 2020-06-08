@@ -52,4 +52,5 @@
   <ng-container *ngFor="let name of tableData.tables.names">
     <app-table *ngIf="table == name" [name]="name"></app-table>
   </ng-container>
+  <app-table *ngIf="!table" ></app-table>
 </div>
