@@ -58,19 +58,19 @@ export class TableComponent implements OnInit {
           const escaped = Handsontable.helper.stringify(value);
           let img = null;
 
-          if (escaped.indexOf('http') === 0) {
-            img = document.createElement('IMG');
-            img.src = value;
+          // if (escaped.indexOf('http') === 0) {
+          //   img = document.createElement('IMG');
+          //   img.src = value;
 
-            Handsontable.dom.addEvent(img, 'mousedown', function (event) {
-              event.preventDefault();
-            });
+          //   Handsontable.dom.addEvent(img, 'mousedown', function (event) {
+          //     event.preventDefault();
+          //   });
 
-            Handsontable.dom.empty(td);
-            td.appendChild(img);
-          } else {
+          //   Handsontable.dom.empty(td);
+          //   td.appendChild(img);
+          // } else {
             Handsontable.renderers.TextRenderer.apply(this, arguments);
-          }
+          // }
 
           return td;
         }

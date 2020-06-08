@@ -11,7 +11,7 @@
       >
         <div class="card">
           <div class="card-body">
-            <div class="card-title text-uppercase font-weight-bold mb-0">
+            <div class="card-title text-uppercase font-weight-bolder text-dark mb-0">
               {{ table | titlecase }}
             </div>
           </div>
@@ -52,5 +52,5 @@
   <ng-container *ngFor="let name of tableData.tables.names">
     <app-table *ngIf="table == name" [name]="name"></app-table>
   </ng-container>
-  <app-table *ngIf="!table" ></app-table>
+  <app-table *ngIf="!table"></app-table>
 </div>
