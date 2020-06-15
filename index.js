@@ -80,7 +80,7 @@ app.use(`/${appName}/assets/`, express.static(path.join(__dirname, folderLoc + '
 app.use(cors()).use(bodyParser.json());
 app.get(`/${appName}/api/`, (req, res) => {
   console.table(req.query);
-  if (true) {
+  if (req.query.page && req.query.limit && req.query.fprop && req.query.fval && req.query.ctable && req.query.dtable) {
     console.log('Got into search parameters!');
     let page = req.query.page || ''; // pagination page number
     let limit = req.query.limit || ''; // pagination limit (how many rows per page)
