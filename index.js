@@ -8,6 +8,7 @@ const mysql = require('mysql');
 const dotenv = require('dotenv');
 const compression = require('compression');
 const helmet = require('helmet');
+const { start } = require('repl');
 console.log(`pathname ${__filename}`);
 console.log(`dirname ${path.dirname(__filename)}`);
 
@@ -69,6 +70,8 @@ console.log('Static Folder:', path.join(__dirname, folderLoc));
 // const appName = __dirname.split(path.sep).pop();
 const appName = 'chronhibWebsite';
 console.log('App Name:', appName);
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 app.use(compression()); // Compress all routes
 app.use(helmet()); // Protect against well known vulnerabilities
 // Serve the static files from the Angular app
@@ -76,23 +79,69 @@ app.use(`/${appName}/`, express.static(path.join(__dirname, folderLoc)));
 app.use(`/${appName}/assets/`, express.static(path.join(__dirname, folderLoc + 'assets/')));
 app.use(cors()).use(bodyParser.json());
 app.get(`/${appName}/api/`, (req, res) => {
-  console.log(
-    'Go to:\n' +
-      Object.keys(tables)
-        .map(path => `/${appName}/api/${path} to see the ${path} table,`)
-        .join('\n')
-  );
-  res.send(
-    'Go to:<br/>' +
-      Object.keys(tables)
-        .map(path => `/${appName}/api/${path} to see the ${path} table,`)
-        .join('<br/>')
-  );
+  console.table(req.query);
+  if (true) {
+    console.log('Got into search parameters!');
+    let page = req.query.page || ''; // pagination page number
+    let limit = req.query.limit || ''; // pagination limit (how many rows per page)
+    let fieldProperty = req.query.fprop || ''; // the property to filter by
+    let fieldValue = req.query.fval; // the value of the property to filter by
+    let currentTable = req.query.ctable; // the table we're currently on
+    let destinationTable = req.query.dtable; // the table we're navigating to
+    let startRow,
+      endRow,
+      between = ' ';
+    // check that the page and limit query parameters are strings 🙄
+    if (typeof page === 'string' && typeof limit === 'string') {
+      if (parseInt(limit, 10) && parseInt(page, 10)) {
+        startRow = (parseInt(page, 10) - 1) * parseInt(limit, 10); // gets the starting row of the query
+        console.log('Start Row:', startRow);
+        endRow = startRow + parseInt(limit, 10); // gets the ending row of the query
+        console.log('End Row:', endRow);
+        between = ` AND Sort_ID BETWEEN ${startRow} AND ${endRow}`;
+        console.log('Between:', between);
+        limit = '';
+      } else {
+        limit = limit === '0' ? '' : ' LIMIT ' + (parseInt(limit, 10) - 1); // if limit is 0 then there's no limit
+      }
+    }
+    // check that the table query parameters are strings 🙄
+    if (typeof currentTable === 'string' && typeof destinationTable === 'string') {
+      const query = `SELECT * FROM ${destinationTable.toUpperCase()} WHERE ${fieldProperty} = '${fieldValue}'${between} ORDER BY Sort_ID ASC${limit}`;
+      console.log(query);
+      connection.query(query, (err, results) => {
+        if (err) {
+          console.log('Error: ', err);
+          return res.send(err);
+        } else {
+          return res.json({
+            data: results
+          });
+        }
+      });
+    }
+  } else {
+    console.log(
+      'Go to:\n' +
+        Object.keys(tables)
+          .map(path => `/${appName}/api/${path} to see the ${path} table,`)
+          .join('\n')
+    );
+    res.send(
+      'Go to:<br/>' +
+        Object.keys(tables)
+          .map(path => `/${appName}/api/${path} to see the ${path} table,`)
+          .join('<br/>')
+    );
+  }
 });
+
+// handles all the get api requests
 app.get(`/${appName}/api/:path`, (req, res) => {
   console.log(req.params.path);
   const path = req.params.path;
   console.log(tables[path]);
+  // if the first character is a question mark and therefore a query
   if (path in tables) {
     connection.query(tables[path], (err, results) => {
       if (err) {
@@ -105,12 +154,13 @@ app.get(`/${appName}/api/:path`, (req, res) => {
     });
   } else {
     // Handles any requests that don't match the ones above
-    return redirect(`/${appName}/*`);
+    // @ts-ignore
+    return redirect(`/${appName}/*`); // redirect back to the homepage
   }
 });
-app.get(`/${appName}/*`, (req, res) => {
-  console.log();
 
+// redirect all the routes to the app and lets angular handle the routing
+app.get(`/${appName}/*`, (req, res) => {
   res.sendFile(path.resolve(__dirname, folderLoc + 'index.html'));
 });
 
