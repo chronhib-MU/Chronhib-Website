@@ -7,7 +7,7 @@ This project was generated with [Angular CLI](https://github.com/angular/angular
 1. Download this github repo.
 2. Run `npm install` to install node modules.
 3. cd into client folder do above step `cd client`.
-4. Import database into local mysql database `mysqldump -u root -p 'database_name' < test.sql`.
+4. Import database into local mysql database `mysql -u 'username' -p 'database_name' < test2020.sql`.
 
 ## Node Server
 

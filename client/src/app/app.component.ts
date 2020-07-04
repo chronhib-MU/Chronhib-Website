@@ -7,9 +7,5 @@ import { TableDataService } from './services/table-data.service';
 })
 export class AppComponent {
   title = 'chronhib2020';
-  constructor(private tableData: TableDataService) {
-    this.tableData.tables.names.forEach((table: string) => {
-      this.tableData.fetchTables(table);
-    });
-  }
+  constructor(private tableData: TableDataService) {}
 }

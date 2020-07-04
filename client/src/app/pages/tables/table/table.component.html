@@ -4,17 +4,20 @@
       <div class="card-header border-0 pb-2">
         <div class="card-title text-uppercase mb-0 float-left">
           <h2 class="mb-0 font-weight-bolder text-dark">
-            {{ name | titlecase }}
+            {{ after | titlecase }}
           </h2>
-          <h5 *ngIf="name !== 'text'" class="mb-0 font-weight-bold text-muted">Sample Textual Unit</h5>
+          <h5 *ngIf="after !== 'text'" class="mb-0 font-weight-bold text-muted">{{ before | titlecase }}</h5>
         </div>
-        <div class="btn-group float-right">
-          <label class="btn btn-secondary px-3 py-2" (click)="undo()">
-            Undo
+
+        <div class="btn-group float-right" *ngIf="edit">
+          <label class="btn btn-secondary px-3 py-2" (click)="undo()"> Undo </label>
+          <label class="btn btn-secondary px-3 py-2" (click)="redo()"> Redo </label>
+        </div>
+        <div class="btn-group float-right pr-3">
+          <label class="btn btn-secondary px-3 py-2" (click)="toggleEditMode()">
+            Edit <i class="fa fa-toggle-on" *ngIf="edit"></i><i class="fa fa-toggle-off" *ngIf="!edit"></i>
           </label>
-          <label class="btn btn-secondary px-3 py-2" (click)="redo()">
-            Redo
-          </label>
+          <label class="btn btn-secondary px-3 py-2" (click)="refresh()"> Refresh <i class="fa fa-refresh"></i> </label>
         </div>
       </div>
       <hot-table
@@ -24,8 +27,7 @@
         [rowHeaders]="getRows()"
         [colHeaders]="true"
         [data]="getTableData()"
-        [settings]="hotSettings"
-        [maxRows]="100"
+        [settings]="hotSettings[this.edit ? 1 : 0]"
         className="htCenter"
         licenseKey="non-commercial-and-evaluation"
         [id]="instance"

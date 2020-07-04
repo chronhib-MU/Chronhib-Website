@@ -54,16 +54,16 @@ connection.connect(err => {
     return err;
   }
 });
-// console.log(connection);
-// connection.query(tables['text'], (err, results) => {
-//   if (err) {
-//     console.log(err);
-//   } else {
-//     console.log('TEXT TABLE: ', {
-//       data: results
-//     });
-//   }
-// });
+console.log(connection);
+/* connection.query(tables['text'], (err, results) => {
+  if (err) {
+    console.log(err);
+  } else {
+    console.log('TEXT TABLE: ', {
+      data: results
+    });
+  }
+}); */
 const folderLoc = 'client/dist/';
 console.log('Static Folder:', path.join(__dirname, folderLoc));
 
@@ -78,48 +78,89 @@ app.use(helmet()); // Protect against well known vulnerabilities
 app.use(`/${appName}/`, express.static(path.join(__dirname, folderLoc)));
 app.use(`/${appName}/assets/`, express.static(path.join(__dirname, folderLoc + 'assets/')));
 app.use(cors()).use(bodyParser.json());
+app.post(`/${appName}/api/`, (req, res) => {
+  //To access POST variable use req.body() methods.
+  console.log('Post Query: ', req.query);
+  console.log('Post Variable: ', req.body);
+  res.status(200).end('Command received! ✔');
+});
 app.get(`/${appName}/api/`, (req, res) => {
   console.table(req.query);
-  if (req.query.page && req.query.limit && req.query.fprop && req.query.fval && req.query.ctable && req.query.dtable) {
+  if (
+    typeof req.query.page === 'string' &&
+    typeof req.query.limit === 'string' &&
+    typeof req.query.fprop === 'string' &&
+    typeof req.query.fval === 'string' &&
+    typeof req.query.dtable === 'string' &&
+    typeof req.query.ctable === 'string'
+  ) {
     console.log('Got into search parameters!');
-    let page = req.query.page || ''; // pagination page number
-    let limit = req.query.limit || ''; // pagination limit (how many rows per page)
+    let page = req.query.page || '0'; // pagination page number
+    let limit = req.query.limit || '0'; // pagination limit (how many rows per page)
     let fieldProperty = req.query.fprop || ''; // the property to filter by
-    let fieldValue = req.query.fval; // the value of the property to filter by
-    let currentTable = req.query.ctable; // the table we're currently on
-    let destinationTable = req.query.dtable; // the table we're navigating to
+    let fieldValue = req.query.fval || ''; // the value of the property to filter by
+    let destinationTable = req.query.dtable || 'text'; // the table we're navigating to
+    let currentTable = req.query.ctable || 'text'; // the table we're navigating from
     let startRow,
       endRow,
       between = ' ';
-    // check that the page and limit query parameters are strings 🙄
-    if (typeof page === 'string' && typeof limit === 'string') {
-      if (parseInt(limit, 10) && parseInt(page, 10)) {
-        startRow = (parseInt(page, 10) - 1) * parseInt(limit, 10); // gets the starting row of the query
-        console.log('Start Row:', startRow);
-        endRow = startRow + parseInt(limit, 10); // gets the ending row of the query
-        console.log('End Row:', endRow);
-        between = ` AND Sort_ID BETWEEN ${startRow} AND ${endRow}`;
-        console.log('Between:', between);
-        limit = '';
-      } else {
-        limit = limit === '0' ? '' : ' LIMIT ' + (parseInt(limit, 10) - 1); // if limit is 0 then there's no limit
-      }
+    if (parseInt(limit, 10) && parseInt(page, 10)) {
+      startRow = (parseInt(page, 10) - 1) * parseInt(limit, 10); // gets the starting row of the query
+      console.log('Start Row:', startRow);
+      endRow = startRow + parseInt(limit, 10); // gets the ending row of the query
+      console.log('End Row:', endRow);
+      between = ` AND Sort_ID BETWEEN ${startRow} AND ${endRow} `;
+      console.log('Between:', between);
+      limit = '';
+    } else {
+      limit = limit === '0' ? '' : ' LIMIT ' + (parseInt(limit, 10) - 1); // if limit is 0 then there's no limit
     }
-    // check that the table query parameters are strings 🙄
-    if (typeof currentTable === 'string' && typeof destinationTable === 'string') {
-      const query = `SELECT * FROM ${destinationTable.toUpperCase()} WHERE ${fieldProperty} = '${fieldValue}'${between} ORDER BY Sort_ID ASC${limit}`;
-      console.log(query);
-      connection.query(query, (err, results) => {
+    let beforeQuery = '',
+      afterQuery = '';
+
+    // Check if fieldProperty and fValue
+    if (fieldProperty || fieldValue) {
+      afterQuery = `SELECT * FROM ${destinationTable.toUpperCase()} WHERE ${fieldProperty} = ${fieldValue}${between}ORDER BY Sort_ID ASC${limit}`;
+    } else {
+      afterQuery = `SELECT * FROM ${destinationTable.toUpperCase()}${between}ORDER BY Sort_ID ASC${limit}`;
+    }
+    if (fieldProperty || fieldValue) {
+      // Text table has exception where TextID is Text_ID
+      if (currentTable === 'text' && fieldProperty === 'TextID') {
+        fieldProperty = 'Text_ID';
+      }
+      if (currentTable !== destinationTable) {
+        beforeQuery = `SELECT * FROM ${currentTable.toUpperCase()} WHERE ${fieldProperty} = ${fieldValue}`;
+      } else {
+        beforeQuery = `SELECT * FROM ${currentTable.toUpperCase()} WHERE ${fieldProperty} = ${fieldValue}`;
+      }
+    } else {
+      beforeQuery = `SELECT * FROM ${currentTable.toUpperCase()}`;
+    }
+    console.log('beforeQuery:', beforeQuery);
+    console.log('afterQuery:', afterQuery);
+    let beforeTable = [],
+      afterTable = [];
+    connection.query(beforeQuery, (err, results) => {
+      if (err) {
+        console.log('Error: ', err);
+        return res.send(err);
+      } else {
+        beforeTable = results;
+      }
+      connection.query(afterQuery, (err, results) => {
         if (err) {
           console.log('Error: ', err);
           return res.send(err);
         } else {
-          return res.json({
-            data: results
-          });
+          afterTable = results;
         }
+        // console.log({ beforeTable, afterTable });
+        return res.json({
+          data: { beforeTable, afterTable }
+        });
       });
-    }
+    });
   } else {
     console.log(
       'Go to:\n' +
@@ -148,7 +189,7 @@ app.get(`/${appName}/api/:path`, (req, res) => {
         return res.send(err);
       } else {
         return res.json({
-          data: results
+          data: { beforeTable: {}, afterTable: results }
         });
       }
     });
