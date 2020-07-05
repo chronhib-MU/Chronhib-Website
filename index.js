@@ -141,20 +141,20 @@ app.get(`/${appName}/api/`, (req, res) => {
       if (currentTable === 'text' && fieldProperty === 'Text_ID') {
         fieldProperty = 'TextID';
       }
-      afterQuery = `SELECT * FROM ${destinationTable.toUpperCase()} WHERE ${fieldProperty} = ${fieldValue}${between}ORDER BY ${
+      afterQuery = `SELECT * FROM ${destinationTable.toUpperCase()} WHERE ${fieldProperty} = "${fieldValue}"${between}ORDER BY ${
         fieldProperty + ', '
       }Sort_ID ASC${limit}`;
     } else {
       afterQuery = `SELECT * FROM ${destinationTable.toUpperCase()}${between}ORDER BY Sort_ID ASC${limit}`;
     }
     if (fieldProperty || fieldValue) {
-      console.log('// Text table has exception where TextID is Text_ID');
+      // Text table has exception where TextID is Text_ID
       // if not the same table
       if (currentTable !== destinationTable) {
         if (currentTable === 'text' && fieldProperty === 'TextID') {
           fieldProperty = 'Text_ID';
         }
-        beforeQuery = `SELECT * FROM ${currentTable.toUpperCase()} WHERE ${fieldProperty} = ${fieldValue}`;
+        beforeQuery = `SELECT * FROM ${currentTable.toUpperCase()} WHERE ${fieldProperty} = "${fieldValue}"`;
       }
     }
     console.log('beforeQuery:', beforeQuery);

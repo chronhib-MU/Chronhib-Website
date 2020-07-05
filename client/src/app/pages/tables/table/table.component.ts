@@ -1,9 +1,10 @@
 import { Component, OnInit, Input } from '@angular/core';
+import { Location } from '@angular/common';
+import { Router } from '@angular/router';
 import { TableDataService } from '../../../services/table-data.service';
 import Handsontable from 'handsontable';
 import { HotTableRegisterer } from '@handsontable/angular';
 import * as _ from 'lodash';
-
 declare const $: any;
 @Component({
   selector: 'app-table',
@@ -76,7 +77,7 @@ export class TableComponent implements OnInit {
   columns: any[] = [];
   hotInstance = this.hotRegisterer.getInstance(this.instance);
   history = [];
-  constructor(public tableData: TableDataService) {
+  constructor(public tableData: TableDataService, private router: Router, private location: Location) {
     this.dataTable = {
       text: this.tableData.tables.text,
       sentences: this.tableData.tables.sentences,
@@ -117,11 +118,9 @@ export class TableComponent implements OnInit {
           type: 'text',
           renderer: function (instance, td, row, col, prop, value, cellProperties) {
             const escaped = Handsontable.helper.stringify(value);
-            let img = null;
             // console.log('Renderer Variables: ', { row, col, prop, value, cellProperties });
             // if (escaped.indexOf('http') === 0) {
             if (escaped.indexOf('http') === 0) {
-              img = document.createElement('IMG');
               // Create anchor element.
               const a = document.createElement('a');
               // Create the text node for anchor element
@@ -132,9 +131,6 @@ export class TableComponent implements OnInit {
               a.title = value;
               // Set the href property
               a.href = value;
-              // Handsontable.dom.addEvent(img, 'mousedown', function (event) {
-              //   event.preventDefault();
-              // });
               Handsontable.dom.addEvent(a, 'mousedown', function (event) {
                 event.preventDefault();
               });
@@ -145,16 +141,46 @@ export class TableComponent implements OnInit {
               // Make it centered
               td.style.textAlign = 'center';
             } else {
-              // link = document.createElement('A');
-              // link.routerLink = value;
+              const dtableIndex = that.tableData.tables.names.indexOf(that.after) + 1;
 
-              // Handsontable.dom.addEvent(link, 'mousedown', function (event) {
-              //   event.preventDefault();
-              // });
+              const queryParams = {
+                page: 0,
+                limit: 0,
+                fprop: prop,
+                fval: value,
+                dtable: that.tableData.tables.names[dtableIndex],
+                ctable: that.after
+              };
+              const queryString = Object.keys(queryParams)
+                .map(key => key + '=' + queryParams[key])
+                .join('&');
+              const a = document.createElement('a');
+              const linkText = document.createTextNode(value);
+              a.appendChild(linkText);
+              // a.className = 'btn-link';
+              a.href = '/tables?' + queryString;
+              Handsontable.dom.addEvent(a, 'mousedown', function (event) {
+                event.preventDefault();
+              });
+              Handsontable.dom.empty(td);
 
-              // Handsontable.dom.empty(td);
-              // td.appendChild(link);
-              Handsontable.renderers.TextRenderer.apply(this, arguments);
+              if (
+                (that.after === 'text' && prop === 'Text_ID') ||
+                (that.after === 'sentences' && prop === 'Textual_Unit_ID') ||
+                (that.after === 'morphology' && prop === 'Lemma')
+              ) {
+                // a.addEventListener('click', () => {
+                //   const queryString = Object.keys(queryParams)
+                //     .map(key => key + '=' + queryParams[key])
+                //     .join('&');
+                //   that.router.navigateByUrl('/tables?' + queryString);
+                // });
+              } else {
+                Handsontable.renderers.TextRenderer.apply(this, arguments);
+                return td;
+              }
+              td.appendChild(a);
+              td.style.textAlign = 'center';
             }
 
             return td;
@@ -228,11 +254,10 @@ export class TableComponent implements OnInit {
   }
   refresh() {
     console.log(this.getTableData());
-    this.hotInstance = this.hotRegisterer.getInstance(this.instance);
+    // this.hotInstance = this.hotRegisterer.getInstance(this.instance);
     // this.hotInstance.loadData(this.getTableData());
     // this.hotInstance.render();
   }
-
   toggleEditMode() {
     this.edit = !this.edit;
     this.hotInstance = this.hotRegisterer.getInstance(this.instance);
@@ -242,5 +267,11 @@ export class TableComponent implements OnInit {
       contextMenu: this.edit,
       readOnly: !this.edit
     });
+  }
+  goBack() {
+    this.location.back();
+  }
+  goForward() {
+    this.location.forward();
   }
 }

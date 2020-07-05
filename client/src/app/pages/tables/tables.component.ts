@@ -14,7 +14,7 @@ export class TablesComponent implements OnInit, OnDestroy {
   before: string;
   after: string;
   table: string;
-  constructor(public tableData: TableDataService, private router: Router, private route: ActivatedRoute) {}
+  constructor(public tableData: TableDataService, public router: Router, private route: ActivatedRoute) {}
 
   ngOnInit() {
     this.routeParams = this.route.paramMap.subscribe(params => {
