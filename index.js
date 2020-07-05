@@ -92,7 +92,6 @@ app.post(`/${appName}/api/`, (req, res) => {
     WHERE ID_unique_number = ${id} AND ${fieldProperty} = "${before}";`;
     console.log('Post Query: ', updateQuery);
     connection.query(updateQuery, (err, results) => {
-      console.log(res);
       if (err) {
         console.log('Error: ', err);
         return res.send(err);
@@ -139,17 +138,22 @@ app.get(`/${appName}/api/`, (req, res) => {
 
     // Check if fieldProperty and fValue
     if (fieldProperty || fieldValue) {
-      afterQuery = `SELECT * FROM ${destinationTable.toUpperCase()} WHERE ${fieldProperty} = ${fieldValue}${between}ORDER BY Sort_ID ASC${limit}`;
+      if (currentTable === 'text' && fieldProperty === 'Text_ID') {
+        fieldProperty = 'TextID';
+      }
+      afterQuery = `SELECT * FROM ${destinationTable.toUpperCase()} WHERE ${fieldProperty} = ${fieldValue}${between}ORDER BY ${
+        fieldProperty + ', '
+      }Sort_ID ASC${limit}`;
     } else {
       afterQuery = `SELECT * FROM ${destinationTable.toUpperCase()}${between}ORDER BY Sort_ID ASC${limit}`;
     }
     if (fieldProperty || fieldValue) {
-      // Text table has exception where TextID is Text_ID
-      if (currentTable === 'text' && fieldProperty === 'TextID') {
-        fieldProperty = 'Text_ID';
-      }
+      console.log('// Text table has exception where TextID is Text_ID');
       // if not the same table
       if (currentTable !== destinationTable) {
+        if (currentTable === 'text' && fieldProperty === 'TextID') {
+          fieldProperty = 'Text_ID';
+        }
         beforeQuery = `SELECT * FROM ${currentTable.toUpperCase()} WHERE ${fieldProperty} = ${fieldValue}`;
       }
     }

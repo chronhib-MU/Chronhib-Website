@@ -20,17 +20,13 @@ export class TablesComponent implements OnInit, OnDestroy {
     this.routeParams = this.route.paramMap.subscribe(params => {
       // 'table' is the variable name from 'admin-layout-routing'
       this.table = params.get('table');
-      // Checks
-      if (this.table == null) {
-        this.router.navigate(['/tables'], {
-          queryParams: { page: 0, limit: 0, fprop: '', fval: '', dtable: 'text', ctable: 'text' }
-        });
-      } else if (this.tableData.tables.names.indexOf(this.table) > -1) {
+      console.log('Table: ', this.table);
+
+      if (this.tableData.tables.names.indexOf(this.table) > -1) {
         this.before = '';
         this.after = this.table;
         this.tableData.fetchTable(this.table);
       }
-      // console.log('Table: ', this.table);
     });
     this.routeQueryParams = this.route.queryParamMap.subscribe(paramMap => {
       const tableParams: any = { ...paramMap };
@@ -38,8 +34,21 @@ export class TablesComponent implements OnInit, OnDestroy {
       this.tableQuery = tableParams.params;
       // console.log({ ...paramMap.keys, ...paramMap });
       console.log('Table Query: ', this.tableQuery);
+      // Checks
+      if (this.table == null && Object.keys(this.tableQuery).length === 0 && this.tableQuery.constructor === Object) {
+        this.router.navigate(['/tables'], {
+          queryParams: {
+            page: 0,
+            limit: 0,
+            fprop: '',
+            fval: '',
+            dtable: 'text',
+            ctable: 'text'
+          }
+        });
+      }
       // Checking if tableQuery is not an empty object
-      if (!(Object.keys(this.tableQuery).length === 0 && this.tableQuery.constructor === Object)) {
+      else if (!(Object.keys(this.tableQuery).length === 0 && this.tableQuery.constructor === Object)) {
         this.before = this.tableQuery.ctable;
         this.after = this.tableQuery.dtable;
         this.tableData.fetchTable(this.tableQuery);
