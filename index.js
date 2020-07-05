@@ -54,7 +54,7 @@ connection.connect(err => {
     return err;
   }
 });
-console.log(connection);
+// console.log(connection);
 /* connection.query(tables['text'], (err, results) => {
   if (err) {
     console.log(err);
@@ -80,9 +80,28 @@ app.use(`/${appName}/assets/`, express.static(path.join(__dirname, folderLoc + '
 app.use(cors()).use(bodyParser.json());
 app.post(`/${appName}/api/`, (req, res) => {
   //To access POST variable use req.body() methods.
-  console.log('Post Query: ', req.query);
   console.log('Post Variable: ', req.body);
-  res.status(200).end('Command received! ✔');
+  const { table, command, values } = req.body;
+  values.forEach(value => {
+    let id = value[0],
+      fieldProperty = value[1],
+      before = value[2],
+      after = value[3];
+    let updateQuery = `UPDATE ${table.toUpperCase()}
+    SET ${fieldProperty} = "${after}"
+    WHERE ID_unique_number = ${id} AND ${fieldProperty} = "${before}";`;
+    console.log('Post Query: ', updateQuery);
+    connection.query(updateQuery, (err, results) => {
+      console.log(res);
+      if (err) {
+        console.log('Error: ', err);
+        return res.send(err);
+      } else {
+        return res.status(200).end('Command received! ✔');
+      }
+      // console.log({ beforeTable, afterTable });
+    });
+  });
 });
 app.get(`/${appName}/api/`, (req, res) => {
   console.table(req.query);
@@ -129,37 +148,40 @@ app.get(`/${appName}/api/`, (req, res) => {
       if (currentTable === 'text' && fieldProperty === 'TextID') {
         fieldProperty = 'Text_ID';
       }
+      // if not the same table
       if (currentTable !== destinationTable) {
         beforeQuery = `SELECT * FROM ${currentTable.toUpperCase()} WHERE ${fieldProperty} = ${fieldValue}`;
-      } else {
-        beforeQuery = `SELECT * FROM ${currentTable.toUpperCase()} WHERE ${fieldProperty} = ${fieldValue}`;
       }
-    } else {
-      beforeQuery = `SELECT * FROM ${currentTable.toUpperCase()}`;
     }
     console.log('beforeQuery:', beforeQuery);
     console.log('afterQuery:', afterQuery);
     let beforeTable = [],
       afterTable = [];
-    connection.query(beforeQuery, (err, results) => {
+    connection.query(afterQuery, (err, results) => {
       if (err) {
         console.log('Error: ', err);
         return res.send(err);
       } else {
-        beforeTable = results;
+        afterTable = results;
       }
-      connection.query(afterQuery, (err, results) => {
-        if (err) {
-          console.log('Error: ', err);
-          return res.send(err);
-        } else {
-          afterTable = results;
-        }
-        // console.log({ beforeTable, afterTable });
+      if (beforeQuery !== '') {
+        connection.query(beforeQuery, (err, results) => {
+          if (err) {
+            console.log('Error: ', err);
+            return res.send(err);
+          } else {
+            beforeTable = results;
+          }
+          // console.log({ beforeTable, afterTable });
+          return res.json({
+            data: { beforeTable, afterTable }
+          });
+        });
+      } else {
         return res.json({
           data: { beforeTable, afterTable }
         });
-      });
+      }
     });
   } else {
     console.log(

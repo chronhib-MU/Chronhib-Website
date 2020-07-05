@@ -97,9 +97,10 @@ export class TableComponent implements OnInit {
     const that = this;
     // need this to push the dataset
     const fetchedTable$ = this.tableData.fetchedTable.subscribe(({ data }) => {
-      console.table(this.after);
+      console.table('After:', this.after);
+      console.table('Before:', this.before);
       console.log(`Datatable[${this.after}]: `, data.afterTable);
-      if (this.before !== '') {
+      if (this.before !== this.after && this.before !== '') {
         this.dataTable[this.before].data = data.beforeTable;
         this.dataTable[this.before].headers = Object.keys(this.dataTable[this.before].data[0]);
         this.dataTable[this.before].headers.splice(0, 0, this.dataTable[this.before].headers.pop());
