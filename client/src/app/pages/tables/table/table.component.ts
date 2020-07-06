@@ -1,6 +1,6 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { Location } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router,  ActivatedRoute } from '@angular/router';
 import { TableDataService } from '../../../services/table-data.service';
 import Handsontable from 'handsontable';
 import { HotTableRegisterer } from '@handsontable/angular';
@@ -34,7 +34,8 @@ export class TableComponent implements OnInit {
       manualRowMove: false,
       manualColumnFreeze: false,
       contextMenu: false,
-      readOnly: true
+      readOnly: true,
+      colWidths: 150
     },
     {
       startRows: 0,
@@ -50,7 +51,8 @@ export class TableComponent implements OnInit {
       manualRowMove: true,
       manualColumnFreeze: true,
       contextMenu: true,
-      readOnly: false
+      readOnly: false,
+      colWidths: 150
     }
   ];
   headers: any;
@@ -77,7 +79,17 @@ export class TableComponent implements OnInit {
   columns: any[] = [];
   hotInstance = this.hotRegisterer.getInstance(this.instance);
   history = [];
-  constructor(public tableData: TableDataService, private router: Router, private location: Location) {
+  tableQuery: any;
+  table: string;
+  routeParams: any;
+  routeQueryParams: any;
+
+  constructor(
+    public tableData: TableDataService,
+    private router: Router,
+    private route: ActivatedRoute,
+    private location: Location
+  ) {
     this.dataTable = {
       text: this.tableData.tables.text,
       sentences: this.tableData.tables.sentences,
@@ -96,11 +108,58 @@ export class TableComponent implements OnInit {
 
   ngOnInit(): void {
     const that = this;
+    this.routeQueryParams = this.route.queryParamMap.subscribe(paramMap => {
+      setTimeout(() => {
+        console.log('updated');
+        // infinitely update the table by getting updates from the db
+        this.refresh();
+      }, 1000);
+    });
     // need this to push the dataset
+    this.fetchedTable();
+
+    const hooks = Handsontable.hooks.getRegistered();
+    hooks.forEach(hook => {
+      // let checked = '';
+      // focuses on the results after changes cause they have before and after data
+      if (hook === 'afterChange') {
+        // checked = 'checked';
+        this.hotSettings[that.edit ? 1 : 0][hook] = function () {
+          console.log(hook, arguments);
+          const data = arguments;
+          const res = {
+            table: that.after,
+            command: data[1],
+            values: data[0]
+          };
+          console.log('Result:', res);
+          if (that.edit && res.command !== 'loadData') {
+            that.tableData.updateTable(res);
+            that.history.push(res);
+            console.log(hook, that.history);
+          }
+        };
+      }
+    });
+
+    // Plugins go here
+    // this.hotInstance.updateSettings({
+    //   cells: function (row, col) {
+    //     const cellProperties = { readOnly: false };
+    //     // if (this.hot.getData()[row][col]) {
+    //     cellProperties.readOnly = true;
+    //     // }
+    //     return cellProperties;
+    //   }
+    // });
+    // $hooksList = $('#hooksList');
+  }
+  fetchedTable() {
+    const that = this;
     const fetchedTable$ = this.tableData.fetchedTable.subscribe(({ data }) => {
-      console.table('After:', this.after);
-      console.table('Before:', this.before);
-      console.log(`Datatable[${this.after}]: `, data.afterTable);
+      // console.table('After:', this.after);
+      // console.table('Before:', this.before);
+      // console.log(`Datatable[${this.after}]: `, data.afterTable);
       if (this.before !== this.after && this.before !== '') {
         this.dataTable[this.before].data = data.beforeTable;
         this.dataTable[this.before].headers = Object.keys(this.dataTable[this.before].data[0]);
@@ -109,7 +168,7 @@ export class TableComponent implements OnInit {
       this.dataTable[this.after].data = data.afterTable;
       this.dataTable[this.after].headers = Object.keys(this.dataTable[this.after].data[0]);
       this.dataTable[this.after].headers.splice(0, 0, this.dataTable[this.after].headers.pop());
-      console.table(this.dataTable);
+      // console.table(this.dataTable);
       this.columns = [];
       this.dataTable[this.after].headers.forEach(header => {
         this.columns.push({
@@ -158,7 +217,7 @@ export class TableComponent implements OnInit {
               const linkText = document.createTextNode(value);
               a.appendChild(linkText);
               // a.className = 'btn-link';
-              a.href = '/tables?' + queryString;
+              // a.href = '/tables?' + queryString;
               Handsontable.dom.addEvent(a, 'mousedown', function (event) {
                 event.preventDefault();
               });
@@ -169,12 +228,9 @@ export class TableComponent implements OnInit {
                 (that.after === 'sentences' && prop === 'Textual_Unit_ID') ||
                 (that.after === 'morphology' && prop === 'Lemma')
               ) {
-                // a.addEventListener('click', () => {
-                //   const queryString = Object.keys(queryParams)
-                //     .map(key => key + '=' + queryParams[key])
-                //     .join('&');
-                //   that.router.navigateByUrl('/tables?' + queryString);
-                // });
+                a.addEventListener('click', () => {
+                  that.router.navigate(['/tables'], { queryParams });
+                });
               } else {
                 Handsontable.renderers.TextRenderer.apply(this, arguments);
                 return td;
@@ -192,48 +248,11 @@ export class TableComponent implements OnInit {
       this.dataTable[this.after].data.forEach(row => {
         this.dataset.push(row);
       });
-      console.log(this.columns, this.dataset);
+      // console.log(this.columns, this.dataset);
 
       fetchedTable$.unsubscribe();
-      this.refresh();
     });
-    const hooks = Handsontable.hooks.getRegistered();
-    hooks.forEach(hook => {
-      // let checked = '';
-      // focuses on the results after changes cause they have before and after data
-      if (hook === 'afterChange') {
-        // checked = 'checked';
-        this.hotSettings[that.edit ? 1 : 0][hook] = function () {
-          console.log(hook, arguments);
-          const data = arguments;
-          const res = {
-            table: that.after,
-            command: data[1],
-            values: data[0]
-          };
-          console.log('Result:', res);
-          if (that.edit) {
-            that.tableData.updateTable(res);
-            that.history.push(res);
-            console.log(hook, that.history);
-          }
-        };
-      }
-    });
-
-    // Plugins go here
-    // this.hotInstance.updateSettings({
-    //   cells: function (row, col) {
-    //     const cellProperties = { readOnly: false };
-    //     // if (this.hot.getData()[row][col]) {
-    //     cellProperties.readOnly = true;
-    //     // }
-    //     return cellProperties;
-    //   }
-    // });
-    // $hooksList = $('#hooksList');
   }
-
   getTableData() {
     return this.dataTable[this.after].data;
   }
@@ -253,7 +272,16 @@ export class TableComponent implements OnInit {
     }
   }
   refresh() {
-    console.log(this.getTableData());
+    // const queryString = window.location.href;
+
+    this.getTableData();
+    // console.log(this.getTableData());
+    // const search = location.search.substring(1);
+    // console.log('search: ', search);
+
+    // this.router.navigateByUrl('/tables?' + search);
+
+    this.fetchedTable();
     // this.hotInstance = this.hotRegisterer.getInstance(this.instance);
     // this.hotInstance.loadData(this.getTableData());
     // this.hotInstance.render();

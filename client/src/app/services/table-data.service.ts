@@ -64,7 +64,7 @@ export class TableDataService {
         this.tables[apiQuery.dtable].headers = Object.keys(this.tables[apiQuery.dtable].data[0]);
         // console.log(this.tables[apiQuery.dtable].headers);
       });
-      // fetchedTable$.unsubscribe();
+      fetchedTable$.unsubscribe();
     }
   };
   updateTable = (apiBody: ApiPostBody) => {
@@ -78,8 +78,13 @@ export class TableDataService {
       console.log(`Before ${apiBody.table} with `, apiBody, `to ${environment.apiUrl}?`);
 
       console.log(`Updated ${apiBody.table} with `, apiBody, `to ${environment.apiUrl}?`);
-      this.postedTable = this.http.post<ApiPostBody>(`${environment.apiUrl}?`, apiBody) as Observable<ApiPostBody>;
-      this.postedTable.subscribe();
+      this.postedTable = this.http.post<ApiPostBody>(
+        `${environment.apiUrl}?`,
+        apiBody
+      ) as Observable<ApiPostBody>;
+      const postedTable$ = this.postedTable.subscribe(() => {
+        postedTable$.unsubscribe();
+      });
       console.log('Done updating!');
     } else {
       console.log(`Load Data doesn't need to update the table...`);

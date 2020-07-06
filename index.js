@@ -8,7 +8,6 @@ const mysql = require('mysql');
 const dotenv = require('dotenv');
 const compression = require('compression');
 const helmet = require('helmet');
-const { start } = require('repl');
 console.log(`pathname ${__filename}`);
 console.log(`dirname ${path.dirname(__filename)}`);
 
@@ -30,6 +29,7 @@ const node_env = process.env.NODE_ENV || NODE_ENV;
 const user = node_env === 'production' ? process.env.USER : USER;
 console.log({ node_env, port, host, user, password, database });
 const app = express();
+const server = http.createServer(app);
 // mysql table queries
 const SELECT_ALL_TEXT_QUERY = 'SELECT * FROM TEXT LIMIT 100';
 const SELECT_ALL_LEMMATA_QUERY = 'SELECT * FROM LEMMATA LIMIT 100';
@@ -78,6 +78,7 @@ app.use(helmet()); // Protect against well known vulnerabilities
 app.use(`/${appName}/`, express.static(path.join(__dirname, folderLoc)));
 app.use(`/${appName}/assets/`, express.static(path.join(__dirname, folderLoc + 'assets/')));
 app.use(cors()).use(bodyParser.json());
+
 app.post(`/${appName}/api/`, (req, res) => {
   //To access POST variable use req.body() methods.
   console.log('Post Variable: ', req.body);
@@ -89,7 +90,8 @@ app.post(`/${appName}/api/`, (req, res) => {
       after = value[3];
     let updateQuery = `UPDATE ${table.toUpperCase()}
     SET ${fieldProperty} = "${after}"
-    WHERE ID_unique_number = ${id} AND ${fieldProperty} = "${before}";`;
+    WHERE ID_unique_number = ${id};`;
+    // AND ${fieldProperty} = "${before}"
     console.log('Post Query: ', updateQuery);
     connection.query(updateQuery, (err, results) => {
       if (err) {
@@ -112,7 +114,7 @@ app.get(`/${appName}/api/`, (req, res) => {
     typeof req.query.dtable === 'string' &&
     typeof req.query.ctable === 'string'
   ) {
-    console.log('Got into search parameters!');
+    // console.log('Got into search parameters!');
     let page = req.query.page || '0'; // pagination page number
     let limit = req.query.limit || '0'; // pagination limit (how many rows per page)
     let fieldProperty = req.query.fprop || ''; // the property to filter by
@@ -157,8 +159,8 @@ app.get(`/${appName}/api/`, (req, res) => {
         beforeQuery = `SELECT * FROM ${currentTable.toUpperCase()} WHERE ${fieldProperty} = "${fieldValue}"`;
       }
     }
-    console.log('beforeQuery:', beforeQuery);
-    console.log('afterQuery:', afterQuery);
+    // console.log('beforeQuery:', beforeQuery);
+    // console.log('afterQuery:', afterQuery);
     let beforeTable = [],
       afterTable = [];
     connection.query(afterQuery, (err, results) => {
@@ -231,7 +233,6 @@ app.get(`/${appName}/*`, (req, res) => {
   res.sendFile(path.resolve(__dirname, folderLoc + 'index.html'));
 });
 
-const server = http.createServer(app);
 if (node_env.toLowerCase() === 'production') {
   server.listen(() => console.log(`Chronhib server is running at http://chronhib.mucampus.net/${appName}/`));
 } else {
