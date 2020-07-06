@@ -69,23 +69,34 @@ export class TableDataService {
   };
   updateTable = (apiBody: ApiPostBody) => {
     if (apiBody.command !== 'loadData') {
+      const filteredApiBody = {
+        table: apiBody.table,
+        values: [],
+        command: apiBody.command
+      };
       apiBody.values.forEach((value, index) => {
         apiBody.values[index][0] = this.tables[apiBody.table].data[value[0]].ID_unique_number;
+        if (apiBody.values[index][2] !== apiBody.values[index][3]) {
+          filteredApiBody.values.push(apiBody.values[index]);
+        }
       });
-      const queryString = Object.keys(apiBody)
-        .map(key => key + '=' + apiBody[key])
+      const queryString = Object.keys(filteredApiBody)
+        .map(key => key + '=' + filteredApiBody[key])
         .join('&');
       console.log(`Before ${apiBody.table} with `, apiBody, `to ${environment.apiUrl}?`);
 
-      console.log(`Updated ${apiBody.table} with `, apiBody, `to ${environment.apiUrl}?`);
-      this.postedTable = this.http.post<ApiPostBody>(
-        `${environment.apiUrl}?`,
-        apiBody
-      ) as Observable<ApiPostBody>;
-      const postedTable$ = this.postedTable.subscribe(() => {
-        postedTable$.unsubscribe();
-      });
-      console.log('Done updating!');
+      console.log(`Updated ${filteredApiBody.table} with `, filteredApiBody, `to ${environment.apiUrl}?`);
+      if (filteredApiBody.values.length > 0) {
+        this.postedTable = this.http.post<ApiPostBody>(`${environment.apiUrl}?`, filteredApiBody) as Observable<
+          ApiPostBody
+        >;
+        const postedTable$ = this.postedTable.subscribe(() => {
+          postedTable$.unsubscribe();
+        });
+        console.log('Done updating!');
+      } else {
+        console.log('The values were the same! No changes made.');
+      }
     } else {
       console.log(`Load Data doesn't need to update the table...`);
     }

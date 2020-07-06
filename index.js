@@ -98,7 +98,7 @@ app.post(`/${appName}/api/`, (req, res) => {
         console.log('Error: ', err);
         return res.send(err);
       } else {
-        return res.status(200).end('Command received! ✔');
+        return res.status(200);
       }
       // console.log({ beforeTable, afterTable });
     });
