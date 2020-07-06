@@ -1,6 +1,6 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, NgZone } from '@angular/core';
 import { Location } from '@angular/common';
-import { Router,  ActivatedRoute } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { TableDataService } from '../../../services/table-data.service';
 import Handsontable from 'handsontable';
 import { HotTableRegisterer } from '@handsontable/angular';
@@ -88,7 +88,8 @@ export class TableComponent implements OnInit {
     public tableData: TableDataService,
     private router: Router,
     private route: ActivatedRoute,
-    private location: Location
+    private location: Location,
+    private ngZone: NgZone
   ) {
     this.dataTable = {
       text: this.tableData.tables.text,
@@ -195,7 +196,6 @@ export class TableComponent implements OnInit {
               });
 
               Handsontable.dom.empty(td);
-              // td.appendChild(img);
               td.appendChild(a);
               // Make it centered
               td.style.textAlign = 'center';
@@ -213,10 +213,10 @@ export class TableComponent implements OnInit {
               const queryString = Object.keys(queryParams)
                 .map(key => key + '=' + queryParams[key])
                 .join('&');
-              const a = document.createElement('a');
+              const a = document.createElement('span');
               const linkText = document.createTextNode(value);
               a.appendChild(linkText);
-              // a.className = 'btn-link';
+              a.className = 'btn-link';
               // a.href = '/tables?' + queryString;
               Handsontable.dom.addEvent(a, 'mousedown', function (event) {
                 event.preventDefault();
@@ -229,7 +229,7 @@ export class TableComponent implements OnInit {
                 (that.after === 'morphology' && prop === 'Lemma')
               ) {
                 a.addEventListener('click', () => {
-                  that.router.navigate(['/tables'], { queryParams });
+                  that.ngZone.run(() => that.router.navigate(['/tables'], { queryParams }));
                 });
               } else {
                 Handsontable.renderers.TextRenderer.apply(this, arguments);
@@ -249,8 +249,8 @@ export class TableComponent implements OnInit {
         this.dataset.push(row);
       });
       // console.log(this.columns, this.dataset);
-
       fetchedTable$.unsubscribe();
+      this.getTableData();
     });
   }
   getTableData() {
@@ -280,8 +280,7 @@ export class TableComponent implements OnInit {
     // console.log('search: ', search);
 
     // this.router.navigateByUrl('/tables?' + search);
-
-    this.fetchedTable();
+    setTimeout(() => this.fetchedTable(), 1000);
     // this.hotInstance = this.hotRegisterer.getInstance(this.instance);
     // this.hotInstance.loadData(this.getTableData());
     // this.hotInstance.render();
