@@ -1,5 +1,9 @@
 {
   "name": "chronhibWebsite",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/chronhib-MU/Chronhib-Website.git"
+  },
   "version": "1.0.0",
   "description": "The Chronologicon Hibernicum Website | ChronHib",
   "main": "index.js",
@@ -21,7 +25,8 @@
     "mysql": "^2.18.1",
     "nodemon": "^2.0.4",
     "path": "0.12.7",
-    "server-static": "2.0.5"
+    "server-static": "2.0.5",
+    "socket.io-client": "^2.3.0"
   },
   "devDependencies": {
     "@types/node": "^12.12.39"

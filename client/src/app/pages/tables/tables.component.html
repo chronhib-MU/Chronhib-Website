@@ -50,7 +50,12 @@
     </div>
   </ng-container>
   <ng-container *ngFor="let name of tableData.tables.names">
-    <app-table *ngIf="table == name" [name]="name"></app-table>
+    <app-table *ngIf="table == name" [before]="before" [after]="after" [edit]="false"></app-table>
   </ng-container>
-  <app-table *ngIf="!table"></app-table>
+  <app-table
+    *ngIf="tableData.tables.names.indexOf(tableQuery.dtable) > -1"
+    [before]="before"
+    [after]="after"
+    [edit]="true"
+  ></app-table>
 </div>
