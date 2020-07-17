@@ -25,7 +25,7 @@ export class TableComponent implements OnInit {
       startCols: 0,
       stretchH: 'all',
       width: '100%',
-      height: 500,
+      height: 700,
       hiddenColumns: { columns: [0], indicators: true },
       // hiddenColumns: { columns: [], indicators: true },
       bindRowsWithHeaders: true,
@@ -35,14 +35,16 @@ export class TableComponent implements OnInit {
       manualColumnFreeze: false,
       contextMenu: false,
       readOnly: true,
-      colWidths: 150
+      // colWidths: 150,
+      wordWrap: true
+
     },
     {
       startRows: 0,
       startCols: 0,
       stretchH: 'all',
       width: '100%',
-      height: 500,
+      height: 700,
       hiddenColumns: { columns: [0], indicators: true },
       // hiddenColumns: { columns: [], indicators: true },
       bindRowsWithHeaders: true,
@@ -52,7 +54,8 @@ export class TableComponent implements OnInit {
       manualColumnFreeze: true,
       contextMenu: true,
       readOnly: false,
-      colWidths: 150
+      // colWidths: 150,
+      wordWrap: true
     }
   ];
   headers: any;
@@ -76,7 +79,7 @@ export class TableComponent implements OnInit {
   };
   dataset: any[] = [];
 
-  columns: any[] = [];
+  columns: Handsontable.ColumnSettings[] = [];
   hotInstance = this.hotRegisterer.getInstance(this.instance);
   history = [];
   tableQuery: any;
@@ -84,7 +87,7 @@ export class TableComponent implements OnInit {
   routeParams: any;
   routeQueryParams: any;
 
-  constructor(
+  constructor (
     public tableData: TableDataService,
     private router: Router,
     private route: ActivatedRoute,
@@ -107,7 +110,7 @@ export class TableComponent implements OnInit {
     // });
   }
 
-  ngOnInit(): void {
+  ngOnInit (): void {
     const that = this;
     this.routeQueryParams = this.route.queryParamMap.subscribe(paramMap => {
       setTimeout(() => {
@@ -155,7 +158,7 @@ export class TableComponent implements OnInit {
     // });
     // $hooksList = $('#hooksList');
   }
-  fetchedTable() {
+  fetchedTable () {
     const that = this;
     const fetchedTable$ = this.tableData.fetchedTable.subscribe(({ data }) => {
       // console.table('After:', this.after);
@@ -176,6 +179,74 @@ export class TableComponent implements OnInit {
           data: header,
           title: _.capitalize(header.replace(/_/g, ' ')),
           type: 'text',
+          colWidths: function (index: number): number | string {
+            // console.log('Index: ', index + ' ' + that.dataTable[that.after].headers[index]);
+            switch (that.after) {
+              // column widths for text table
+              case 'text':
+                switch (index) {
+                  case 2:
+                    return 100;
+                  case 5:
+                    return 400;
+                  case 6:
+                    return 200;
+                  case 7:
+                    return 300;
+                  case 8:
+                    return 300;
+                  case 9:
+                    return 600;
+                  case 12:
+                    return 100;
+                  case 13:
+                    return 300;
+                  case 14:
+                    return 300;
+                  default:
+                    break;
+                }
+                break;
+              // column widths for sentences table
+              case 'sentences':
+                switch (index) {
+                  case 2:
+                    return 100;
+                  case 7:
+                    return 300;
+                  case 9:
+                    return 300;
+                  default:
+                    break;
+                }
+                break;
+              // column widths for morphology table
+              case 'morphology':
+                switch (index) {
+                  case 3:
+                    return 100;
+                  case 21:
+                    return 250;
+                  default:
+                    break;
+                }
+              // column widths for lemmata table
+              case 'lemmata':
+                switch (index) {
+                  case 7:
+                    return 200;
+                  case 9:
+                    return 300;
+                  case 10:
+                    return 200;
+                  default:
+                    break;
+                }
+              default:
+                break;
+            }
+            return 150;
+          },
           renderer: function (instance, td, row, col, prop, value, cellProperties) {
             const escaped = Handsontable.helper.stringify(value);
             // console.log('Renderer Variables: ', { row, col, prop, value, cellProperties });
@@ -200,43 +271,43 @@ export class TableComponent implements OnInit {
               // Make it centered
               td.style.textAlign = 'center';
             } else {
-              const dtableIndex = that.tableData.tables.names.indexOf(that.after) + 1;
-
-              const queryParams = {
-                page: 0,
-                limit: 0,
-                fprop: prop,
-                fval: value,
-                dtable: that.tableData.tables.names[dtableIndex],
-                ctable: that.after
-              };
-              const queryString = Object.keys(queryParams)
-                .map(key => key + '=' + queryParams[key])
-                .join('&');
-              const a = document.createElement('span');
-              const linkText = document.createTextNode(value);
-              a.appendChild(linkText);
-              a.className = 'btn-link';
-              // a.href = '/tables?' + queryString;
-              Handsontable.dom.addEvent(a, 'mousedown', function (event) {
-                event.preventDefault();
-              });
-              Handsontable.dom.empty(td);
-
               if (
                 (that.after === 'text' && prop === 'Text_ID') ||
                 (that.after === 'sentences' && prop === 'Textual_Unit_ID') ||
                 (that.after === 'morphology' && prop === 'Lemma')
               ) {
+                const dtableIndex = that.tableData.tables.names.indexOf(that.after) + 1;
+
+                const queryParams = {
+                  page: 0,
+                  limit: 0,
+                  fprop: prop,
+                  fval: value,
+                  dtable: that.tableData.tables.names[dtableIndex],
+                  ctable: that.after
+                };
+                const queryString = Object.keys(queryParams)
+                  .map(key => key + '=' + queryParams[key])
+                  .join('&');
+                const a = document.createElement('span');
+                const linkText = document.createTextNode(value);
+                a.appendChild(linkText);
+                a.className = 'btn-link';
+                // a.href = '/tables?' + queryString;
+                Handsontable.dom.addEvent(a, 'mousedown', function (event) {
+                  event.preventDefault();
+                });
+                Handsontable.dom.empty(td);
                 a.addEventListener('click', () => {
                   that.ngZone.run(() => that.router.navigate(['/tables'], { queryParams }));
                 });
+                td.appendChild(a);
+                td.style.textAlign = 'center';
               } else {
                 Handsontable.renderers.TextRenderer.apply(this, arguments);
-                return td;
+                return td
               }
-              td.appendChild(a);
-              td.style.textAlign = 'center';
+
             }
 
             return td;
@@ -253,25 +324,25 @@ export class TableComponent implements OnInit {
       this.getTableData();
     });
   }
-  getTableData() {
+  getTableData () {
     return this.dataTable[this.after].data;
   }
-  getRows() {
+  getRows () {
     return this.dataTable[this.after].data.map(row => row.Sort_ID);
   }
-  undo() {
+  undo () {
     this.hotInstance = this.hotRegisterer.getInstance(this.instance);
     if ((this.hotInstance as any).isUndoAvailable()) {
       (this.hotInstance as any).undo();
     }
   }
-  redo() {
+  redo () {
     this.hotInstance = this.hotRegisterer.getInstance(this.instance);
     if ((this.hotInstance as any).isRedoAvailable()) {
       (this.hotInstance as any).redo();
     }
   }
-  refresh() {
+  refresh () {
     // const queryString = window.location.href;
 
     this.getTableData();
@@ -285,7 +356,7 @@ export class TableComponent implements OnInit {
     // this.hotInstance.loadData(this.getTableData());
     // this.hotInstance.render();
   }
-  toggleEditMode() {
+  toggleEditMode () {
     this.edit = !this.edit;
     this.hotInstance = this.hotRegisterer.getInstance(this.instance);
     this.hotInstance.updateSettings({
@@ -295,10 +366,10 @@ export class TableComponent implements OnInit {
       readOnly: !this.edit
     });
   }
-  goBack() {
+  goBack () {
     this.location.back();
   }
-  goForward() {
+  goForward () {
     this.location.forward();
   }
 }

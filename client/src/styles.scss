@@ -50,6 +50,13 @@
 .handsontable th.beforeHiddenColumn::after, .handsontable th.afterHiddenColumn::before {
   color: #000;
 }
+
+.handsontable {
+  .table td{
+    white-space: normal !important;
+    word-wrap: break-word;
+  }
+}
 @media (min-width: 768px) {
   .navbar-vertical.navbar-expand-md .navbar-brand, .navbar-brand-img {
     max-height: 4rem;
