@@ -30,7 +30,7 @@ export class TableDataService {
   };
   fetchedTable: Observable<{ data: { afterTable: []; beforeTable: [] } }>;
   postedTable: Observable<ApiPostBody>;
-  constructor(private http: HttpClient) {}
+  constructor (private http: HttpClient) { }
   // Fetches table data from the API
   fetchTable = (apiQuery: ApiGetQuery | string) => {
     const queryString = Object.keys(apiQuery)
@@ -74,19 +74,26 @@ export class TableDataService {
         values: [],
         command: apiBody.command
       };
-      apiBody.values.forEach((value, index) => {
-        apiBody.values[index][0] = this.tables[apiBody.table].data[value[0]].ID_unique_number;
-        if (apiBody.values[index][2] !== apiBody.values[index][3]) {
-          filteredApiBody.values.push(apiBody.values[index]);
-        }
-      });
-      const queryString = Object.keys(filteredApiBody)
-        .map(key => key + '=' + filteredApiBody[key])
-        .join('&');
+      if (filteredApiBody.command === 'moveRow') {
+        filteredApiBody.values.push(apiBody.values[0]);
+      }
+      else {
+        apiBody.values.forEach((value, index) => {
+          apiBody.values[index][0] = this.tables[filteredApiBody.table].data[value[0]].ID_unique_number;
+          console.log(apiBody.values[index][2], ' != ', apiBody.values[index][3]);
+          if (apiBody.values[index][2] !== apiBody.values[index][3]) {
+            filteredApiBody.values.push(apiBody.values[index]);
+          }
+        });
+      }
+      // const queryString = Object.keys(filteredApiBody)
+      //   .map(key => key + '=' + filteredApiBody[key])
+      //   .join('&');
       console.log(`Before ${apiBody.table} with `, apiBody, `to ${environment.apiUrl}?`);
 
       console.log(`Updated ${filteredApiBody.table} with `, filteredApiBody, `to ${environment.apiUrl}?`);
       if (filteredApiBody.values.length > 0) {
+        console.log(filteredApiBody.values[0]);
         this.postedTable = this.http.post<ApiPostBody>(`${environment.apiUrl}?`, filteredApiBody) as Observable<
           ApiPostBody
         >;

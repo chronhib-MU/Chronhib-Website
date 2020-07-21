@@ -1,5 +1,5 @@
 export interface ApiPostBody {
   table: string;
-  values: any[][];
+  values: any[];
   command: string;
 }

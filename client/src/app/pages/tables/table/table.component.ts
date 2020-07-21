@@ -5,6 +5,7 @@ import { TableDataService } from '../../../services/table-data.service';
 import Handsontable from 'handsontable';
 import { HotTableRegisterer } from '@handsontable/angular';
 import * as _ from 'lodash';
+import { ApiPostBody } from 'src/app/interfaces/api-post-body';
 declare const $: any;
 @Component({
   selector: 'app-table',
@@ -13,8 +14,8 @@ declare const $: any;
 })
 export class TableComponent implements OnInit {
   // TODO: this needs to handle tableQuery
-  @Input() before;
-  @Input() after;
+  @Input() before: string;
+  @Input() after: string;
   @Input() edit: boolean;
   private hotRegisterer = new HotTableRegisterer();
   instance = 'hot';
@@ -124,10 +125,8 @@ export class TableComponent implements OnInit {
 
     const hooks = Handsontable.hooks.getRegistered();
     hooks.forEach(hook => {
-      // let checked = '';
       // focuses on the results after changes cause they have before and after data
-      if (hook === 'afterChange') {
-        // checked = 'checked';
+      if (hook === 'beforeChange') {
         this.hotSettings[that.edit ? 1 : 0][hook] = function () {
           console.log(hook, arguments);
           const data = arguments;
@@ -140,7 +139,41 @@ export class TableComponent implements OnInit {
           if (that.edit && res.command !== 'loadData') {
             that.tableData.updateTable(res);
             that.history.push(res);
-            console.log(hook, that.history);
+            console.log('History: ', that.history);
+            that.refresh();
+            return false;
+          }
+        };
+      }
+      else if (hook === 'beforeRowMove') {
+        this.hotSettings[that.edit ? 1 : 0][hook] = function () {
+          const range = (start = 0, target) => [...Array(target).keys()].map(i => start + i);
+          console.log(hook, arguments);
+          const selectedRows = arguments[0];
+          const selectedRowsData = arguments[0].map((index: string | number) => that.dataTable[that.after].data[index]);
+          const target = arguments[1];
+          // selects the row before the line if the target is ahead of the selected row or the row after if the target is behind
+          const targetRow = target > selectedRows[selectedRows.length - 1] ? target - 1 : target;
+          const targetRowData = that.dataTable[that.after].data[targetRow]
+          const otherAffectedRows = targetRow < selectedRows[0] ? range(targetRow, selectedRows[0]) : range(selectedRows[selectedRows.length - 1] + 1, targetRow - 1);
+          const otherAffectedRowsData = otherAffectedRows.map((index: string | number) => that.dataTable[that.after].data[index]);
+          const res: ApiPostBody = {
+            table: that.after,
+            command: 'moveRow',
+            values: [{
+              selectedRowsData,
+              otherAffectedRowsData,
+              selectedRowsAdder: targetRow - selectedRows[0],
+              otherAffectedRowsSubtracter: targetRow < selectedRows[0] ? selectedRows.length : -selectedRows.length
+            }]
+          };
+          console.log('Result:', res);
+          if (that.edit) {
+            that.tableData.updateTable(res);
+            that.history.push(res);
+            console.log('History: ', that.history);
+            that.refresh();
+            return false;
           }
         };
       }
@@ -174,7 +207,7 @@ export class TableComponent implements OnInit {
       this.dataTable[this.after].headers.splice(0, 0, this.dataTable[this.after].headers.pop());
       // console.table(this.dataTable);
       this.columns = [];
-      this.dataTable[this.after].headers.forEach(header => {
+      this.dataTable[this.after].headers.forEach((header: string) => {
         this.columns.push({
           data: header,
           title: _.capitalize(header.replace(/_/g, ' ')),
@@ -316,7 +349,7 @@ export class TableComponent implements OnInit {
       });
 
       this.dataset = [];
-      this.dataTable[this.after].data.forEach(row => {
+      this.dataTable[this.after].data.forEach((row: any) => {
         this.dataset.push(row);
       });
       // console.log(this.columns, this.dataset);
@@ -328,7 +361,7 @@ export class TableComponent implements OnInit {
     return this.dataTable[this.after].data;
   }
   getRows () {
-    return this.dataTable[this.after].data.map(row => row.Sort_ID);
+    return this.dataTable[this.after].data.map((row: { Sort_ID: any; }) => row.Sort_ID);
   }
   undo () {
     this.hotInstance = this.hotRegisterer.getInstance(this.instance);
@@ -351,10 +384,10 @@ export class TableComponent implements OnInit {
     // console.log('search: ', search);
 
     // this.router.navigateByUrl('/tables?' + search);
-    setTimeout(() => this.fetchedTable(), 1000);
-    // this.hotInstance = this.hotRegisterer.getInstance(this.instance);
+    setTimeout(() => this.fetchedTable(), 500);
+    this.hotInstance = this.hotRegisterer.getInstance(this.instance);
     // this.hotInstance.loadData(this.getTableData());
-    // this.hotInstance.render();
+    this.hotInstance.render();
   }
   toggleEditMode () {
     this.edit = !this.edit;

@@ -83,26 +83,58 @@ app.post(`/${appName}/api/`, (req, res) => {
   //To access POST variable use req.body() methods.
   console.log('Post Variable: ', req.body);
   const { table, command, values } = req.body;
-  values.forEach(value => {
-    let id = value[0],
-      fieldProperty = value[1],
-      before = value[2],
-      after = value[3];
-    let updateQuery = `UPDATE ${table.toUpperCase()}
-    SET ${fieldProperty} = "${after}"
-    WHERE ID_unique_number = ${id};`;
-    // AND ${fieldProperty} = "${before}"
-    console.log('Post Query: ', updateQuery);
-    connection.query(updateQuery, (err, results) => {
-      if (err) {
-        console.log('Error: ', err);
-        return res.send(err);
-      } else {
-        return res.status(200);
-      }
-      // console.log({ beforeTable, afterTable });
+  if (command === 'moveRow') {
+    const updateQueries = [];
+    const { selectedRowsData, otherAffectedRowsData, selectedRowsAdder, otherAffectedRowsSubtracter } = values[0];
+    console.table({ selectedRowsAdder, otherAffectedRowsSubtracter });
+    console.table(selectedRowsData.map(obj => ({ ID_unique_number: obj.ID_unique_number, Sort_ID: obj.Sort_ID })));
+    console.table(otherAffectedRowsData.map(obj => ({ D_unique_number: obj.ID_unique_number, Sort_ID: obj.Sort_ID })));
+    selectedRowsData.forEach(rowData => {
+      updateQueries.push(
+        `UPDATE ${table.toUpperCase()} SET Sort_ID = ${rowData.Sort_ID + selectedRowsAdder} WHERE ID_unique_number = ${
+          rowData.ID_unique_number
+        };`
+      );
     });
-  });
+    otherAffectedRowsData.forEach(rowData => {
+      updateQueries.push(
+        `UPDATE ${table.toUpperCase()} SET Sort_ID = ${
+          rowData.Sort_ID - otherAffectedRowsSubtracter
+        } WHERE ID_unique_number = ${rowData.ID_unique_number};`
+      );
+    });
+    updateQueries.forEach(updateQuery => {
+      console.log('Post Query: ', updateQuery);
+      connection.query(updateQuery, (err, results) => {
+        if (err) {
+          console.log('Error: ', err);
+          res.send(err);
+        } else {
+          res.status(200);
+        }
+        // console.log({ beforeTable, afterTable });
+      });
+    });
+  } else {
+    values.forEach(value => {
+      let id = value[0],
+        fieldProperty = value[1],
+        // before = value[2],
+        after = value[3];
+      let updateQuery = `UPDATE ${table.toUpperCase()} SET ${fieldProperty} = "${after}" WHERE ID_unique_number = ${id};`;
+      // AND ${fieldProperty} = "${before}"
+      console.log('Post Query: ', updateQuery);
+      connection.query(updateQuery, (err, results) => {
+        if (err) {
+          console.log('Error: ', err);
+          return res.send(err);
+        } else {
+          return res.status(200);
+        }
+        // console.log({ beforeTable, afterTable });
+      });
+    });
+  }
 });
 app.get(`/${appName}/api/`, (req, res) => {
   console.table(req.query);
