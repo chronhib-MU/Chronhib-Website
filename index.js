@@ -85,23 +85,11 @@ app.post(`/${appName}/api/`, (req, res) => {
   const { table, command, values } = req.body;
   if (command === 'moveRow') {
     const updateQueries = [];
-    const { selectedRowsData, otherAffectedRowsData, selectedRowsAdder, otherAffectedRowsSubtracter } = values[0];
-    console.table({ selectedRowsAdder, otherAffectedRowsSubtracter });
-    console.table(selectedRowsData.map(obj => ({ ID_unique_number: obj.ID_unique_number, Sort_ID: obj.Sort_ID })));
-    console.table(otherAffectedRowsData.map(obj => ({ D_unique_number: obj.ID_unique_number, Sort_ID: obj.Sort_ID })));
-    selectedRowsData.forEach(rowData => {
-      updateQueries.push(
-        `UPDATE ${table.toUpperCase()} SET Sort_ID = ${rowData.Sort_ID + selectedRowsAdder} WHERE ID_unique_number = ${
-          rowData.ID_unique_number
-        };`
-      );
-    });
-    otherAffectedRowsData.forEach(rowData => {
-      updateQueries.push(
-        `UPDATE ${table.toUpperCase()} SET Sort_ID = ${
-          rowData.Sort_ID - otherAffectedRowsSubtracter
-        } WHERE ID_unique_number = ${rowData.ID_unique_number};`
-      );
+    values[0].forEach(rowData => {
+      let query = `UPDATE ${table.toUpperCase()} SET Sort_ID = ${rowData.Sort_ID} WHERE ID_unique_number = ${
+        rowData.ID_unique_number
+      };`;
+      updateQueries.push(query);
     });
     updateQueries.forEach(updateQuery => {
       console.log('Post Query: ', updateQuery);

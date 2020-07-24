@@ -145,27 +145,19 @@ export class TableComponent implements OnInit {
           }
         };
       }
-      else if (hook === 'beforeRowMove') {
+      else if (hook === 'afterRowMove') {
         this.hotSettings[that.edit ? 1 : 0][hook] = function () {
-          const range = (start = 0, target) => [...Array(target).keys()].map(i => start + i);
-          console.log(hook, arguments);
-          const selectedRows = arguments[0];
-          const selectedRowsData = arguments[0].map((index: string | number) => that.dataTable[that.after].data[index]);
-          const target = arguments[1];
-          // selects the row before the line if the target is ahead of the selected row or the row after if the target is behind
-          const targetRow = target > selectedRows[selectedRows.length - 1] ? target - 1 : target;
-          const targetRowData = that.dataTable[that.after].data[targetRow]
-          const otherAffectedRows = targetRow < selectedRows[0] ? range(targetRow, selectedRows[0]) : range(selectedRows[selectedRows.length - 1] + 1, targetRow - 1);
-          const otherAffectedRowsData = otherAffectedRows.map((index: string | number) => that.dataTable[that.after].data[index]);
+          const tableData = this.getData();
+
+          const newValues = tableData.map((r, i) => {
+            let sortId = i + 1;
+            return { ID_unique_number: r['1'], Sort_ID: sortId };
+          });
+
           const res: ApiPostBody = {
             table: that.after,
             command: 'moveRow',
-            values: [{
-              selectedRowsData,
-              otherAffectedRowsData,
-              selectedRowsAdder: targetRow - selectedRows[0],
-              otherAffectedRowsSubtracter: targetRow < selectedRows[0] ? selectedRows.length : -selectedRows.length
-            }]
+            values: [newValues]
           };
           console.log('Result:', res);
           if (that.edit) {
@@ -173,7 +165,6 @@ export class TableComponent implements OnInit {
             that.history.push(res);
             console.log('History: ', that.history);
             that.refresh();
-            return false;
           }
         };
       }
