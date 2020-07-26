@@ -26,7 +26,6 @@ export class TableComponent implements OnInit {
       startCols: 0,
       stretchH: 'all',
       width: '100%',
-      height: 700,
       hiddenColumns: { columns: [0], indicators: true },
       // hiddenColumns: { columns: [], indicators: true },
       bindRowsWithHeaders: true,
@@ -45,7 +44,6 @@ export class TableComponent implements OnInit {
       startCols: 0,
       stretchH: 'all',
       width: '100%',
-      height: 700,
       hiddenColumns: { columns: [0], indicators: true },
       // hiddenColumns: { columns: [], indicators: true },
       bindRowsWithHeaders: true,
@@ -81,6 +79,7 @@ export class TableComponent implements OnInit {
   dataset: any[] = [];
 
   columns: Handsontable.ColumnSettings[] = [];
+  columnsMini: Handsontable.ColumnSettings[] = [];
   hotInstance = this.hotRegisterer.getInstance(this.instance);
   history = [];
   tableQuery: any;
@@ -203,6 +202,8 @@ export class TableComponent implements OnInit {
     // console.table('After:', this.after);
     // console.table('Before:', this.before);
     // console.log(`Datatable[${this.after}]: `, data.afterTable);
+
+    // If this is a scenario where there is a before table
     if (this.before !== this.after && this.before !== '') {
       this.dataTable[this.before].data = data.beforeTable;
       this.dataTable[this.before].headers = Object.keys(this.dataTable[this.before].data[0]);
@@ -213,6 +214,153 @@ export class TableComponent implements OnInit {
     this.dataTable[this.after].headers.splice(0, 0, this.dataTable[this.after].headers.pop());
     // console.table(this.dataTable);
     this.columns = [];
+    this.columnsMini = [];
+
+    // If this is a scenario where there is a before table
+    if (this.before !== this.after && this.before !== '') {
+      this.dataTable[this.before].headers.forEach((header: string) => {
+        this.columnsMini.push({
+          data: header,
+          title: _.capitalize(header.replace(/_/g, ' ')),
+          type: 'text',
+          colWidths: function (index: number): number | string {
+            // console.log('Index: ', index + ' ' + that.dataTable[that.after].headers[index]);
+            switch (that.before) {
+              // column widths for text table
+              case 'text':
+                switch (index) {
+                  case 2:
+                    return 100;
+                  case 5:
+                    return 400;
+                  case 6:
+                    return 200;
+                  case 7:
+                    return 300;
+                  case 8:
+                    return 300;
+                  case 9:
+                    return 600;
+                  case 12:
+                    return 100;
+                  case 13:
+                    return 300;
+                  case 14:
+                    return 300;
+                  default:
+                    break;
+                }
+                break;
+              // column widths for sentences table
+              case 'sentences':
+                switch (index) {
+                  case 2:
+                    return 100;
+                  case 7:
+                    return 300;
+                  case 9:
+                    return 300;
+                  default:
+                    break;
+                }
+                break;
+              // column widths for morphology table
+              case 'morphology':
+                switch (index) {
+                  case 3:
+                    return 100;
+                  case 21:
+                    return 250;
+                  default:
+                    break;
+                }
+              // column widths for lemmata table
+              case 'lemmata':
+                switch (index) {
+                  case 7:
+                    return 200;
+                  case 9:
+                    return 300;
+                  case 10:
+                    return 200;
+                  default:
+                    break;
+                }
+              default:
+                break;
+            }
+            return 150;
+          },
+          renderer: function (instance, td, row, col, prop, value, cellProperties) {
+            const escaped = Handsontable.helper.stringify(value);
+            // console.log('Renderer Variables: ', { row, col, prop, value, cellProperties });
+            // if (escaped.indexOf('http') === 0) {
+            if (escaped.indexOf('http') === 0) {
+              // Create anchor element.
+              const a = document.createElement('a');
+              // Create the text node for anchor element
+              const link = document.createTextNode(value);
+              // Append the text node to anchor element
+              a.appendChild(link);
+              // Set the title
+              a.title = value;
+              // Set the href property
+              a.href = value;
+              Handsontable.dom.addEvent(a, 'mousedown', function (event) {
+                event.preventDefault();
+              });
+
+              Handsontable.dom.empty(td);
+              td.appendChild(a);
+              // Make it centered
+              td.style.textAlign = 'center';
+            } else {
+              if (
+                (that.before === 'text' && prop === 'Text_ID') ||
+                (that.before === 'sentences' && prop === 'Textual_Unit_ID') ||
+                (that.before === 'morphology' && prop === 'Lemma')
+              ) {
+                const dtableIndex = that.tableData.tables.names.indexOf(that.before) + 1;
+
+                const queryParams = {
+                  page: 0,
+                  limit: 0,
+                  fprop: prop,
+                  fval: value,
+                  dtable: that.tableData.tables.names[dtableIndex],
+                  ctable: that.before
+                };
+                const queryString = Object.keys(queryParams)
+                  .map(key => key + '=' + queryParams[key])
+                  .join('&');
+                const a = document.createElement('span');
+                const linkText = document.createTextNode(value);
+                a.appendChild(linkText);
+                a.className = 'btn-link';
+                // a.href = '/tables?' + queryString;
+                Handsontable.dom.addEvent(a, 'mousedown', function (event) {
+                  event.preventDefault();
+                });
+                Handsontable.dom.empty(td);
+                a.addEventListener('click', () => {
+                  that.ngZone.run(() => that.router.navigate(['/tables'], { queryParams }));
+                });
+                td.appendChild(a);
+                td.style.textAlign = 'center';
+              } else {
+                Handsontable.renderers.TextRenderer.apply(this, arguments);
+                return td
+              }
+
+            }
+
+            return td;
+          }
+        })
+      });
+      this.getTableData(this.before);
+
+    }
     this.dataTable[this.after].headers.forEach((header: string) => {
       this.columns.push({
         data: header,
@@ -354,18 +502,18 @@ export class TableComponent implements OnInit {
       });
     });
 
-    this.dataset = [];
-    this.dataTable[this.after].data.forEach((row: any) => {
-      this.dataset.push(row);
-    });
+    // this.dataset = [];
+    // this.dataTable[this.after].data.forEach((row: any) => {
+    //   this.dataset.push(row);
+    // });
     // console.log(this.columns, this.dataset);
-    this.getTableData();
+    this.getTableData(this.after);
   }
-  getTableData () {
-    return this.dataTable[this.after].data;
+  getTableData (table) {
+    return this.dataTable[table].data;
   }
-  getRows () {
-    return this.dataTable[this.after].data.map((row: { Sort_ID: any; }) => row.Sort_ID);
+  getRows (table) {
+    return this.dataTable[table].data.map((row: { Sort_ID: any; }) => row.Sort_ID);
   }
   undo () {
     this.hotInstance = this.hotRegisterer.getInstance(this.instance);
@@ -382,8 +530,8 @@ export class TableComponent implements OnInit {
   refresh () {
     // const queryString = window.location.href;
 
-    this.getTableData();
-    // console.log(this.getTableData());
+    this.getTableData(this.after);
+    // console.log(this.getTableData(this.after));
     // const search = location.search.substring(1);
     // console.log('search: ', search);
 
@@ -392,7 +540,7 @@ export class TableComponent implements OnInit {
     this.fetchedTable();
 
     //   this.hotInstance = this.hotRegisterer.getInstance(this.instance);
-    //   this.hotInstance.loadData(this.getTableData());
+    //   this.hotInstance.loadData(this.getTableData(this.after));
     //   this.hotInstance.render();
   }
   toggleEditMode () {
@@ -410,5 +558,8 @@ export class TableComponent implements OnInit {
   }
   goForward () {
     this.location.forward();
+  }
+  scrollToBottom () {
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })
   }
 }

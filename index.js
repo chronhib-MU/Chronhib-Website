@@ -31,10 +31,10 @@ console.log({ node_env, port, host, user, password, database });
 const app = express();
 const server = http.createServer(app);
 // mysql table queries
-const SELECT_ALL_TEXT_QUERY = 'SELECT * FROM TEXT LIMIT 100';
-const SELECT_ALL_LEMMATA_QUERY = 'SELECT * FROM LEMMATA LIMIT 100';
-const SELECT_ALL_MORPHOLOGY_QUERY = 'SELECT * FROM MORPHOLOGY LIMIT 100';
-const SELECT_ALL_SENTENCES_QUERY = 'SELECT * FROM SENTENCES LIMIT 100';
+const SELECT_ALL_TEXT_QUERY = 'SELECT * FROM TEXT ORDER BY Sort_ID ASC LIMIT 100';
+const SELECT_ALL_LEMMATA_QUERY = 'SELECT * FROM LEMMATA ORDER BY Sort_ID ASC LIMIT 100';
+const SELECT_ALL_MORPHOLOGY_QUERY = 'SELECT * FROM MORPHOLOGY ORDER BY Textual_Unit_ID, Sort_ID ASC LIMIT 100';
+const SELECT_ALL_SENTENCES_QUERY = 'SELECT * FROM SENTENCES ORDER BY Sort_ID ASC LIMIT 100';
 
 const tables = {
   text: SELECT_ALL_TEXT_QUERY,
@@ -122,6 +122,7 @@ app.post(`/${appName}/api/`, (req, res) => {
     });
   }
 });
+// handles all the advanced get api table queries
 app.get(`/${appName}/api/`, (req, res) => {
   console.table(req.query);
   if (
@@ -223,7 +224,7 @@ app.get(`/${appName}/api/`, (req, res) => {
   }
 });
 
-// handles all the get api requests
+// handles all the basic get api table queries
 app.get(`/${appName}/api/:path`, (req, res) => {
   console.log(req.params.path);
   const path = req.params.path;
