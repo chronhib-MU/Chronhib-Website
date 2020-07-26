@@ -105,12 +105,10 @@ app.post(`/${appName}/api/`, (req, res) => {
     });
   } else {
     values.forEach(value => {
-      let id = value[0],
-        fieldProperty = value[1],
-        // before = value[2],
-        after = value[3];
-      let updateQuery = `UPDATE ${table.toUpperCase()} SET ${fieldProperty} = "${after}" WHERE ID_unique_number = ${id};`;
-      // AND ${fieldProperty} = "${before}"
+      console.log(value);
+      let { id, fieldProperty, fieldValue } = value;
+      console.table({ id, fieldProperty, fieldValue });
+      let updateQuery = `UPDATE ${table.toUpperCase()} SET ${fieldProperty} = "${fieldValue}" WHERE ID_unique_number = ${id};`;
       console.log('Post Query: ', updateQuery);
       connection.query(updateQuery, (err, results) => {
         if (err) {
