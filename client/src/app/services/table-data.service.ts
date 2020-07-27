@@ -29,10 +29,11 @@ export class TableDataService {
     }
   };
   fetchedTable: Observable<{ data: { afterTable: []; beforeTable: [] } }>;
-  postedTable: Observable<ApiPostBody>;
-  constructor(private http: HttpClient) {}
+  currentApiQuery: ApiGetQuery | string;
+  constructor (private http: HttpClient) { }
   // Fetches table data from the API
-  fetchTable = (apiQuery: ApiGetQuery | string) => {
+  fetchTable = async (apiQuery: ApiGetQuery | string) => {
+    this.currentApiQuery = apiQuery;
     const queryString = Object.keys(apiQuery)
       .map(key => key + '=' + apiQuery[key])
       .join('&');
@@ -44,55 +45,50 @@ export class TableDataService {
       this.fetchedTable = this.http.get(`${environment.apiUrl}${apiQuery}`) as Observable<{
         data: { afterTable: []; beforeTable: [] };
       }>;
-      const fetchedTable$ = this.fetchedTable.subscribe(({ data }) => {
-        console.log(`${apiQuery}: `, data.afterTable);
-        this.tables[apiQuery].data = data.afterTable;
-        this.tables[apiQuery].headers = Object.keys(this.tables[apiQuery].data[0]);
-        // console.log(this.tables[apiQuery].headers);
-      });
+      const { data } = await this.fetchedTable.toPromise();
+      console.log(`${apiQuery}: `, data.afterTable);
+      this.tables[apiQuery].data = data.afterTable;
+      this.tables[apiQuery].headers = Object.keys(this.tables[apiQuery].data[0]);
+      // console.log(this.tables[apiQuery].headers);
     } else if (typeof apiQuery !== 'string') {
       this.fetchedTable = this.http.get(`${environment.apiUrl}?${queryString}`) as Observable<{
         data: { afterTable: []; beforeTable: [] };
       }>;
-      const fetchedTable$ = this.fetchedTable.subscribe(({ data }) => {
-        console.log(`${queryString}: `, data);
-        if (apiQuery.dtable !== apiQuery.ctable) {
-          this.tables[apiQuery.ctable].data = data.beforeTable;
-          this.tables[apiQuery.ctable].headers = Object.keys(this.tables[apiQuery.ctable].data[0]);
-        }
-        this.tables[apiQuery.dtable].data = data.afterTable;
-        this.tables[apiQuery.dtable].headers = Object.keys(this.tables[apiQuery.dtable].data[0]);
-        // console.log(this.tables[apiQuery.dtable].headers);
-      });
-      fetchedTable$.unsubscribe();
+      const { data } = await this.fetchedTable.toPromise();
+      console.log(`${queryString}: `, data);
+      if (apiQuery.dtable !== apiQuery.ctable) {
+        this.tables[apiQuery.ctable].data = data.beforeTable;
+        this.tables[apiQuery.ctable].headers = Object.keys(this.tables[apiQuery.ctable].data[0]);
+      }
+      this.tables[apiQuery.dtable].data = data.afterTable;
+      this.tables[apiQuery.dtable].headers = Object.keys(this.tables[apiQuery.dtable].data[0]);
+      // console.log(this.tables[apiQuery.dtable].headers);
     }
   };
-  updateTable = (apiBody: ApiPostBody) => {
+  updateTable = async (apiBody: ApiPostBody) => {
     if (apiBody.command !== 'loadData') {
       const filteredApiBody = {
         table: apiBody.table,
         values: [],
         command: apiBody.command
       };
-      apiBody.values.forEach((value, index) => {
-        apiBody.values[index][0] = this.tables[apiBody.table].data[value[0]].ID_unique_number;
-        if (apiBody.values[index][2] !== apiBody.values[index][3]) {
-          filteredApiBody.values.push(apiBody.values[index]);
-        }
-      });
-      const queryString = Object.keys(filteredApiBody)
-        .map(key => key + '=' + filteredApiBody[key])
-        .join('&');
+      if (filteredApiBody.command === 'moveRow') {
+        filteredApiBody.values.push(apiBody.values[0]);
+      }
+      else {
+        filteredApiBody.values = [...apiBody.values];
+      }
+      // const queryString = Object.keys(filteredApiBody)
+      //   .map(key => key + '=' + filteredApiBody[key])
+      //   .join('&');
       console.log(`Before ${apiBody.table} with `, apiBody, `to ${environment.apiUrl}?`);
 
       console.log(`Updated ${filteredApiBody.table} with `, filteredApiBody, `to ${environment.apiUrl}?`);
       if (filteredApiBody.values.length > 0) {
-        this.postedTable = this.http.post<ApiPostBody>(`${environment.apiUrl}?`, filteredApiBody) as Observable<
+        const postedTable: Observable<ApiPostBody> = this.http.post<ApiPostBody>(`${environment.apiUrl}?`, filteredApiBody) as Observable<
           ApiPostBody
         >;
-        const postedTable$ = this.postedTable.subscribe(() => {
-          postedTable$.unsubscribe();
-        });
+        await postedTable.toPromise();
         console.log('Done updating!');
       } else {
         console.log('The values were the same! No changes made.');

@@ -3,7 +3,7 @@
     <div class="card shadow w-100">
       <div class="card-header border-0 pb-2">
         <div class="card-title text-uppercase mb-0 float-left">
-          <h2 class="mb-0 font-weight-bolder text-dark">
+          <h2 class="mb-0 font-weight-bolder text-dark pointer" (click)="scrollToBottom()">
             {{ after | titlecase }}
           </h2>
           <h5 *ngIf="after !== 'text'" class="mb-0 font-weight-bold text-muted">{{ before | titlecase }}</h5>
@@ -30,13 +30,29 @@
         </div>
       </div>
       <hot-table
+        *ngIf="edit && after !== 'text'"
+        #hotMini
+        [hotId]="instance + 'Mini'"
+        [columns]="columnsMini"
+        [colHeaders]="true"
+        [data]="getTableData(before)"
+        [settings]="hotSettings[0]"
+        [height]="100"
+        className="htCenter"
+        licenseKey="non-commercial-and-evaluation"
+        [id]="instance + 'Mini'"
+      >
+      </hot-table>
+
+      <hot-table
         #hot
         [hotId]="instance"
         [columns]="columns"
-        [rowHeaders]="getRows()"
+        [rowHeaders]="getRows(after)"
         [colHeaders]="true"
-        [data]="getTableData()"
+        [data]="getTableData(after)"
         [settings]="hotSettings[this.edit ? 1 : 0]"
+        [height]="600"
         className="htCenter"
         licenseKey="non-commercial-and-evaluation"
         [id]="instance"

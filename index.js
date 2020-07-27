@@ -31,10 +31,10 @@ console.log({ node_env, port, host, user, password, database });
 const app = express();
 const server = http.createServer(app);
 // mysql table queries
-const SELECT_ALL_TEXT_QUERY = 'SELECT * FROM TEXT LIMIT 100';
-const SELECT_ALL_LEMMATA_QUERY = 'SELECT * FROM LEMMATA LIMIT 100';
-const SELECT_ALL_MORPHOLOGY_QUERY = 'SELECT * FROM MORPHOLOGY LIMIT 100';
-const SELECT_ALL_SENTENCES_QUERY = 'SELECT * FROM SENTENCES LIMIT 100';
+const SELECT_ALL_TEXT_QUERY = 'SELECT * FROM TEXT ORDER BY Sort_ID ASC LIMIT 100';
+const SELECT_ALL_LEMMATA_QUERY = 'SELECT * FROM LEMMATA ORDER BY Sort_ID ASC LIMIT 100';
+const SELECT_ALL_MORPHOLOGY_QUERY = 'SELECT * FROM MORPHOLOGY ORDER BY Textual_Unit_ID, Sort_ID ASC LIMIT 100';
+const SELECT_ALL_SENTENCES_QUERY = 'SELECT * FROM SENTENCES ORDER BY Sort_ID ASC LIMIT 100';
 
 const tables = {
   text: SELECT_ALL_TEXT_QUERY,
@@ -83,27 +83,46 @@ app.post(`/${appName}/api/`, (req, res) => {
   //To access POST variable use req.body() methods.
   console.log('Post Variable: ', req.body);
   const { table, command, values } = req.body;
-  values.forEach(value => {
-    let id = value[0],
-      fieldProperty = value[1],
-      before = value[2],
-      after = value[3];
-    let updateQuery = `UPDATE ${table.toUpperCase()}
-    SET ${fieldProperty} = "${after}"
-    WHERE ID_unique_number = ${id};`;
-    // AND ${fieldProperty} = "${before}"
-    console.log('Post Query: ', updateQuery);
-    connection.query(updateQuery, (err, results) => {
-      if (err) {
-        console.log('Error: ', err);
-        return res.send(err);
-      } else {
-        return res.status(200);
-      }
-      // console.log({ beforeTable, afterTable });
+  if (command === 'moveRow') {
+    const updateQueries = [];
+    values[0].forEach(rowData => {
+      let query = `UPDATE ${table.toUpperCase()} SET Sort_ID = ${rowData.Sort_ID} WHERE ID_unique_number = ${
+        rowData.ID_unique_number
+      };`;
+      updateQueries.push(query);
     });
-  });
+    updateQueries.forEach(updateQuery => {
+      console.log('Post Query: ', updateQuery);
+      connection.query(updateQuery, (err, results) => {
+        if (err) {
+          console.log('Error: ', err);
+          res.send(err);
+        } else {
+          res.status(200);
+        }
+        // console.log({ beforeTable, afterTable });
+      });
+    });
+  } else {
+    values.forEach(value => {
+      console.log(value);
+      let { id, fieldProperty, fieldValue } = value;
+      console.table({ id, fieldProperty, fieldValue });
+      let updateQuery = `UPDATE ${table.toUpperCase()} SET ${fieldProperty} = "${fieldValue}" WHERE ID_unique_number = ${id};`;
+      console.log('Post Query: ', updateQuery);
+      connection.query(updateQuery, (err, results) => {
+        if (err) {
+          console.log('Error: ', err);
+          return res.send(err);
+        } else {
+          return res.status(200);
+        }
+        // console.log({ beforeTable, afterTable });
+      });
+    });
+  }
 });
+// handles all the advanced get api table queries
 app.get(`/${appName}/api/`, (req, res) => {
   console.table(req.query);
   if (
@@ -205,7 +224,7 @@ app.get(`/${appName}/api/`, (req, res) => {
   }
 });
 
-// handles all the get api requests
+// handles all the basic get api table queries
 app.get(`/${appName}/api/:path`, (req, res) => {
   console.log(req.params.path);
   const path = req.params.path;
