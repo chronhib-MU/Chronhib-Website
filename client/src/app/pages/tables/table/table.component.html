@@ -1,12 +1,12 @@
-<div class="row mb-3 mt-3">
+<div class="row mb-3 mt-3" #appTable (click)="scrollToTable()">
   <div class="col">
     <div class="card shadow w-100">
       <div class="card-header border-0 pb-2">
         <div class="card-title text-uppercase mb-0 float-left">
-          <h2 class="mb-0 font-weight-bolder text-dark pointer" (click)="scrollToBottom()">
+          <h2 class="mb-0 font-weight-bolder text-dark">
             {{ after | titlecase }}
           </h2>
-          <h5 *ngIf="after !== 'text'" class="mb-0 font-weight-bold text-muted">{{ before | titlecase }}</h5>
+          <h5 *ngIf="before && after !== before" class="mb-0 font-weight-bold text-muted">{{ before | titlecase }}</h5>
         </div>
 
         <div class="btn-group float-right" *ngIf="edit">
@@ -14,7 +14,12 @@
           <label class="btn btn-secondary px-3 py-2" (click)="redo()"> Redo </label>
         </div>
         <div class="btn-group float-right pr-3">
-          <label class="btn btn-secondary px-3 py-2" (click)="toggleEditMode()">
+          <label class="btn btn-secondary px-3 py-2" (click)="toggleMode('wordWrap')">
+            Word-Wrap <i class="fa fa-toggle-on" *ngIf="wordWrap"></i><i class="fa fa-toggle-off" *ngIf="!wordWrap"></i>
+          </label>
+        </div>
+        <div class="btn-group float-right pr-3">
+          <label class="btn btn-secondary px-3 py-2" (click)="toggleMode('edit')">
             Edit <i class="fa fa-toggle-on" *ngIf="edit"></i><i class="fa fa-toggle-off" *ngIf="!edit"></i>
           </label>
           <label class="btn btn-secondary px-3 py-2" (click)="refresh()"> Refresh <i class="fa fa-refresh"></i> </label>
@@ -24,19 +29,32 @@
       <div class="mx-4 mb-1">
         <div class="float-left">
           <label class="btn btn-secondary px-3 py-2" (click)="goBack()"><i class="fas fa-arrow-left"></i></label>
+          <label
+            class="btn btn-secondary px-3 py-2"
+            (click)="changeID('previous')"
+            [hidden]="after === 'text' || after === 'lemmata'"
+            ><i class="fas fa-angle-double-left"></i
+          ></label>
         </div>
         <div class="float-right">
+          <label
+            class="btn btn-secondary px-3 py-2"
+            (click)="changeID('next')"
+            [hidden]="after.toLowerCase() === 'text' || after.toLowerCase() === 'lemmata'"
+            ><i class="fas fa-angle-double-right"></i
+          ></label>
           <label class="btn btn-secondary px-3 py-2" (click)="goForward()"><i class="fas fa-arrow-right"></i></label>
         </div>
       </div>
       <hot-table
-        *ngIf="edit && after !== 'text'"
+        *ngIf="before && after !== before && after !== 'lemmata'"
         #hotMini
         [hotId]="instance + 'Mini'"
-        [columns]="columnsMini"
+        [columns]="after === 'lemmata' ? columns : columnsMini"
+        [rowHeaders]="after === 'lemmata' ? getRows(after) : null"
         [colHeaders]="true"
-        [data]="getTableData(before)"
-        [settings]="hotSettings[0]"
+        [data]="getTableData(after === 'lemmata' ? after : before)"
+        [settings]="hotSettings[after === 'lemmata' ? 1 : 0]"
         [height]="100"
         className="htCenter"
         licenseKey="non-commercial-and-evaluation"
@@ -52,15 +70,27 @@
         [colHeaders]="true"
         [data]="getTableData(after)"
         [settings]="hotSettings[this.edit ? 1 : 0]"
-        [height]="600"
+        [height]="before && after !== before && after === 'lemmata' ? 100 : '70vh'"
         className="htCenter"
         licenseKey="non-commercial-and-evaluation"
         [id]="instance"
       >
       </hot-table>
-      <div class="table-responsive">
-        <table></table>
-      </div>
+      <hot-table
+        *ngIf="before && after !== before && after === 'lemmata'"
+        #hotMini
+        [hotId]="instance + 'Mini'"
+        [columns]="columnsMini"
+        [rowHeaders]="getRows(before)"
+        [colHeaders]="true"
+        [data]="getTableData(before)"
+        [settings]="hotSettings[after === 'lemmata' ? 1 : 0]"
+        [height]="'70vh'"
+        className="htCenter"
+        licenseKey="non-commercial-and-evaluation"
+        [id]="instance + 'Mini'"
+      >
+      </hot-table>
     </div>
   </div>
 </div>

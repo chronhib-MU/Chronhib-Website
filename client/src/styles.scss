@@ -33,6 +33,7 @@
 .navbar-horizontal .navbar-brand img {
   height: 60px;
 }
+
 .handsontable th {
   color: #fff;
 
@@ -70,15 +71,30 @@
 }
 
 .handsontable {
-  .table td {
-    white-space: normal !important;
-    word-wrap: break-word;
+  .table {
+    td {
+      // white-space: normal;
+      word-wrap: break-word;
+    }
+    thead th {
+      font-size: 0.8125rem;
+    }
   }
 }
-@media (min-width: 768px) {
-  .navbar-vertical.navbar-expand-md .navbar-brand,
-  .navbar-brand-img {
-    max-height: 4rem;
-    padding-bottom: 0rem;
+@media screen and (min-width: 768px) {
+  html:not(.auth-layout) .main-content {
+    margin-left: 0;
   }
 }
+// @media (min-width: 768px) {
+//   .navbar-vertical.navbar-expand-md .navbar-brand,
+//   .navbar-brand-img {
+//     max-height: 4rem;
+//     padding-bottom: 0rem;
+//   }
+//   .navbar-vertical.navbar-expand-md {
+//     // width: 15vw;
+//     z-index: 99;
+//     animation: width ease-in-out 0.3s;
+//   }
+// }

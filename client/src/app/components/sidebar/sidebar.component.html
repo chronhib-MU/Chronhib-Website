@@ -1,20 +1,23 @@
-<nav class="navbar navbar-vertical navbar-expand-md navbar-light bg-white" id="sidenav-main">
+<nav class="navbar navbar-vertical navbar-light bg-white" id="sidenav-main">
   <div class="container-fluid">
     <!-- Toggler -->
-    <button
-      class="navbar-toggler"
-      type="button"
-      (click)="isCollapsed = !isCollapsed"
-      aria-controls="sidenav-collapse-main"
-    >
-      <span class="navbar-toggler-icon"></span>
-    </button>
+    <div class="toggler">
+      <button
+        class="navbar-toggler ml-2 mr-2 p-0"
+        type="button"
+        (click)="isCollapsed = !isCollapsed"
+        aria-controls="sidenav-collapse-main"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <a class="h4 mb-0 text-black text-uppercase inline-block">{{ getTitle() }}</a>
+    </div>
     <!-- Brand -->
     <a class="navbar-brand pt-0" routerLinkActive="active" [routerLink]="['/dashboard']">
       <img src="./assets/img/brand/Logo1.png" class="navbar-brand-img" alt="ChronHib Logo" />
     </a>
     <!-- User -->
-    <ul class="nav align-items-center d-md-none">
+    <ul class="nav align-items-center">
       <li class="nav-item" ngbDropdown placement="bottom-right">
         <a class="nav-link nav-link-icon" role="button" ngbDropdownToggle>
           <i class="ni ni-bell-55"></i>
@@ -30,7 +33,7 @@
         <a class="nav-link" role="button" ngbDropdownToggle>
           <div class="media align-items-center">
             <span class="avatar avatar-sm rounded-circle">
-              <img alt="Image placeholder" src="./assets/img/theme/team-1-800x800.jpg" />
+              <img alt="Image placeholder" src="./assets/img/theme/team-4-800x800.jpg" />
             </span>
           </div>
         </a>
@@ -65,7 +68,7 @@
     <!-- Collapse -->
     <div class="collapse navbar-collapse" [ngbCollapse]="isCollapsed" id="sidenav-collapse-main">
       <!-- Collapse header -->
-      <div class="navbar-collapse-header d-md-none">
+      <div class="navbar-collapse-header">
         <div class="row">
           <div class="col-6 collapse-brand">
             <a routerLinkActive="active" [routerLink]="['/dashboard']">
@@ -81,7 +84,7 @@
         </div>
       </div>
       <!-- Form -->
-      <form class="mt-4 mb-3 d-md-none">
+      <form class="mt-4 mb-3">
         <div class="input-group input-group-rounded input-group-merge">
           <input
             type="search"

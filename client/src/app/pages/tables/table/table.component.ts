@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, NgZone } from '@angular/core';
+import { Component, OnInit, Input, NgZone, ElementRef, ViewChild } from '@angular/core';
 import { Location } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { TableDataService } from '../../../services/table-data.service';
@@ -17,7 +17,9 @@ export class TableComponent implements OnInit {
   @Input() before: string;
   @Input() after: string;
   @Input() edit: boolean;
+  @ViewChild('appTable') appTable: ElementRef;
   private hotRegisterer = new HotTableRegisterer();
+  wordWrap: boolean = true;
   instance = 'hot';
   // index 0 if edit mode false OR index 1 if edit mode true
   hotSettings: Handsontable.GridSettings[] = [
@@ -102,6 +104,7 @@ export class TableComponent implements OnInit {
     };
     Handsontable.hooks.add('afterInit', () => {
       $('.htCore').addClass('table');
+
     });
     // Handsontable.hooks.add('afterChange', changes => {
     //   changes.forEach(([row, prop, oldValue, newValue]) => {
@@ -117,7 +120,20 @@ export class TableComponent implements OnInit {
       console.log('updated');
     });
     // need this to push the dataset
-    this.fetchedTable();
+    this.fetchedTable().then(() => {
+      // Plugins go here
+      if (this.before === 'sentences') {
+        // console.log(this.dataTable[this.before]);
+        // console.log([...Array((this.dataTable[this.before].headers.length)).keys()]);
+        const headerArr = [...Array((this.dataTable[this.before].headers.length)).keys()];
+
+        this.hotRegisterer.getInstance(this.instance + 'Mini').updateSettings({
+          hiddenColumns: {
+            columns: headerArr.filter((_, i) => i !== 7)
+          }
+        });
+      }
+    });
     const hooks = Handsontable.hooks.getRegistered();
     hooks.forEach(hook => {
       // focuses on the results after changes cause they have before and after data
@@ -182,19 +198,8 @@ export class TableComponent implements OnInit {
       }
     });
 
-    // Plugins go here
-    // this.hotInstance.updateSettings({
-    //   cells: function (row, col) {
-    //     const cellProperties = { readOnly: false };
-    //     // if (this.hot.getData()[row][col]) {
-    //     cellProperties.readOnly = true;
-    //     // }
-    //     return cellProperties;
-    //   }
-    // });
+
     // $hooksList = $('#hooksList');
-
-
   }
   async fetchedTable () {
     const that = this;
@@ -349,11 +354,12 @@ export class TableComponent implements OnInit {
                 td.style.textAlign = 'center';
               } else {
                 Handsontable.renderers.TextRenderer.apply(this, arguments);
+                td.style.whiteSpace = that.wordWrap ? 'normal' : 'nowrap';
                 return td
               }
 
             }
-
+            td.style.whiteSpace = that.wordWrap ? 'normal' : 'nowrap';
             return td;
           }
         })
@@ -492,11 +498,12 @@ export class TableComponent implements OnInit {
               td.style.textAlign = 'center';
             } else {
               Handsontable.renderers.TextRenderer.apply(this, arguments);
+              td.style.whiteSpace = that.wordWrap ? 'normal' : 'nowrap';
               return td
             }
 
           }
-
+          td.style.whiteSpace = that.wordWrap ? 'normal' : 'nowrap';
           return td;
         }
       });
@@ -543,15 +550,50 @@ export class TableComponent implements OnInit {
     //   this.hotInstance.loadData(this.getTableData(this.after));
     //   this.hotInstance.render();
   }
-  toggleEditMode () {
-    this.edit = !this.edit;
-    this.hotInstance = this.hotRegisterer.getInstance(this.instance);
-    this.hotInstance.updateSettings({
-      manualRowMove: this.edit,
-      manualColumnFreeze: this.edit,
-      contextMenu: this.edit,
-      readOnly: !this.edit
-    });
+  toggleMode (variable) {
+    if (variable === 'edit') {
+      this.edit = !this.edit;
+      this.hotInstance = this.hotRegisterer.getInstance(this.instance);
+      this.hotInstance.updateSettings({
+        manualRowMove: this.edit,
+        manualColumnFreeze: this.edit,
+        contextMenu: this.edit,
+        readOnly: !this.edit
+      });
+    }
+    else {
+      console.log(variable, this.wordWrap);
+      this.wordWrap = !this.wordWrap;
+      this.fetchedTable();
+
+    }
+  }
+  changeID (direction) {
+    const urlParams = new URLSearchParams(window.location.search);
+    console.log(urlParams.toString());
+    if (urlParams.has('fval') && (this.before === 'text' || this.before === 'sentences')) {
+      console.log("Got it: ", urlParams.get('fval'));
+      let fVal = urlParams.get('fval');
+      const fValArr = fVal.split('-');
+      let numVal = parseInt(fValArr[fValArr.length - 1], 10);
+      direction === 'next' ? numVal++ : numVal--;
+      if (numVal === 0) return;
+      if (fValArr.length === 1) {
+        // if its the textID from the Text table e.g. 0001
+        let stringVal = numVal.toString() // convert numVal back to String
+        fVal = Array(4 - stringVal.length).fill('0').join('') + stringVal
+      }
+      else {
+        // if its the textual_unit_ID from the Sentences table e.g. S0001-1
+        fVal = `${fValArr[0]}-${numVal}`;
+        console.log(fVal);
+      }
+      urlParams.set('fval', fVal);
+      console.log(urlParams.toString());
+      const queryParams = JSON.parse('{"' + decodeURI(urlParams.toString()).replace(/"/g, '\\"').replace(/&/g, '","').replace(/=/g, '":"') + '"}')
+      console.log(queryParams);
+      this.router.navigate(['/tables'], { queryParams })
+    }
   }
   goBack () {
     this.location.back();
@@ -559,7 +601,9 @@ export class TableComponent implements OnInit {
   goForward () {
     this.location.forward();
   }
-  scrollToBottom () {
-    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })
+  scrollToTable () {
+    console.log("App Table Height: ", this.appTable.nativeElement.scrollHeight);
+    // window.scrollTo({ top: this.appTable.nativeElement.scrollHeight, behavior: 'smooth' })
+    this.appTable.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 }

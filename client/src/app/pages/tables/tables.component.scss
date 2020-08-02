@@ -1,15 +1,16 @@
-.col, .table-card-container {
-  margin-top: 1.5rem;
+.col,
+.table-card-container {
+  // margin-top: 1.5rem;
   .card {
     .card-body {
-      padding: .5rem;
+      padding: 0.5rem;
 
       text-align: center;
 
       background-color: #fff;
     }
     .selection-row {
-      background-color: rgba(0, 0, 0, .075);
+      background-color: rgba(0, 0, 0, 0.075);
     }
     #img-container {
       position: relative;
