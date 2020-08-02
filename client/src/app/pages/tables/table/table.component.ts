@@ -117,23 +117,11 @@ export class TableComponent implements OnInit {
     const that = this;
     this.routeQueryParams = this.route.queryParamMap.subscribe(async paramMap => {
       await this.refresh();
+
       console.log('updated');
     });
     // need this to push the dataset
-    this.fetchedTable().then(() => {
-      // Plugins go here
-      if (this.before === 'sentences') {
-        // console.log(this.dataTable[this.before]);
-        // console.log([...Array((this.dataTable[this.before].headers.length)).keys()]);
-        const headerArr = [...Array((this.dataTable[this.before].headers.length)).keys()];
-
-        this.hotRegisterer.getInstance(this.instance + 'Mini').updateSettings({
-          hiddenColumns: {
-            columns: headerArr.filter((_, i) => i !== 7)
-          }
-        });
-      }
-    });
+    this.fetchedTable();
     const hooks = Handsontable.hooks.getRegistered();
     hooks.forEach(hook => {
       // focuses on the results after changes cause they have before and after data
@@ -365,7 +353,19 @@ export class TableComponent implements OnInit {
         })
       });
       this.getTableData(this.before);
+      // Plugins go here
+      console.log("What is this.before?", this.before);
+      if (this.before === 'sentences') {
+        // console.log(this.dataTable[this.before]);
+        // console.log([...Array((this.dataTable[this.before].headers.length)).keys()]);
+        const headerArr = [...Array((this.dataTable[this.before].headers.length)).keys()];
 
+        this.hotRegisterer.getInstance(this.instance + 'Mini').updateSettings({
+          hiddenColumns: {
+            columns: headerArr.filter((_, i) => i !== 7)
+          }
+        });
+      }
     }
     this.dataTable[this.after].headers.forEach((header: string) => {
       this.columns.push({

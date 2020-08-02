@@ -44,12 +44,15 @@ export class SidebarComponent implements OnInit {
       titlee = titlee.slice(1);
     }
     // split by '/' and '?'
-    titlee = '/' + titlee.split(/[?\/]+/)[1];
-    for (var item = 0; item < this.menuItems.length; item++) {
-      if (this.menuItems[item].path === titlee) {
-        return this.menuItems[item].title;
+    titlee.split(/[?\/]+/)
+    for (let page of titlee.split(/[?\/]+/)) {
+      titlee = '/' + page;
+      for (let menuItem of this.menuItems) {
+        if (menuItem.path === titlee) {
+          return menuItem.title;
+        }
       }
-    }
+    };
     return 'Dashboard';
   }
 }
