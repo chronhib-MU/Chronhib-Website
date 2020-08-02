@@ -32,8 +32,8 @@ const app = express();
 const server = http.createServer(app);
 // mysql table queries
 const SELECT_ALL_TEXT_QUERY = 'SELECT * FROM TEXT ORDER BY Sort_ID ASC LIMIT 100';
-const SELECT_ALL_LEMMATA_QUERY = 'SELECT * FROM LEMMATA ORDER BY Sort_ID ASC LIMIT 100';
-const SELECT_ALL_MORPHOLOGY_QUERY = 'SELECT * FROM MORPHOLOGY ORDER BY Textual_Unit_ID, Sort_ID ASC LIMIT 100';
+const SELECT_ALL_LEMMATA_QUERY = 'SELECT * FROM LEMMATA ORDER BY ID_unique_number ASC LIMIT 100';
+const SELECT_ALL_MORPHOLOGY_QUERY = 'SELECT * FROM MORPHOLOGY ORDER BY TextID, Textual_Unit_ID, Sort_ID ASC LIMIT 100';
 const SELECT_ALL_SENTENCES_QUERY = 'SELECT * FROM SENTENCES ORDER BY Sort_ID ASC LIMIT 100';
 
 const tables = {
@@ -159,6 +159,7 @@ app.get(`/${appName}/api/`, (req, res) => {
 
     // Check if fieldProperty and fValue
     if (fieldProperty || fieldValue) {
+      // afterQuery
       if (currentTable === 'text' && fieldProperty === 'Text_ID') {
         fieldProperty = 'TextID';
       }
@@ -169,6 +170,7 @@ app.get(`/${appName}/api/`, (req, res) => {
       afterQuery = `SELECT * FROM ${destinationTable.toUpperCase()}${between}ORDER BY Sort_ID ASC${limit}`;
     }
     if (fieldProperty || fieldValue) {
+      // beforeQuery
       // Text table has exception where TextID is Text_ID
       // if not the same table
       if (currentTable !== destinationTable) {
@@ -235,6 +237,7 @@ app.get(`/${appName}/api/:path`, (req, res) => {
       if (err) {
         return res.send(err);
       } else {
+        console.log(results);
         return res.json({
           data: { beforeTable: {}, afterTable: results }
         });
