@@ -1,4 +1,4 @@
-# Chronhib Website - Database FAQ
+# Chronhib Website - Database Guide/FAQs
 
 CorPH is an on-line database of Old Irish texts curated by the ChronHib project. It incorporates and harmonises several pre-existing digital databases of Old Irish texts, as well as digitalises and annotates a number of other Old Irish texts. All data have undergone digitalisation, tokenisation, lemmatisation, POS- and morphological tagging, following the rules and tagsets created by ChronHib, which can be downloaded from this webpage.
 
