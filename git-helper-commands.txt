@@ -1,0 +1,7 @@
+# Delete all files deleted by us when git merging from master to production
+Linux:
+git diff --name-only --diff-filter=U | xargs git rm
+Windows(PowerShell):
+# create xargs in PowerShell followed by the actual command
+filter xargs { & $args[0] ($args[1..$args.length] + $_) }
+git diff --name-only --diff-filter=U | xargs git rm
