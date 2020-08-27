@@ -74,18 +74,17 @@ export class TableDataService {
       };
       if (filteredApiBody.command === 'moveRow') {
         // filteredApiBody.values.push(apiBody.values[0]);
-        let tableData = this.tables[filteredApiBody.table].data;
-        let newData = apiBody.values[0];
+        const tableData = this.tables[filteredApiBody.table].data;
+        const newData = apiBody.values[0];
         for (let i = 0; i < tableData.length; i++) {
-          let row = tableData[i];
-          let newDataRow = newData.find(r => r.ID_unique_number === row.ID_unique_number);
-          if (typeof newDataRow !== "undefined") {
+          const row = tableData[i];
+          const newDataRow = newData.find(r => r.ID_unique_number === row.ID_unique_number);
+          if (typeof newDataRow !== 'undefined') {
             row.Sort_ID = newDataRow.Sort_ID;
           }
         }
         filteredApiBody.values.push(tableData);
-      }
-      else {
+      } else {
         filteredApiBody.values = [...apiBody.values];
       }
       // const queryString = Object.keys(filteredApiBody)

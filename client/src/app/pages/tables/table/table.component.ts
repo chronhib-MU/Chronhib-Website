@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, NgZone, ElementRef, ViewChild } from '@angular/core';
+import { Component, OnInit, Input, NgZone, ElementRef, ViewChild, ɵConsole } from '@angular/core';
 import { Location } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { TableDataService } from '../../../services/table-data.service';
@@ -183,6 +183,28 @@ export class TableComponent implements OnInit {
             });
           }
         };
+      } else if (hook === 'afterCreateRow') {
+        this.hotSettings[that.edit ? 1 : 0][hook] = function () {
+          console.log(this);
+          const tableData = this.getData();
+          const newValues = tableData.map((row, i) => {
+            let sortId = i + 1;
+            return { ID_unique_number: row['1'], Sort_ID: sortId };
+          });
+          const res: ApiPostBody = {
+            table: that.after,
+            command: 'createRow',
+            values: [newValues]
+          };
+          console.log('Result:', res);
+          if (that.edit) {
+            that.tableData.updateTable(res).then(() => {
+              that.history.push(res);
+              console.log('History: ', that.history);
+              // that.refresh();
+            });
+          }
+        }
       }
     });
 

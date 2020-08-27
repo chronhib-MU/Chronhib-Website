@@ -1,5 +1,5 @@
 <div class="header bg-gradient-image py-7 py-lg-8">
-  <div class="container">
+  <!-- <div class="container">
     <div class="header-body text-center mb-7">
       <div class="row justify-content-center">
         <div class="col-lg-5 col-md-6">
@@ -10,7 +10,7 @@
         </div>
       </div>
     </div>
-  </div>
+  </div> -->
   <div class="separator separator-bottom separator-skew zindex-100">
     <svg x="0" y="0" viewBox="0 0 2560 100" preserveAspectRatio="none" version="1.1" xmlns="http://www.w3.org/2000/svg">
       <polygon class="fill-default" points="2560 0 2560 100 0 100"></polygon>
@@ -23,8 +23,8 @@
   <div class="row justify-content-center">
     <div class="col-lg-6 col-md-8">
       <div class="card bg-secondary shadow border-0">
-        <div class="card-header bg-transparent pb-5">
-          <div class="text-muted text-center mt-2 mb-4"><small>Sign up with</small></div>
+        <!-- <div class="card-header bg-transparent"> -->
+        <!-- <div class="text-muted text-center mt-2 mb-4"><small>Sign up with</small></div>
           <div class="text-center">
             <a href="javascript:void(0)" class="btn btn-neutral btn-icon mr-4">
               <span class="btn-inner--icon"><img src="assets/img/icons/common/github.svg" /></span>
@@ -34,41 +34,150 @@
               <span class="btn-inner--icon"><img src="assets/img/icons/common/google.svg" /></span>
               <span class="btn-inner--text">Google</span>
             </a>
+          </div> -->
+        <!-- </div> -->
+        <div class="card-header bg-transparent px-lg-5 py-lg-5">
+          <div class="text-center mb-4">
+            <b>Register</b>
           </div>
-        </div>
-        <div class="card-body px-lg-5 py-lg-5">
-          <div class="text-center text-muted mb-4">
-            <small>Or sign up with credentials</small>
-          </div>
-          <form role="form">
-            <div class="form-group">
-              <div class="input-group input-group-alternative mb-3">
-                <div class="input-group-prepend">
-                  <span class="input-group-text"><i class="ni ni-hat-3"></i></span>
+          <form role="form" [formGroup]="registerForm" (ngSubmit)="createAccount()">
+            <div class="row">
+              <div class="col-md-6">
+                <div
+                  class="form-group"
+                  [ngClass]="{
+                    'has-danger': rF['firstName'].invalid && (rF['firstName'].dirty || rF['firstName'].touched),
+                    'has-success': rF['firstName'].touched || rF['firstName'].dirty
+                  }"
+                >
+                  <div class="input-group input-group-alternative mb-3">
+                    <div class="input-group-prepend">
+                      <span class="input-group-text"><i class="ni ni-hat-3"></i></span>
+                    </div>
+                    <input
+                      class="form-control"
+                      formControlName="firstName"
+                      placeholder="First Name"
+                      type="text"
+                      required
+                    />
+                  </div>
                 </div>
-                <input class="form-control" placeholder="Name" type="text" />
+              </div>
+              <div class="col-md-6">
+                <div
+                  class="form-group"
+                  [ngClass]="{
+                    'has-danger': rF['lastName'].invalid && (rF['lastName'].dirty || rF['lastName'].touched),
+                    'has-success': rF['lastName'].touched || rF['lastName'].dirty
+                  }"
+                >
+                  <div class="input-group input-group-alternative mb-3">
+                    <div class="input-group-prepend">
+                      <span class="input-group-text"><i class="ni ni-hat-3"></i></span>
+                    </div>
+                    <input
+                      class="form-control"
+                      formControlName="lastName"
+                      placeholder="Last Name"
+                      type="text"
+                      required
+                    />
+                  </div>
+                </div>
               </div>
             </div>
-            <div class="form-group">
-              <div class="input-group input-group-alternative mb-3">
+            <div
+              class="form-group"
+              [ngClass]="{
+                'has-danger': rF['email'].invalid && (rF['email'].dirty || rF['email'].touched),
+                'has-success': rF['email'].touched || rF['email'].dirty
+              }"
+            >
+              <div class="input-group input-group-alternative">
                 <div class="input-group-prepend">
                   <span class="input-group-text"><i class="ni ni-email-83"></i></span>
                 </div>
-                <input class="form-control" placeholder="Email" type="email" />
+                <input class="form-control" formControlName="email" placeholder="Email" type="email" required />
               </div>
             </div>
-            <div class="form-group">
+            <div
+              class="form-group"
+              [ngClass]="{
+                'has-danger': rF['password'].invalid && (rF['password'].dirty || rF['password'].touched),
+                'has-success': rF['password'].touched || rF['password'].dirty
+              }"
+            >
               <div class="input-group input-group-alternative">
                 <div class="input-group-prepend">
                   <span class="input-group-text"><i class="ni ni-lock-circle-open"></i></span>
                 </div>
-                <input class="form-control" placeholder="Password" type="password" />
+                <input
+                  class="form-control"
+                  formControlName="password"
+                  placeholder="Password"
+                  type="password"
+                  required
+                />
               </div>
             </div>
-            <div class="text-muted font-italic">
-              <small>password strength: <span class="text-success font-weight-700">strong</span></small>
+            <div
+              class="form-group"
+              [ngClass]="{
+                'has-danger':
+                  rF['confirmPassword'].invalid && (rF['confirmPassword'].dirty || rF['confirmPassword'].touched),
+                'has-success': rF['confirmPassword'].touched || rF['confirmPassword'].dirty
+              }"
+            >
+              <div class="input-group input-group-alternative">
+                <div class="input-group-prepend">
+                  <span class="input-group-text"><i class="ni ni-lock-circle-open"></i></span>
+                </div>
+                <input
+                  class="form-control"
+                  formControlName="confirmPassword"
+                  placeholder="Confirm Password"
+                  type="password"
+                  required
+                />
+              </div>
             </div>
-            <div class="row my-4">
+            <div
+              class="form-group"
+              [ngClass]="{
+                'has-danger': rF['accessCode'].invalid && (rF['accessCode'].dirty || rF['accessCode'].touched),
+                'has-success': rF['accessCode'].touched || rF['accessCode'].dirty
+              }"
+            >
+              <div class="input-group input-group-alternative">
+                <div class="input-group-prepend">
+                  <span class="input-group-text"><i class="ni ni-lock-circle-open"></i></span>
+                </div>
+                <input
+                  class="form-control"
+                  formControlName="accessCode"
+                  placeholder="Access Code"
+                  type="text"
+                  required
+                />
+              </div>
+            </div>
+            <div class="text-muted font-italic text-center">
+              <small>
+                Failed Attempts: <span class="text-danger font-weight-600">{{ attempts + '/3' }}</span>
+              </small>
+            </div>
+            <div class="text-center mt-2" [hidden]="attempts === 0">
+              <small>
+                <span class="text-danger">
+                  <span></span>
+                  <span [hidden]="blocked(attempts)">Invalid Access Code.</span>
+                  You have failed {{ attempts > 1 ? attempts + ' times' : 'once' }}.
+                  <span [hidden]="!blocked(attempts)">Please try again in {{ timeLeftString }}.</span>
+                </span>
+              </small>
+            </div>
+            <!-- <div class="row my-4">
               <div class="col-12">
                 <div class="custom-control custom-control-alternative custom-checkbox">
                   <input class="custom-control-input" id="customCheckRegister" type="checkbox" />
@@ -77,11 +186,23 @@
                   </label>
                 </div>
               </div>
-            </div>
+            </div> -->
             <div class="text-center">
-              <button type="button" class="btn btn-primary mt-4">Create account</button>
+              <button
+                type="submit"
+                class="btn btn-primary mt-4"
+                value="Create New Account"
+                [disabled]="blocked(attempts) || registerForm.invalid"
+              >
+                Create New Account
+              </button>
             </div>
           </form>
+        </div>
+      </div>
+      <div class="row mt-2 flex-row-reverse">
+        <div class="col-6 text-right">
+          <a [routerLink]="['/login']" class="text-light"><small>Already have an account? Login</small></a>
         </div>
       </div>
     </div>

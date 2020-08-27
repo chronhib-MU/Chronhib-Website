@@ -5,6 +5,8 @@ const path = require('path');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const mysql = require('mysql');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 const dotenv = require('dotenv');
 const compression = require('compression');
 const helmet = require('helmet');
@@ -42,12 +44,13 @@ const tables = {
   morphology: SELECT_ALL_MORPHOLOGY_QUERY,
   sentences: SELECT_ALL_SENTENCES_QUERY
 };
-const connection = mysql.createConnection({
+const dbconfig = {
   host,
   user,
   password,
   database
-});
+};
+const connection = mysql.createConnection(dbconfig);
 
 connection.connect(err => {
   if (err) {
@@ -79,11 +82,55 @@ app.use(`/${appName}/`, express.static(path.join(__dirname, folderLoc)));
 app.use(`/${appName}/assets/`, express.static(path.join(__dirname, folderLoc + 'assets/')));
 app.use(cors()).use(bodyParser.json());
 
+app.post(`/${appName}/register/`, (req, res) => {
+  // Creates a new account
+  console.table(req.body);
+  const { firstName, lastName, email, password } = req.body;
+  connection.query('SELECT email FROM users WHERE email = ?', [email], async (error, result) => {
+    if (error) {
+      console.log(error);
+    }
+
+    if (result.length > 0) {
+      return res.json(
+        JSON.stringify({
+          message: 'Please try a different email.',
+          title: 'Email already registered!',
+          type: 'error'
+        })
+      );
+    }
+
+    // Encrypt password
+    let hashedPassword = await bcrypt.hash(password, 8);
+    console.log(hashedPassword);
+    connection.query(
+      'INSERT INTO users SET ?',
+      { First_Name: firstName, Last_Name: lastName, Email: email, Password: hashedPassword },
+      (error, result) => {
+        if (error) {
+          console.log(error);
+        } else {
+          console.log(result);
+          return res.json(
+            JSON.stringify({
+              message: 'Please login with your new account details.',
+              title: 'Registration successful',
+              type: 'success'
+            })
+          );
+        }
+      }
+    );
+  });
+});
+
 app.post(`/${appName}/api/`, (req, res) => {
   //To access POST variable use req.body() methods.
   console.log('Post Variable: ', req.body);
   const { table, command, values } = req.body;
   if (command === 'moveRow') {
+    // if the row is moved
     const updateQueries = [];
     values[0].forEach(rowData => {
       let query = `UPDATE ${table.toUpperCase()} SET Sort_ID = ${rowData.Sort_ID} WHERE ID_unique_number = ${
@@ -96,14 +143,18 @@ app.post(`/${appName}/api/`, (req, res) => {
       connection.query(updateQuery, (err, results) => {
         if (err) {
           console.log('Error: ', err);
-          res.send(err);
+          return res.send(err);
         } else {
-          res.status(200);
+          return res.status(200);
         }
         // console.log({ beforeTable, afterTable });
       });
     });
+  } else if (command === 'createRow') {
+    // if a row is created
+    console.log(values);
   } else {
+    // if the row needs to be updated
     values.forEach(value => {
       console.log(value);
       let { id, fieldProperty, fieldValue } = value;
@@ -122,7 +173,7 @@ app.post(`/${appName}/api/`, (req, res) => {
     });
   }
 });
-// handles all the advanced get api table queries
+// Handles all the advanced get api table queries
 app.get(`/${appName}/api/`, (req, res) => {
   console.table(req.query);
   if (
@@ -237,7 +288,7 @@ app.get(`/${appName}/api/:path`, (req, res) => {
       if (err) {
         return res.send(err);
       } else {
-        console.log(results);
+        // console.log(results);
         return res.json({
           data: { beforeTable: {}, afterTable: results }
         });
