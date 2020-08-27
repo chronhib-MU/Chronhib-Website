@@ -40,7 +40,11 @@
           <div class="text-center mb-4">
             <b>Register</b>
           </div>
-          <form role="form" [formGroup]="registerForm" (ngSubmit)="createAccount()">
+          <form
+            role="form"
+            [formGroup]="registerForm"
+            (ngSubmit)="this.authService.register(attempts, timeLeftString, timeout, registerForm)"
+          >
             <div class="row">
               <div class="col-md-6">
                 <div
@@ -191,10 +195,10 @@
               <button
                 type="submit"
                 class="btn btn-primary mt-4"
-                value="Create New Account"
+                value="Register"
                 [disabled]="blocked(attempts) || registerForm.invalid"
               >
-                Create New Account
+                Register
               </button>
             </div>
           </form>

@@ -13,6 +13,7 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { AppRoutingModule } from './app.routing';
 import { ComponentsModule } from './components/components.module';
 import { TableDataService } from './services/table-data.service';
+import { AuthService } from './services/auth.service';
 import { ToastrModule } from 'ngx-toastr';
 @NgModule({
   imports: [
@@ -24,14 +25,13 @@ import { ToastrModule } from 'ngx-toastr';
     RouterModule,
     AppRoutingModule,
     ToastrModule.forRoot({
-      closeButton: true,
       timeOut: 5000,
       positionClass: 'toast-bottom-right',
       preventDuplicates: true
     })
   ],
   declarations: [AppComponent, AdminLayoutComponent, AuthLayoutComponent],
-  providers: [TableDataService],
+  providers: [TableDataService, AuthService],
   bootstrap: [AppComponent]
 })
 export class AppModule {}

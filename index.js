@@ -7,9 +7,12 @@ const bodyParser = require('body-parser');
 const mysql = require('mysql');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const cookieParser = require('cookie-parser');
+const { promisify } = require('util');
 const dotenv = require('dotenv');
 const compression = require('compression');
 const helmet = require('helmet');
+const { parse } = require('path');
 console.log(`pathname ${__filename}`);
 console.log(`dirname ${path.dirname(__filename)}`);
 
@@ -21,15 +24,28 @@ if (result.error) {
 }
 
 // Make .env file that has all these variables in the form: KEY=VALUE, e.g. PORT=4000
-const { NODE_ENV, PORT, HOST, USER, PASSWORD, DATABASE } = result.parsed;
+const {
+  NODE_ENV,
+  PORT,
+  HOST,
+  USER,
+  PASSWORD,
+  DATABASE,
+  JWT_SECRET,
+  JWT_EXPIRES_IN,
+  JWT_COOKIE_EXPIRES
+} = result.parsed;
 
 const port = process.env.PORT || PORT;
 const host = process.env.HOST || HOST;
 const password = process.env.PASSWORD || PASSWORD;
 const database = process.env.DATABASE || DATABASE;
 const node_env = process.env.NODE_ENV || NODE_ENV;
-const user = node_env === 'production' ? process.env.USER : USER;
-console.log({ node_env, port, host, user, password, database });
+const user = process.env.USER || USER;
+const jwt_secret = process.env.JWT_SECRET || JWT_SECRET;
+const jwt_expires_in = process.env.JWT_EXPIRES_IN || JWT_EXPIRES_IN;
+const jwt_cookie_expires = parseInt(process.env.JWT_COOKIE_EXPIRES || JWT_COOKIE_EXPIRES);
+console.log({ port, host, password, database, node_env, user, jwt_secret, jwt_expires_in, jwt_cookie_expires });
 const app = express();
 const server = http.createServer(app);
 // mysql table queries
@@ -75,6 +91,7 @@ const appName = 'chronhibWebsite';
 console.log('App Name:', appName);
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+app.use(cookieParser());
 app.use(compression()); // Compress all routes
 app.use(helmet()); // Protect against well known vulnerabilities
 // Serve the static files from the Angular app
@@ -82,10 +99,27 @@ app.use(`/${appName}/`, express.static(path.join(__dirname, folderLoc)));
 app.use(`/${appName}/assets/`, express.static(path.join(__dirname, folderLoc + 'assets/')));
 app.use(cors()).use(bodyParser.json());
 
-app.post(`/${appName}/register/`, (req, res) => {
+app.post(`/${appName}/register`, (req, res) => {
   // Creates a new account
   console.table(req.body);
   const { firstName, lastName, email, password } = req.body;
+  if (!email) {
+    return res.json(
+      JSON.stringify({
+        message: 'Please provide an email to login or create an account.',
+        title: 'No email provided!',
+        type: 'error'
+      })
+    );
+  } else if (!password) {
+    return res.json(
+      JSON.stringify({
+        message: 'Please provide a password.',
+        title: 'No password provided!',
+        type: 'error'
+      })
+    );
+  }
   connection.query('SELECT email FROM users WHERE email = ?', [email], async (error, result) => {
     if (error) {
       console.log(error);
@@ -102,7 +136,7 @@ app.post(`/${appName}/register/`, (req, res) => {
     }
 
     // Encrypt password
-    let hashedPassword = await bcrypt.hash(password, 8);
+    let hashedPassword = await bcrypt.hash(password, 10);
     console.log(hashedPassword);
     connection.query(
       'INSERT INTO users SET ?',
@@ -115,7 +149,7 @@ app.post(`/${appName}/register/`, (req, res) => {
           return res.json(
             JSON.stringify({
               message: 'Please login with your new account details.',
-              title: 'Registration successful',
+              title: 'Registration successful!',
               type: 'success'
             })
           );
@@ -123,6 +157,82 @@ app.post(`/${appName}/register/`, (req, res) => {
       }
     );
   });
+});
+
+app.post(`/${appName}/login`, (req, res) => {
+  // Signs user in
+  console.table(req.body);
+  const { email, password } = req.body;
+  if (!email) {
+    return res.json(
+      JSON.stringify({
+        message: 'Please provide an email to login or create an account.',
+        title: 'No email provided!',
+        type: 'error'
+      })
+    );
+  } else if (!password) {
+    return res.json(
+      JSON.stringify({
+        message: 'Please provide a password.',
+        title: 'No password provided!',
+        type: 'error'
+      })
+    );
+  }
+  connection.query('SELECT * FROM users WHERE Email = ?', [email], async (error, result) => {
+    console.log(result);
+    if (result.length === 0) {
+      return res.status(401).json(
+        JSON.stringify({
+          message: 'Please check your email and try again.',
+          title: 'Email not registered!',
+          type: 'error'
+        })
+      );
+    } else if (!(await bcrypt.compareSync(password, result[0].Password))) {
+      res.status(401).json(
+        JSON.stringify({
+          message: 'Please double-check your password.',
+          title: 'Incorrect password!',
+          type: 'error'
+        })
+      );
+    } else {
+      const id = result[0].User_ID;
+      const token = jwt.sign({ id }, jwt_secret, {
+        expiresIn: jwt_expires_in
+      });
+      console.log('The token is: ' + token);
+      res.status(200).json(
+        JSON.stringify({
+          message: 'You have been successfully logged in.',
+          title: 'Login successful!',
+          type: 'success',
+          token
+        })
+      );
+    }
+  });
+});
+app.post(`/${appName}/isLoggedIn`, (req, res) => {
+  // console.log(req.body);
+  if (!req.body.token) {
+    res.status(401).json();
+  } else {
+    const decoded = jwt.verify(req.body.token, jwt_secret);
+    // console.log(decoded);
+    if (decoded.exp > 0) {
+      connection.query('SELECT * FROM users WHERE User_ID = ?', [decoded.id], async (error, result) => {
+        console.log(result[0]);
+        console.log(result[0].Password);
+        const { First_Name, Last_Name, Email } = result[0];
+        res.status(200).json(JSON.stringify({ First_Name, Last_Name, Email }));
+      });
+    } else {
+      res.status(401).json();
+    }
+  }
 });
 
 app.post(`/${appName}/api/`, (req, res) => {

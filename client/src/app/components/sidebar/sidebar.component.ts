@@ -1,3 +1,4 @@
+import { AuthService } from './../../services/auth.service';
 import { Component, OnInit, ElementRef } from '@angular/core';
 import { Location, LocationStrategy, PathLocationStrategy } from '@angular/common';
 import { Router } from '@angular/router';
@@ -12,13 +13,13 @@ export const ROUTES: RouteInfo[] = [
   {
     path: '/dashboard',
     title: 'Dashboard',
-    icon: 'ni-tv-2 text-primary',
+    icon: 'ni-tv-2 text-marigold',
     class: ''
   },
-  { path: '/user-profile', title: 'User profile', icon: 'ni-single-02 text-yellow', class: '' },
-  { path: '/tables', title: 'Tables', icon: 'ni-bullet-list-67 text-red', class: '' },
-  { path: '/login', title: 'Login', icon: 'ni-key-25 text-info', class: '' },
-  { path: '/register', title: 'Register', icon: 'ni-circle-08 text-pink', class: '' }
+  { path: '/user-profile', title: 'User profile', icon: 'ni-single-02 text-marigold', class: '' },
+  { path: '/tables', title: 'Tables', icon: 'ni-bullet-list-67 text-marigold', class: '' },
+  { path: '/login', title: 'Login', icon: 'ni-key-25 text-marigold', class: 'auth' },
+  { path: '/register', title: 'Register', icon: 'ni-circle-08 text-marigold', class: 'auth' }
 ];
 
 @Component({
@@ -32,29 +33,34 @@ export class SidebarComponent implements OnInit {
 
   public focus;
   public location: Location;
-  constructor(location: Location, private element: ElementRef, private router: Router) {
+  constructor(
+    public authService: AuthService,
+    location: Location,
+    private element: ElementRef,
+    private router: Router
+  ) {
     this.location = location;
   }
 
   ngOnInit() {
     this.menuItems = ROUTES.filter(menuItem => menuItem);
-    ROUTES[2].class = this.getTitle() === 'Register' ? 'd-none' : '';
+    // ROUTES[2].class = this.getTitle() === 'Register' ? 'd-none' : '';
 
     this.router.events.subscribe(event => {
       this.isCollapsed = true;
     });
   }
   getTitle() {
-    var titlee = this.location.prepareExternalUrl(this.location.path());
-    if (titlee.charAt(0) === '#') {
-      titlee = titlee.slice(1);
+    let title = this.location.prepareExternalUrl(this.location.path());
+    if (title.charAt(0) === '#') {
+      title = title.slice(1);
     }
     // split by '/' and '?'
-    titlee.split(/[?\/]+/);
-    for (let page of titlee.split(/[?\/]+/)) {
-      titlee = '/' + page;
-      for (let menuItem of this.menuItems) {
-        if (menuItem.path === titlee) {
+    title.split(/[?\/]+/);
+    for (const page of title.split(/[?\/]+/)) {
+      title = '/' + page;
+      for (const menuItem of this.menuItems) {
+        if (menuItem.path === title) {
           return menuItem.title;
         }
       }

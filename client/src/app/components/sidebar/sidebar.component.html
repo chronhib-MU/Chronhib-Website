@@ -10,7 +10,7 @@
       >
         <span class="navbar-toggler-icon"></span>
       </button>
-      <a class="h4 mb-0 text-black text-uppercase inline-block">{{ getTitle() }}</a>
+      <span class="h4 mb-0 text-black text-uppercase inline-block">{{ getTitle() }}</span>
     </div>
     <!-- Brand -->
     <a class="navbar-brand pt-0" routerLinkActive="active" [routerLink]="['/dashboard']">
@@ -20,7 +20,7 @@
     <ul class="nav align-items-center">
       <li class="nav-item" ngbDropdown placement="bottom-right">
         <a class="nav-link nav-link-icon" role="button" ngbDropdownToggle>
-          <i class="ni ni-bell-55"></i>
+          <i class="ni ni-bell-55 text-default"></i>
         </a>
         <div class="dropdown-menu-arrow dropdown-menu-right" ngbDropdownMenu>
           <a class="dropdown-item" href="javascript:void(0)">Action</a>
@@ -57,11 +57,11 @@
             <i class="ni ni-support-16"></i>
             <span>Support</span>
           </a>
-          <div class="dropdown-divider"></div>
-          <a href="#!" class="dropdown-item">
-            <i class="ni ni-user-run"></i>
+          <div class="dropdown-divider" [hidden]="!authService.authenticated"></div>
+          <span (click)="authService.logOut()" class="dropdown-item" [hidden]="!authService.authenticated">
+            <i class="ni ni-lock-circle-open text-marigold"></i>
             <span>Logout</span>
-          </a>
+          </span>
         </div>
       </li>
     </ul>
@@ -101,7 +101,11 @@
       </form>
       <!-- Navigation -->
       <ul class="navbar-nav">
-        <li *ngFor="let menuItem of menuItems" class="{{ menuItem.class }} nav-item">
+        <li
+          *ngFor="let menuItem of menuItems"
+          class="{{ menuItem.class }} nav-item"
+          [ngClass]="{ 'd-none': authService.authenticated && menuItem.class === 'auth' }"
+        >
           <a routerLinkActive="active" [routerLink]="[menuItem.path]" class="nav-link">
             <i class="ni {{ menuItem.icon }}"></i>
             {{ menuItem.title }}
