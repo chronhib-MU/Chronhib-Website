@@ -40,11 +40,7 @@
           <div class="text-center mb-4">
             <b>Register</b>
           </div>
-          <form
-            role="form"
-            [formGroup]="registerForm"
-            (ngSubmit)="this.authService.register(attempts, timeLeftString, timeout, registerForm)"
-          >
+          <form role="form" [formGroup]="registerForm" (ngSubmit)="this.authService.register(registerForm)">
             <div class="row">
               <div class="col-md-6">
                 <div
@@ -168,16 +164,18 @@
             </div>
             <div class="text-muted font-italic text-center">
               <small>
-                Failed Attempts: <span class="text-danger font-weight-600">{{ attempts + '/3' }}</span>
+                Failed Attempts: <span class="text-danger font-weight-600">{{ authService.attempts + '/3' }}</span>
               </small>
             </div>
-            <div class="text-center mt-2" [hidden]="attempts === 0">
+            <div class="text-center mt-2" [hidden]="authService.attempts === 0">
               <small>
                 <span class="text-danger">
                   <span></span>
-                  <span [hidden]="blocked(attempts)">Invalid Access Code.</span>
-                  You have failed {{ attempts > 1 ? attempts + ' times' : 'once' }}.
-                  <span [hidden]="!blocked(attempts)">Please try again in {{ timeLeftString }}.</span>
+                  <span [hidden]="blocked(authService.attempts)">Invalid Access Code.</span>
+                  You have failed {{ authService.attempts > 1 ? authService.attempts + ' times' : 'once' }}.
+                  <span [hidden]="!blocked(authService.attempts)"
+                    >Please try again in {{ authService.timeLeftString }}.</span
+                  >
                 </span>
               </small>
             </div>
@@ -196,7 +194,7 @@
                 type="submit"
                 class="btn btn-primary mt-4"
                 value="Register"
-                [disabled]="blocked(attempts) || registerForm.invalid"
+                [disabled]="blocked(authService.attempts) || registerForm.invalid"
               >
                 Register
               </button>

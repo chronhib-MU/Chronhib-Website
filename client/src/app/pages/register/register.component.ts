@@ -10,9 +10,7 @@ import { HttpClient } from '@angular/common/http';
 })
 export class RegisterComponent implements OnInit, OnChanges {
   registerForm: FormGroup;
-  attempts = 0;
-  timeout = 1;
-  timeLeftString = '59s';
+  
 
   blocked = (attempts: number) => attempts === 3;
 

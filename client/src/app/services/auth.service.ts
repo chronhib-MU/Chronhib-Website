@@ -18,6 +18,9 @@ export class AuthService {
     lastName: '',
     email: ''
   };
+  attempts = 0;
+  timeout = 1;
+  timeLeftString = '59s';
   authenticated = false;
   constructor(private http: HttpClient, private notifyService: NotificationService, private router: Router) {
     // console.log(localStorage.getItem('token'));
@@ -82,18 +85,18 @@ export class AuthService {
     }
   }
 
-  async register(attempts, timeLeftString, timeout, registerForm) {
+  async register(registerForm) {
     console.table(registerForm.value);
     const { firstName, lastName, email, password, confirmPassword, accessCode } = registerForm.value;
     console.log(registerForm.value);
     if (accessCode !== '100' || registerForm.invalid) {
-      attempts++;
-      console.log('Attempts: ', attempts);
-      if (attempts === 3) {
+      this.attempts++;
+      console.log('Attempts: ', this.attempts);
+      if (this.attempts === 3) {
         // Start Timeout countdown
         console.log('Starting now: ', Date.now());
         const t: Date = new Date(Date.now());
-        t.setMinutes(t.getMinutes() + timeout);
+        t.setMinutes(t.getMinutes() + this.timeout);
         const countDownDate = t.getTime();
         const timer = setInterval(() => {
           const now = new Date().getTime();
@@ -108,12 +111,12 @@ export class AuthService {
           const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
 
           // Store the result in "timeLeft"
-          timeLeftString =
+          this.timeLeftString =
             (days ? days + 'd ' : '') + (hours ? hours + 'h ' : '') + (minutes ? minutes + 'm ' : '') + (seconds + 's');
 
           // If the count down is finished, write some text
           if (timeLeft < 0) {
-            attempts = 0;
+            this.attempts = 0;
             console.log('Now you can try again!');
             clearInterval(timer);
           }

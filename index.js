@@ -120,7 +120,7 @@ app.post(`/${appName}/register`, (req, res) => {
       })
     );
   }
-  connection.query('SELECT email FROM users WHERE email = ?', [email], async (error, result) => {
+  connection.query('SELECT email FROM USERS WHERE email = ?', [email], async (error, result) => {
     if (error) {
       console.log(error);
     }
@@ -139,7 +139,7 @@ app.post(`/${appName}/register`, (req, res) => {
     let hashedPassword = await bcrypt.hash(password, 10);
     console.log(hashedPassword);
     connection.query(
-      'INSERT INTO users SET ?',
+      'INSERT INTO USERS SET ?',
       { First_Name: firstName, Last_Name: lastName, Email: email, Password: hashedPassword },
       (error, result) => {
         if (error) {
@@ -180,7 +180,7 @@ app.post(`/${appName}/login`, (req, res) => {
       })
     );
   }
-  connection.query('SELECT * FROM users WHERE Email = ?', [email], async (error, result) => {
+  connection.query('SELECT * FROM USERS WHERE Email = ?', [email], async (error, result) => {
     console.log(result);
     if (result.length === 0) {
       return res.status(401).json(
@@ -223,7 +223,7 @@ app.post(`/${appName}/isLoggedIn`, (req, res) => {
     const decoded = jwt.verify(req.body.token, jwt_secret);
     // console.log(decoded);
     if (decoded.exp > 0) {
-      connection.query('SELECT * FROM users WHERE User_ID = ?', [decoded.id], async (error, result) => {
+      connection.query('SELECT * FROM USERS WHERE User_ID = ?', [decoded.id], async (error, result) => {
         console.log(result[0]);
         console.log(result[0].Password);
         const { First_Name, Last_Name, Email } = result[0];
