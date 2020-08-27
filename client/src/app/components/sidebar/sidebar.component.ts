@@ -9,7 +9,12 @@ declare interface RouteInfo {
   class: string;
 }
 export const ROUTES: RouteInfo[] = [
-  { path: '/dashboard', title: 'Dashboard', icon: 'ni-tv-2 text-primary', class: '' },
+  {
+    path: '/dashboard',
+    title: 'Dashboard',
+    icon: 'ni-tv-2 text-primary',
+    class: ''
+  },
   { path: '/user-profile', title: 'User profile', icon: 'ni-single-02 text-yellow', class: '' },
   { path: '/tables', title: 'Tables', icon: 'ni-bullet-list-67 text-red', class: '' },
   { path: '/login', title: 'Login', icon: 'ni-key-25 text-info', class: '' },
@@ -22,29 +27,30 @@ export const ROUTES: RouteInfo[] = [
   styleUrls: ['./sidebar.component.scss']
 })
 export class SidebarComponent implements OnInit {
-
   public menuItems: any[];
   public isCollapsed = true;
 
   public focus;
   public location: Location;
-  constructor (location: Location, private element: ElementRef, private router: Router) {
+  constructor(location: Location, private element: ElementRef, private router: Router) {
     this.location = location;
   }
 
-  ngOnInit () {
+  ngOnInit() {
     this.menuItems = ROUTES.filter(menuItem => menuItem);
-    this.router.events.subscribe((event) => {
+    ROUTES[2].class = this.getTitle() === 'Register' ? 'd-none' : '';
+
+    this.router.events.subscribe(event => {
       this.isCollapsed = true;
     });
   }
-  getTitle () {
+  getTitle() {
     var titlee = this.location.prepareExternalUrl(this.location.path());
     if (titlee.charAt(0) === '#') {
       titlee = titlee.slice(1);
     }
     // split by '/' and '?'
-    titlee.split(/[?\/]+/)
+    titlee.split(/[?\/]+/);
     for (let page of titlee.split(/[?\/]+/)) {
       titlee = '/' + page;
       for (let menuItem of this.menuItems) {
@@ -52,7 +58,7 @@ export class SidebarComponent implements OnInit {
           return menuItem.title;
         }
       }
-    };
+    }
     return 'Dashboard';
   }
 }

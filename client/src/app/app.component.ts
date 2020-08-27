@@ -6,6 +6,6 @@ import { TableDataService } from './services/table-data.service';
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
-  title = 'chronhib2020';
+  title = 'ChronhibWebsite';
   constructor(private tableData: TableDataService) {}
 }

@@ -5,7 +5,7 @@
 export const environment = {
   apiUrl: 'http://localhost:4001/chronhibWebsite/api/',
   production: false,
-  ws_url: `${window.location.origin}`,
+  wsUrl: 'http://localhost:4001/chronhibWebsite/'
 };
 
 /*
