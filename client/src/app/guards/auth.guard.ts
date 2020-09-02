@@ -12,8 +12,8 @@ export class AuthGuard implements CanActivate {
     next: ActivatedRouteSnapshot,
     state: RouterStateSnapshot
   ): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree {
-    if (localStorage.getItem('token')) {
-      const token = localStorage.token;
+    if (localStorage.getItem(`${window.location.origin}token`)) {
+      const token = localStorage[`${window.location.origin}token`];
       this.authService.isLoggedIn(token).then(_ => {
         if (!this.authService.authenticated) {
           console.log('access denied');

@@ -191,7 +191,7 @@ app.post(`/${appName}/login`, (req, res) => {
         })
       );
     } else if (!(await bcrypt.compareSync(password, result[0].Password))) {
-      res.status(401).json(
+      return res.status(401).json(
         JSON.stringify({
           message: 'Please double-check your password.',
           title: 'Incorrect password!',
@@ -204,7 +204,7 @@ app.post(`/${appName}/login`, (req, res) => {
         expiresIn: jwt_expires_in
       });
       console.log('The token is: ' + token);
-      res.status(200).json(
+      return res.status(200).json(
         JSON.stringify({
           message: 'You have been successfully logged in.',
           title: 'Login successful!',
@@ -217,7 +217,7 @@ app.post(`/${appName}/login`, (req, res) => {
 });
 app.post(`/${appName}/isLoggedIn`, (req, res) => {
   if (!req.body.token) {
-    res.status(401).json();
+    return res.status(401).json();
   } else {
     const decoded = jwt.verify(req.body.token, jwt_secret);
     // console.log(decoded);
@@ -226,10 +226,10 @@ app.post(`/${appName}/isLoggedIn`, (req, res) => {
         console.log(result[0]);
         console.log(result[0].Password);
         const { First_Name, Last_Name, Email } = result[0];
-        res.status(200).json(JSON.stringify({ First_Name, Last_Name, Email }));
+        return res.status(200).json(JSON.stringify({ First_Name, Last_Name, Email }));
       });
     } else {
-      res.status(401).json();
+      return res.status(401).json();
     }
   }
 });
