@@ -1,6 +1,6 @@
 {
   "configVersion": 1,
-  "timestamp": 1599049500886,
+  "timestamp": 1599050742676,
   "index": "/chronhibWebsite/index.html",
   "assetGroups": [
     {
@@ -3540,35 +3540,7 @@
       "patterns": []
     }
   ],
-  "dataGroups": [
-    {
-      "name": "performance",
-      "patterns": [
-        "\\/assets\\/.*"
-      ],
-      "strategy": "performance",
-      "maxSize": 100,
-      "maxAge": 259200000,
-      "cacheQueryOptions": {
-        "ignoreVary": true
-      },
-      "version": 1
-    },
-    {
-      "name": "freshness",
-      "patterns": [
-        "\\/tables"
-      ],
-      "strategy": "freshness",
-      "maxSize": 100,
-      "maxAge": 259200000,
-      "timeoutMs": 10000,
-      "cacheQueryOptions": {
-        "ignoreVary": true
-      },
-      "version": 1
-    }
-  ],
+  "dataGroups": [],
   "hashTable": {
     "/chronhibWebsite/5-es2015.0564c9c7fee10d80bc55.js": "2abe09464118a1c52a53d8ff78c5ef82aaa5b7ba",
     "/chronhibWebsite/5-es5.0564c9c7fee10d80bc55.js": "d5cc917b2fe328371e7e545e4d99a6daa98d090f",
