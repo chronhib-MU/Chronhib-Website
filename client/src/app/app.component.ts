@@ -1,6 +1,4 @@
 import { Component } from '@angular/core';
-import { TableDataService } from './services/table-data.service';
-import { AuthService } from './services/auth.service';
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -8,5 +6,5 @@ import { AuthService } from './services/auth.service';
 })
 export class AppComponent {
   title = 'ChronhibWebsite';
-  constructor(private tableData: TableDataService, private authService: AuthService) {}
+  constructor() {}
 }
