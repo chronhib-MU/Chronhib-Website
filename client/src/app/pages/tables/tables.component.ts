@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { TableDataService } from '../../services/table-data.service';
-import * as $ from 'jquery';
+
 @Component({
   selector: 'app-tables',
   templateUrl: './tables.component.html',
@@ -46,9 +46,8 @@ export class TablesComponent implements OnInit, OnDestroy {
             ctable: 'text'
           }
         });
-      }
-      // Checking if tableQuery is not an empty object
-      else if (!(Object.keys(this.tableQuery).length === 0 && this.tableQuery.constructor === Object)) {
+      } else if (!(Object.keys(this.tableQuery).length === 0 && this.tableQuery.constructor === Object)) {
+        // Checking if tableQuery is not an empty object
         this.before = this.tableQuery.ctable;
         this.after = this.tableQuery.dtable;
         this.tableData.fetchTable(this.tableQuery);

@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
-import { catchError, retry } from 'rxjs/operators';
+import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { ApiGetQuery } from '../interfaces/api-get-query';
 import { ApiPostBody } from '../interfaces/api-post-body';
@@ -30,7 +29,7 @@ export class TableDataService {
   };
   fetchedTable: Observable<{ data: { afterTable: []; beforeTable: [] } }>;
   currentApiQuery: ApiGetQuery | string;
-  constructor (private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
   // Fetches table data from the API
   fetchTable = async (apiQuery: ApiGetQuery | string) => {
     this.currentApiQuery = apiQuery;
@@ -78,7 +77,7 @@ export class TableDataService {
         const newData = apiBody.values[0];
         for (let i = 0; i < tableData.length; i++) {
           const row = tableData[i];
-          const newDataRow = newData.find(r => r.ID_unique_number === row.ID_unique_number);
+          const newDataRow = newData.find((r: { ID: any }) => r.ID === row.ID);
           if (typeof newDataRow !== 'undefined') {
             row.Sort_ID = newDataRow.Sort_ID;
           }
@@ -94,9 +93,10 @@ export class TableDataService {
 
       console.log(`Updated ${filteredApiBody.table} with `, filteredApiBody, `to ${environment.apiUrl}?`);
       if (filteredApiBody.values.length > 0) {
-        const postedTable: Observable<ApiPostBody> = this.http.post<ApiPostBody>(`${environment.apiUrl}?`, filteredApiBody) as Observable<
-          ApiPostBody
-        >;
+        const postedTable: Observable<ApiPostBody> = this.http.post<ApiPostBody>(
+          `${environment.apiUrl}?`,
+          filteredApiBody
+        ) as Observable<ApiPostBody>;
         await postedTable.toPromise();
         console.log('Done updating!');
       } else {

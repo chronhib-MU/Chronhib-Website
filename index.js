@@ -50,8 +50,8 @@ const app = express();
 const server = http.createServer(app);
 // mysql table queries
 const SELECT_ALL_TEXT_QUERY = 'SELECT * FROM TEXT ORDER BY Sort_ID ASC LIMIT 100';
-const SELECT_ALL_LEMMATA_QUERY = 'SELECT * FROM LEMMATA ORDER BY ID_unique_number ASC LIMIT 100';
-const SELECT_ALL_MORPHOLOGY_QUERY = 'SELECT * FROM MORPHOLOGY ORDER BY TextID, Textual_Unit_ID, Sort_ID ASC LIMIT 100';
+const SELECT_ALL_LEMMATA_QUERY = 'SELECT * FROM LEMMATA ORDER BY ID ASC LIMIT 100';
+const SELECT_ALL_MORPHOLOGY_QUERY = 'SELECT * FROM MORPHOLOGY ORDER BY Text_Unit_ID, Sort_ID ASC LIMIT 100';
 const SELECT_ALL_SENTENCES_QUERY = 'SELECT * FROM SENTENCES ORDER BY Sort_ID ASC LIMIT 100';
 
 const tables = {
@@ -216,7 +216,6 @@ app.post(`/${appName}/login`, (req, res) => {
   });
 });
 app.post(`/${appName}/isLoggedIn`, (req, res) => {
-  // console.log(req.body);
   if (!req.body.token) {
     res.status(401).json();
   } else {
@@ -243,9 +242,7 @@ app.post(`/${appName}/api/`, (req, res) => {
     // if the row is moved
     const updateQueries = [];
     values[0].forEach(rowData => {
-      let query = `UPDATE ${table.toUpperCase()} SET Sort_ID = ${rowData.Sort_ID} WHERE ID_unique_number = ${
-        rowData.ID_unique_number
-      };`;
+      let query = `UPDATE ${table.toUpperCase()} SET Sort_ID = ${rowData.Sort_ID} WHERE ID = ${rowData.ID};`;
       updateQueries.push(query);
     });
     updateQueries.forEach(updateQuery => {
@@ -269,7 +266,7 @@ app.post(`/${appName}/api/`, (req, res) => {
       console.log(value);
       let { id, fieldProperty, fieldValue } = value;
       console.table({ id, fieldProperty, fieldValue });
-      let updateQuery = `UPDATE ${table.toUpperCase()} SET ${fieldProperty} = "${fieldValue}" WHERE ID_unique_number = ${id};`;
+      let updateQuery = `UPDATE ${table.toUpperCase()} SET ${fieldProperty} = "${fieldValue}" WHERE ID = ${id};`;
       console.log('Post Query: ', updateQuery);
       connection.query(updateQuery, (err, results) => {
         if (err) {
@@ -320,26 +317,17 @@ app.get(`/${appName}/api/`, (req, res) => {
 
     // Check if fieldProperty and fValue
     if (fieldProperty || fieldValue) {
-      // afterQuery
-      if (currentTable === 'text' && fieldProperty === 'Text_ID') {
-        fieldProperty = 'TextID';
+      // beforeQuery
+      if (currentTable !== destinationTable) {
+        // if not the same table
+        beforeQuery = `SELECT * FROM ${currentTable.toUpperCase()} WHERE ${fieldProperty} = "${fieldValue}"`;
       }
+      // afterQuery
       afterQuery = `SELECT * FROM ${destinationTable.toUpperCase()} WHERE ${fieldProperty} = "${fieldValue}"${between}ORDER BY ${
         fieldProperty + ', '
       }Sort_ID ASC${limit}`;
     } else {
       afterQuery = `SELECT * FROM ${destinationTable.toUpperCase()}${between}ORDER BY Sort_ID ASC${limit}`;
-    }
-    if (fieldProperty || fieldValue) {
-      // beforeQuery
-      // Text table has exception where TextID is Text_ID
-      // if not the same table
-      if (currentTable !== destinationTable) {
-        if (currentTable === 'text' && fieldProperty === 'TextID') {
-          fieldProperty = 'Text_ID';
-        }
-        beforeQuery = `SELECT * FROM ${currentTable.toUpperCase()} WHERE ${fieldProperty} = "${fieldValue}"`;
-      }
     }
     // console.log('beforeQuery:', beforeQuery);
     // console.log('afterQuery:', afterQuery);

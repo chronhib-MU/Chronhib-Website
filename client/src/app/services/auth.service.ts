@@ -142,9 +142,11 @@ export class AuthService {
       }) as Observable<string>).toPromise();
       const userData = JSON.parse(userDataString);
       const { First_Name, Last_Name, Email } = userData;
+      console.log(userData);
       this.user = { firstName: First_Name, lastName: Last_Name, email: Email };
       this.authenticated = true;
     } catch (error) {
+      console.log(error);
       this.user = {
         firstName: '',
         lastName: '',

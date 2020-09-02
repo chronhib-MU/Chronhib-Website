@@ -15,6 +15,8 @@ import { ComponentsModule } from './components/components.module';
 import { TableDataService } from './services/table-data.service';
 import { AuthService } from './services/auth.service';
 import { ToastrModule } from 'ngx-toastr';
+import { ServiceWorkerModule } from '@angular/service-worker';
+import { environment } from '../environments/environment';
 @NgModule({
   imports: [
     BrowserAnimationsModule,
@@ -28,7 +30,8 @@ import { ToastrModule } from 'ngx-toastr';
       timeOut: 5000,
       positionClass: 'toast-bottom-right',
       preventDuplicates: true
-    })
+    }),
+    ServiceWorkerModule.register('ngsw-worker.js', { enabled: environment.production })
   ],
   declarations: [AppComponent, AdminLayoutComponent, AuthLayoutComponent],
   providers: [TableDataService, AuthService],

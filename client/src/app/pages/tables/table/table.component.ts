@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, NgZone, ElementRef, ViewChild, ɵConsole } from '@angular/core';
+import { Component, OnInit, Input, ElementRef, ViewChild } from '@angular/core';
 import { Location } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { TableDataService } from '../../../services/table-data.service';
@@ -13,13 +13,12 @@ declare const $: any;
   styleUrls: ['./table.component.scss']
 })
 export class TableComponent implements OnInit {
-  // TODO: this needs to handle tableQuery
   @Input() before: string;
   @Input() after: string;
   @Input() edit: boolean;
   @ViewChild('appTable') appTable: ElementRef;
   private hotRegisterer = new HotTableRegisterer();
-  wordWrap: boolean = true;
+  wordWrap = true;
   instance = 'hot';
   // index 0 if edit mode false OR index 1 if edit mode true
   hotSettings: Handsontable.GridSettings[] = [
@@ -39,7 +38,6 @@ export class TableComponent implements OnInit {
       readOnly: true,
       // colWidths: 150,
       wordWrap: true
-
     },
     {
       startRows: 0,
@@ -89,12 +87,11 @@ export class TableComponent implements OnInit {
   routeParams: any;
   routeQueryParams: any;
 
-  constructor (
+  constructor(
     public tableData: TableDataService,
     private router: Router,
     private route: ActivatedRoute,
-    private location: Location,
-    private ngZone: NgZone
+    private location: Location
   ) {
     this.dataTable = {
       text: this.tableData.tables.text,
@@ -104,7 +101,6 @@ export class TableComponent implements OnInit {
     };
     Handsontable.hooks.add('afterInit', () => {
       $('.htCore').addClass('table');
-
     });
     // Handsontable.hooks.add('afterChange', changes => {
     //   changes.forEach(([row, prop, oldValue, newValue]) => {
@@ -113,9 +109,9 @@ export class TableComponent implements OnInit {
     // });
   }
 
-  ngOnInit (): void {
+  ngOnInit(): void {
     const that = this;
-    this.routeQueryParams = this.route.queryParamMap.subscribe(async paramMap => {
+    this.routeQueryParams = this.route.queryParamMap.subscribe(async _paramMap => {
       await this.refresh();
 
       console.log('updated');
@@ -133,15 +129,14 @@ export class TableComponent implements OnInit {
             console.log(tableData);
             const values = [];
             arguments[0].forEach(value => {
-              console.log("value:", value);
+              console.log('value:', value);
               if (value[2] !== value[3]) {
-                let fieldProperty = value[1];
-                values
-                  .push({
-                    id: tableData[value[0]][1],
-                    fieldProperty,
-                    fieldValue: value[3]
-                  });
+                const fieldProperty = value[1];
+                values.push({
+                  id: tableData[value[0]][1],
+                  fieldProperty,
+                  fieldValue: value[3]
+                });
               }
             });
             const res = {
@@ -157,16 +152,15 @@ export class TableComponent implements OnInit {
                 // that.refresh();
               });
             }
-          };
-        }
-      }
-      else if (hook === 'afterRowMove') {
+          }
+        };
+      } else if (hook === 'afterRowMove') {
         this.hotSettings[that.edit ? 1 : 0][hook] = function () {
           console.log(this);
           const tableData = this.getData();
           const newValues = tableData.map((row, i) => {
-            let sortId = i + 1;
-            return { ID_unique_number: row['1'], Sort_ID: sortId };
+            const sortId = i + 1;
+            return { ID: row['1'], Sort_ID: sortId };
           });
 
           const res: ApiPostBody = {
@@ -188,8 +182,8 @@ export class TableComponent implements OnInit {
           console.log(this);
           const tableData = this.getData();
           const newValues = tableData.map((row, i) => {
-            let sortId = i + 1;
-            return { ID_unique_number: row['1'], Sort_ID: sortId };
+            const sortId = i + 1;
+            return { ID: row['1'], Sort_ID: sortId };
           });
           const res: ApiPostBody = {
             table: that.after,
@@ -204,15 +198,13 @@ export class TableComponent implements OnInit {
               // that.refresh();
             });
           }
-        }
+        };
       }
     });
 
-
     // $hooksList = $('#hooksList');
   }
-  async fetchedTable () {
-    const that = this;
+  async fetchedTable() {
     const { data } = await this.tableData.fetchedTable.toPromise();
     // console.table('After:', this.after);
     // console.table('Before:', this.before);
@@ -233,302 +225,28 @@ export class TableComponent implements OnInit {
 
     // If this is a scenario where there is a before table
     if (this.before !== this.after && this.before !== '') {
+      // For the mini table
       this.dataTable[this.before].headers.forEach((header: string) => {
-        this.columnsMini.push({
-          data: header,
-          title: _.capitalize(header.replace(/_/g, ' ')),
-          type: 'text',
-          colWidths: function (index: number): number | string {
-            // console.log('Index: ', index + ' ' + that.dataTable[that.after].headers[index]);
-            switch (that.before) {
-              // column widths for text table
-              case 'text':
-                switch (index) {
-                  case 2:
-                    return 100;
-                  case 5:
-                    return 400;
-                  case 6:
-                    return 200;
-                  case 7:
-                    return 300;
-                  case 8:
-                    return 300;
-                  case 9:
-                    return 600;
-                  case 12:
-                    return 100;
-                  case 13:
-                    return 300;
-                  case 14:
-                    return 300;
-                  default:
-                    break;
-                }
-                break;
-              // column widths for sentences table
-              case 'sentences':
-                switch (index) {
-                  case 2:
-                    return 100;
-                  case 7:
-                    return 300;
-                  case 9:
-                    return 300;
-                  default:
-                    break;
-                }
-                break;
-              // column widths for morphology table
-              case 'morphology':
-                switch (index) {
-                  case 3:
-                    return 100;
-                  case 21:
-                    return 250;
-                  default:
-                    break;
-                }
-              // column widths for lemmata table
-              case 'lemmata':
-                switch (index) {
-                  case 7:
-                    return 200;
-                  case 9:
-                    return 300;
-                  case 10:
-                    return 200;
-                  default:
-                    break;
-                }
-              default:
-                break;
-            }
-            return 150;
-          },
-          renderer: function (instance, td, row, col, prop, value, cellProperties) {
-            const escaped = Handsontable.helper.stringify(value);
-            // console.log('Renderer Variables: ', { row, col, prop, value, cellProperties });
-            // if (escaped.indexOf('http') === 0) {
-            if (escaped.indexOf('http') === 0) {
-              // Create anchor element.
-              const a = document.createElement('a');
-              // Create the text node for anchor element
-              const link = document.createTextNode(value);
-              // Append the text node to anchor element
-              a.appendChild(link);
-              // Set the title
-              a.title = value;
-              // Set the href property
-              a.href = value;
-              Handsontable.dom.addEvent(a, 'mousedown', function (event) {
-                event.preventDefault();
-              });
-
-              Handsontable.dom.empty(td);
-              td.appendChild(a);
-              // Make it centered
-              td.style.textAlign = 'center';
-            } else {
-              if (
-                (that.before === 'text' && prop === 'Text_ID') ||
-                (that.before === 'sentences' && prop === 'Textual_Unit_ID') ||
-                (that.before === 'morphology' && prop === 'Lemma')
-              ) {
-                const dtableIndex = that.tableData.tables.names.indexOf(that.before) + 1;
-
-                const queryParams = {
-                  page: 0,
-                  limit: 0,
-                  fprop: prop,
-                  fval: value,
-                  dtable: that.tableData.tables.names[dtableIndex],
-                  ctable: that.before
-                };
-                const queryString = Object.keys(queryParams)
-                  .map(key => key + '=' + queryParams[key])
-                  .join('&');
-                const a = document.createElement('span');
-                const linkText = document.createTextNode(value);
-                a.appendChild(linkText);
-                a.className = 'btn-link';
-                // a.href = '/tables?' + queryString;
-                Handsontable.dom.addEvent(a, 'mousedown', function (event) {
-                  event.preventDefault();
-                });
-                Handsontable.dom.empty(td);
-                a.addEventListener('click', () => {
-                  that.ngZone.run(() => that.router.navigate(['/tables'], { queryParams }));
-                });
-                td.appendChild(a);
-                td.style.textAlign = 'center';
-              } else {
-                Handsontable.renderers.TextRenderer.apply(this, arguments);
-                td.style.whiteSpace = that.wordWrap ? 'normal' : 'nowrap';
-                return td
-              }
-
-            }
-            td.style.whiteSpace = that.wordWrap ? 'normal' : 'nowrap';
-            return td;
-          }
-        })
+        this.columnsMini.push(this.columnSettings(this, this.before, header));
       });
       this.getTableData(this.before);
       // Plugins go here
-      console.log("What is this.before?", this.before);
+      console.log('What is this.before?', this.before);
       if (this.before === 'sentences') {
         // console.log(this.dataTable[this.before]);
         // console.log([...Array((this.dataTable[this.before].headers.length)).keys()]);
-        const headerArr = [...Array((this.dataTable[this.before].headers.length)).keys()];
+        const headerArr = [...Array(this.dataTable[this.before].headers.length).keys()];
 
         this.hotRegisterer.getInstance(this.instance + 'Mini').updateSettings({
           hiddenColumns: {
-            columns: headerArr.filter((_, i) => i !== 7)
+            columns: headerArr.filter((_val, i) => i !== 7)
           }
         });
       }
     }
     this.dataTable[this.after].headers.forEach((header: string) => {
-      this.columns.push({
-        data: header,
-        title: _.capitalize(header.replace(/_/g, ' ')),
-        type: 'text',
-        colWidths: function (index: number): number | string {
-          // console.log('Index: ', index + ' ' + that.dataTable[that.after].headers[index]);
-          switch (that.after) {
-            // column widths for text table
-            case 'text':
-              switch (index) {
-                case 2:
-                  return 100;
-                case 5:
-                  return 400;
-                case 6:
-                  return 200;
-                case 7:
-                  return 300;
-                case 8:
-                  return 300;
-                case 9:
-                  return 600;
-                case 12:
-                  return 100;
-                case 13:
-                  return 300;
-                case 14:
-                  return 300;
-                default:
-                  break;
-              }
-              break;
-            // column widths for sentences table
-            case 'sentences':
-              switch (index) {
-                case 2:
-                  return 100;
-                case 7:
-                  return 300;
-                case 9:
-                  return 300;
-                default:
-                  break;
-              }
-              break;
-            // column widths for morphology table
-            case 'morphology':
-              switch (index) {
-                case 3:
-                  return 100;
-                case 21:
-                  return 250;
-                default:
-                  break;
-              }
-            // column widths for lemmata table
-            case 'lemmata':
-              switch (index) {
-                case 7:
-                  return 200;
-                case 9:
-                  return 300;
-                case 10:
-                  return 200;
-                default:
-                  break;
-              }
-            default:
-              break;
-          }
-          return 150;
-        },
-        renderer: function (instance, td, row, col, prop, value, cellProperties) {
-          const escaped = Handsontable.helper.stringify(value);
-          // console.log('Renderer Variables: ', { row, col, prop, value, cellProperties });
-          // if (escaped.indexOf('http') === 0) {
-          if (escaped.indexOf('http') === 0) {
-            // Create anchor element.
-            const a = document.createElement('a');
-            // Create the text node for anchor element
-            const link = document.createTextNode(value);
-            // Append the text node to anchor element
-            a.appendChild(link);
-            // Set the title
-            a.title = value;
-            // Set the href property
-            a.href = value;
-            Handsontable.dom.addEvent(a, 'mousedown', function (event) {
-              event.preventDefault();
-            });
-
-            Handsontable.dom.empty(td);
-            td.appendChild(a);
-            // Make it centered
-            td.style.textAlign = 'center';
-          } else {
-            if (
-              (that.after === 'text' && prop === 'Text_ID') ||
-              (that.after === 'sentences' && prop === 'Textual_Unit_ID') ||
-              (that.after === 'morphology' && prop === 'Lemma')
-            ) {
-              const dtableIndex = that.tableData.tables.names.indexOf(that.after) + 1;
-
-              const queryParams = {
-                page: 0,
-                limit: 0,
-                fprop: prop,
-                fval: value,
-                dtable: that.tableData.tables.names[dtableIndex],
-                ctable: that.after
-              };
-              const queryString = Object.keys(queryParams)
-                .map(key => key + '=' + queryParams[key])
-                .join('&');
-              const a = document.createElement('span');
-              const linkText = document.createTextNode(value);
-              a.appendChild(linkText);
-              a.className = 'btn-link';
-              // a.href = '/tables?' + queryString;
-              Handsontable.dom.addEvent(a, 'mousedown', function (event) {
-                event.preventDefault();
-              });
-              Handsontable.dom.empty(td);
-              a.addEventListener('click', () => {
-                that.ngZone.run(() => that.router.navigate(['/tables'], { queryParams }));
-              });
-              td.appendChild(a);
-              td.style.textAlign = 'center';
-            } else {
-              Handsontable.renderers.TextRenderer.apply(this, arguments);
-              td.style.whiteSpace = that.wordWrap ? 'normal' : 'nowrap';
-              return td
-            }
-
-          }
-          td.style.whiteSpace = that.wordWrap ? 'normal' : 'nowrap';
-          return td;
-        }
-      });
+      // For the main table
+      this.columns.push(this.columnSettings(this, this.after, header));
     });
 
     // this.dataset = [];
@@ -538,25 +256,164 @@ export class TableComponent implements OnInit {
     // console.log(this.columns, this.dataset);
     this.getTableData(this.after);
   }
-  getTableData (table) {
+  columnSettings(that, table, header) {
+    return {
+      data: header,
+      title: _.capitalize(header.replace(/_/g, ' ')),
+      type: 'text',
+      colWidths: function (index: number): number | string {
+        console.log('Index: ', index + ' ' + that.dataTable[that.after].headers[index]);
+        const indexTitle = that.dataTable[that.after].headers[index];
+        switch (table) {
+          // column widths for text table
+          case 'text':
+            switch (indexTitle) {
+              case 'ID':
+                return 50;
+              case 'Text_ID':
+                return 75;
+              case 'MSS':
+                return 400;
+              case 'Digital_MSS':
+                return 200;
+              case 'Date':
+                return 300;
+              case 'Edition':
+                return 300;
+              case 'Dating_Criteria':
+                return 600;
+              case 'Created_Date':
+                return 100;
+              case 'MS_Checked':
+                return 300;
+              case 'Reason_Of_MS_Choice_And_Editorial_Policy':
+                return 300;
+              default:
+                return;
+            }
+          // column widths for sentences table
+          case 'sentences':
+            switch (indexTitle) {
+              case 'ID':
+                return 50;
+              case 'Text_ID':
+                return 75;
+              case 'Textual_Unit':
+                return 300;
+              case 'Translation':
+                return 300;
+              default:
+                return;
+            }
+          // column widths for morphology table
+          case 'morphology':
+            switch (indexTitle) {
+              case 'Text_ID':
+                return 100;
+              case 'Comments':
+                return 250;
+              default:
+                return;
+            }
+          // column widths for lemmata table
+          case 'lemmata':
+            switch (indexTitle) {
+              case 'Etymology':
+                return 200;
+              case 'Comments':
+                return 300;
+              case 'DIL_Headword':
+                return 200;
+              default:
+                return;
+            }
+          default:
+            return 150;
+        }
+      },
+      renderer: function (_instance, td, _row, _col, prop, value, _cellProperties) {
+        const escaped = Handsontable.helper.stringify(value);
+        // console.log('Renderer Variables: ', { instance, td, row, col, prop, value, cellProperties });
+        // if (escaped.indexOf('http') === 0) {
+        if (escaped.indexOf('http') === 0) {
+          // Create anchor element.
+          const a = document.createElement('a');
+          // Create the text node for anchor element
+          const link = document.createTextNode(value);
+          // Append the text node to anchor element
+          a.appendChild(link);
+          // Set the title
+          a.title = value;
+          // Set the href property
+          a.href = value;
+          Handsontable.dom.addEvent(a, 'mousedown', function (event) {
+            event.preventDefault();
+          });
+
+          Handsontable.dom.empty(td);
+          td.appendChild(a);
+          // Make it centered
+          td.style.textAlign = 'center';
+        } else {
+          if (
+            (table === 'text' && prop === 'Text_ID') ||
+            (table === 'sentences' && prop === 'Text_Unit_ID') ||
+            (table === 'morphology' && prop === 'Lemma')
+          ) {
+            const dtableIndex = that.tableData.tables.names.indexOf(table) + 1;
+
+            const queryParams = {
+              page: 0,
+              limit: 0,
+              fprop: prop,
+              fval: value,
+              dtable: that.tableData.tables.names[dtableIndex],
+              ctable: table
+            };
+            const a = document.createElement('span');
+            const linkText = document.createTextNode(value);
+            a.appendChild(linkText);
+            a.className = 'btn-link';
+            // a.href = '/tables?' + queryString;
+            Handsontable.dom.addEvent(a, 'mousedown', function (event) {
+              event.preventDefault();
+            });
+            Handsontable.dom.empty(td);
+            a.addEventListener('click', () => {
+              that.ngZone.run(() => that.router.navigate(['/tables'], { queryParams }));
+            });
+            td.appendChild(a);
+            td.style.textAlign = 'center';
+          } else {
+            Handsontable.renderers.TextRenderer.apply(this, arguments);
+            td.style.whiteSpace = that.wordWrap ? 'normal' : 'nowrap';
+            return td;
+          }
+        }
+        td.style.whiteSpace = that.wordWrap ? 'normal' : 'nowrap';
+        return td;
+      }
+    };
+  }
+  getTableData(table) {
     return this.dataTable[table].data;
   }
-  getRows (table) {
-    return this.dataTable[table].data.map((row: { Sort_ID: any; }) => row.Sort_ID);
+  getRows(table) {
+    return this.dataTable[table].data.map((row: { Sort_ID: any }) => row.Sort_ID);
   }
-  undo () {
+  undo() {
     this.hotInstance = this.hotRegisterer.getInstance(this.instance);
     if ((this.hotInstance as any).isUndoAvailable()) {
       (this.hotInstance as any).undo();
     }
   }
-  redo () {
+  redo() {
     this.hotInstance = this.hotRegisterer.getInstance(this.instance);
     if ((this.hotInstance as any).isRedoAvailable()) {
       (this.hotInstance as any).redo();
     }
   }
-  refresh () {
+  refresh() {
     // const queryString = window.location.href;
 
     this.getTableData(this.after);
@@ -572,7 +429,7 @@ export class TableComponent implements OnInit {
     //   this.hotInstance.loadData(this.getTableData(this.after));
     //   this.hotInstance.render();
   }
-  toggleMode (variable) {
+  toggleMode(variable) {
     if (variable === 'edit') {
       this.edit = !this.edit;
       this.hotInstance = this.hotRegisterer.getInstance(this.instance);
@@ -582,49 +439,53 @@ export class TableComponent implements OnInit {
         contextMenu: this.edit,
         readOnly: !this.edit
       });
-    }
-    else {
+    } else {
       console.log(variable, this.wordWrap);
       this.wordWrap = !this.wordWrap;
       this.fetchedTable();
-
     }
   }
-  changeID (direction) {
+  changeID(direction) {
     const urlParams = new URLSearchParams(window.location.search);
     console.log(urlParams.toString());
     if (urlParams.has('fval') && (this.before === 'text' || this.before === 'sentences')) {
-      console.log("Got it: ", urlParams.get('fval'));
+      console.log('Got it: ', urlParams.get('fval'));
       let fVal = urlParams.get('fval');
       const fValArr = fVal.split('-');
       let numVal = parseInt(fValArr[fValArr.length - 1], 10);
       direction === 'next' ? numVal++ : numVal--;
-      if (numVal === 0) return;
+      if (numVal === 0) {
+        return;
+      }
       if (fValArr.length === 1) {
         // if its the textID from the Text table e.g. 0001
-        let stringVal = numVal.toString() // convert numVal back to String
-        fVal = Array(4 - stringVal.length).fill('0').join('') + stringVal
-      }
-      else {
-        // if its the textual_unit_ID from the Sentences table e.g. S0001-1
+        const stringVal = numVal.toString(); // convert numVal back to String
+        fVal =
+          Array(4 - stringVal.length)
+            .fill('0')
+            .join('') + stringVal;
+      } else {
+        // if its the text_unit_ID from the Sentences table e.g. S0001-1
         fVal = `${fValArr[0]}-${numVal}`;
         console.log(fVal);
       }
       urlParams.set('fval', fVal);
       console.log(urlParams.toString());
-      const queryParams = JSON.parse('{"' + decodeURI(urlParams.toString()).replace(/"/g, '\\"').replace(/&/g, '","').replace(/=/g, '":"') + '"}')
+      const queryParams = JSON.parse(
+        '{"' + decodeURI(urlParams.toString()).replace(/"/g, '\\"').replace(/&/g, '","').replace(/=/g, '":"') + '"}'
+      );
       console.log(queryParams);
-      this.router.navigate(['/tables'], { queryParams })
+      this.router.navigate(['/tables'], { queryParams });
     }
   }
-  goBack () {
+  goBack() {
     this.location.back();
   }
-  goForward () {
+  goForward() {
     this.location.forward();
   }
-  scrollToTable () {
-    console.log("App Table Height: ", this.appTable.nativeElement.scrollHeight);
+  scrollToTable() {
+    console.log('App Table Height: ', this.appTable.nativeElement.scrollHeight);
     // window.scrollTo({ top: this.appTable.nativeElement.scrollHeight, behavior: 'smooth' })
     this.appTable.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
