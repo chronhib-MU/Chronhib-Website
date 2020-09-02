@@ -120,7 +120,7 @@ app.post(`/${appName}/register`, (req, res) => {
       })
     );
   }
-  connection.query('SELECT email FROM USERS WHERE email = ?', [email], async (error, result) => {
+  connection.query('SELECT Email FROM USERS WHERE Email = ?', [email], async (error, result) => {
     if (error) {
       console.log(error);
     }
@@ -182,7 +182,7 @@ app.post(`/${appName}/login`, (req, res) => {
   }
   connection.query('SELECT * FROM USERS WHERE Email = ?', [email], async (error, result) => {
     console.log(result);
-    if (result.length === 0) {
+    if (result || result.length === 0) {
       return res.status(401).json(
         JSON.stringify({
           message: 'Please check your email and try again.',
