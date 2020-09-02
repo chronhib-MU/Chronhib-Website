@@ -106,7 +106,7 @@ app.post(`/${appName}/register`, (req, res) => {
   if (!email) {
     return res.json(
       JSON.stringify({
-        message: 'Please provide an email to login or create an account.',
+        message: 'Please provide an email to create an account.',
         title: 'No email provided!',
         type: 'error'
       })
@@ -169,7 +169,7 @@ app.post(`/${appName}/login`, (req, res) => {
   if (!email) {
     return res.json(
       JSON.stringify({
-        message: 'Please provide an email to login or create an account.',
+        message: 'Please provide an email to login.',
         title: 'No email provided!',
         type: 'error'
       })
