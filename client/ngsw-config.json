@@ -4,7 +4,7 @@
   "dataGroups": [
     {
       "name": "performance",
-      "urls": ["/assets/**", "/login", "/register"],
+      "urls": ["/assets/**"],
       "cacheConfig": {
         "strategy": "performance",
         "maxSize": 100,

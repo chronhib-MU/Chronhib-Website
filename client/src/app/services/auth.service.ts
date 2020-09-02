@@ -3,11 +3,9 @@ import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { Observable } from 'rxjs';
-import { Component, OnChanges, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import { NotificationService } from '../services/notification.service';
-import jwt_decode from 'jwt-decode';
 
 @Injectable({
   providedIn: 'root'
@@ -23,9 +21,9 @@ export class AuthService {
   timeLeftString = '59s';
   authenticated = false;
   constructor(private http: HttpClient, private notifyService: NotificationService, private router: Router) {
-    // console.log(localStorage.getItem('token'));
-    if (localStorage.getItem('token')) {
-      const token = localStorage.token;
+    // console.log(localStorage.getItem(`${window.location.origin}token`));
+    if (localStorage.getItem(`${window.location.origin}token`)) {
+      const token = localStorage[`${window.location.origin}token`];
       this.isLoggedIn(token);
     }
   }
@@ -48,9 +46,8 @@ export class AuthService {
     }
   };
   async logOut() {
-    console.log("I'm out");
-
-    localStorage.removeItem('token');
+    console.log(`I'm out`);
+    localStorage.removeItem(`${window.location.origin}token`);
     await this.isLoggedIn(null);
     this.router.navigate(['/login']);
   }
@@ -71,7 +68,7 @@ export class AuthService {
       const res: string = await signedInForm.toPromise();
       console.log(JSON.parse(res));
       const { message, title, type, token } = JSON.parse(res);
-      localStorage.setItem('token', token);
+      localStorage.setItem(`${window.location.origin}token`, token);
       this.showToaster(message, title, type);
       await this.isLoggedIn(token);
       loginForm.reset();
