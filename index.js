@@ -135,12 +135,15 @@ app.post(`/${appName}/register`, (req, res) => {
           type: 'error'
         })
       );
+    } else {
+      console.table(result);
+      console.table(error);
     }
 
     // Encrypt password
     let hashedPassword = await bcrypt.hash(password, 10);
     console.log(hashedPassword);
-    connection.query(
+    return connection.query(
       'INSERT INTO USERS SET ?',
       { First_Name: firstName, Last_Name: lastName, Email: email, Password: hashedPassword },
       (error, result) => {
@@ -171,7 +174,8 @@ app.post(`/${appName}/login`, (req, res) => {
       JSON.stringify({
         message: 'Please provide an email to login.',
         title: 'No email provided!',
-        type: 'error'
+        type: 'error',
+        error: req.body
       })
     );
   } else if (!password) {
@@ -179,7 +183,7 @@ app.post(`/${appName}/login`, (req, res) => {
       JSON.stringify({
         message: 'Please provide a password.',
         title: 'No password provided!',
-        type: 'error'
+        type: 'error',
       })
     );
   }

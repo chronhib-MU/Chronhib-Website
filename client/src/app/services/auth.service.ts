@@ -120,16 +120,20 @@ export class AuthService {
         }, 1000);
       }
     } else {
-      const newUserData = { firstName, lastName, email, password };
-      const registeredForm: Observable<string> = this.http.post<string>(
-        `${environment.wsUrl}register`,
-        newUserData
-      ) as Observable<string>;
-      const res: string = await registeredForm.toPromise();
-      console.log(JSON.parse(res));
-      const { message, title, type } = JSON.parse(res);
-      this.showToaster(message, title, type);
-      registerForm.reset();
+      try {
+        const newUserData = { firstName, lastName, email, password };
+        const registeredForm: Observable<string> = this.http.post<string>(
+          `${environment.wsUrl}register`,
+          newUserData
+        ) as Observable<string>;
+        const res: string = await registeredForm.toPromise();
+        console.log(JSON.parse(res));
+        const { message, title, type } = JSON.parse(res);
+        this.showToaster(message, title, type);
+        registerForm.reset();
+      } catch (error) {
+        console.log(error);
+      }
     }
   }
   async isLoggedIn(token) {
