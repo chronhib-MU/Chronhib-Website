@@ -44,9 +44,6 @@ MIT
 @angular/router
 MIT
 
-@angular/service-worker
-MIT
-
 @handsontable/angular
 MIT
 (The MIT License)
