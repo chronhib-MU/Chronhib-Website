@@ -1,6 +1,6 @@
 {
   "configVersion": 1,
-  "timestamp": 1599042548667,
+  "timestamp": 1599049500886,
   "index": "/chronhibWebsite/index.html",
   "assetGroups": [
     {
@@ -11,19 +11,19 @@
         "ignoreVary": true
       },
       "urls": [
-        "/chronhibWebsite/5-es2015.1f9e7fcf78060e7a1fe8.js",
-        "/chronhibWebsite/5-es5.1f9e7fcf78060e7a1fe8.js",
+        "/chronhibWebsite/5-es2015.0564c9c7fee10d80bc55.js",
+        "/chronhibWebsite/5-es5.0564c9c7fee10d80bc55.js",
         "/chronhibWebsite/6-es2015.9a98a0c5b18822d58dda.js",
         "/chronhibWebsite/6-es5.9a98a0c5b18822d58dda.js",
         "/chronhibWebsite/favicon.ico",
         "/chronhibWebsite/index.html",
-        "/chronhibWebsite/main-es2015.1332edb8223d19f49ab7.js",
-        "/chronhibWebsite/main-es5.1332edb8223d19f49ab7.js",
+        "/chronhibWebsite/main-es2015.e6d06bdefbe7d634f71e.js",
+        "/chronhibWebsite/main-es5.e6d06bdefbe7d634f71e.js",
         "/chronhibWebsite/manifest.webmanifest",
         "/chronhibWebsite/polyfills-es2015.dc4071ea26ddf014db10.js",
         "/chronhibWebsite/polyfills-es5.8f4ffaa0acf927c82e07.js",
-        "/chronhibWebsite/runtime-es2015.3e28b39673c01380d8c3.js",
-        "/chronhibWebsite/runtime-es5.3e28b39673c01380d8c3.js",
+        "/chronhibWebsite/runtime-es2015.78c96ceebd749edf1de8.js",
+        "/chronhibWebsite/runtime-es5.78c96ceebd749edf1de8.js",
         "/chronhibWebsite/scripts.005580c97ad2b110b542.js",
         "/chronhibWebsite/styles.a6c97f34242dbad5bace.css"
       ],
@@ -3544,9 +3544,7 @@
     {
       "name": "performance",
       "patterns": [
-        "\\/assets\\/.*",
-        "\\/login",
-        "\\/register"
+        "\\/assets\\/.*"
       ],
       "strategy": "performance",
       "maxSize": 100,
@@ -3572,8 +3570,8 @@
     }
   ],
   "hashTable": {
-    "/chronhibWebsite/5-es2015.1f9e7fcf78060e7a1fe8.js": "521f2be32fb69f0a388bae85905107bf0c6c1b79",
-    "/chronhibWebsite/5-es5.1f9e7fcf78060e7a1fe8.js": "c6e8a64b96be53796b4b53fd30ff568933ee025b",
+    "/chronhibWebsite/5-es2015.0564c9c7fee10d80bc55.js": "2abe09464118a1c52a53d8ff78c5ef82aaa5b7ba",
+    "/chronhibWebsite/5-es5.0564c9c7fee10d80bc55.js": "d5cc917b2fe328371e7e545e4d99a6daa98d090f",
     "/chronhibWebsite/6-es2015.9a98a0c5b18822d58dda.js": "b7a776c5546c3c820cdc9784f58e51a6e92dde47",
     "/chronhibWebsite/6-es5.9a98a0c5b18822d58dda.js": "6beefeb3fe83d2b0fa8e9a0b9f50e51f71abac20",
     "/chronhibWebsite/Iontas_Daylight.a10c81ae7ff6a4492476.jpg": "5f6418202f58bbb23d03e49e8893bb352fdb0ded",
@@ -7076,14 +7074,14 @@
     "/chronhibWebsite/assets/vendor/nucleo/fonts/nucleo-icons.woff": "31ecd290a72557cc64f9ab28ee5d7d0a417a36bc",
     "/chronhibWebsite/assets/vendor/nucleo/fonts/nucleo-icons.woff2": "64baa3293e90631d5257d6056b089ba11510d0f4",
     "/chronhibWebsite/favicon.ico": "84161b857f5c547e3699ddfbffc6d8d737542e01",
-    "/chronhibWebsite/index.html": "556cf666dfa4e45a419a0dbb5807509f5cc6aae2",
-    "/chronhibWebsite/main-es2015.1332edb8223d19f49ab7.js": "f010d017fe1a00f3c7ff5aefe32c10918380085b",
-    "/chronhibWebsite/main-es5.1332edb8223d19f49ab7.js": "aa0c853d438e6483fdd6f0875e7bd3d84a8be7c1",
-    "/chronhibWebsite/manifest.webmanifest": "6bd446cf481e91dc7da6926e0d9b5fb2029c63fa",
+    "/chronhibWebsite/index.html": "a49962d9bcd11cbe8ae0677e280f53f478eb201b",
+    "/chronhibWebsite/main-es2015.e6d06bdefbe7d634f71e.js": "34368e2c58e00ad65994943535da333618aa552e",
+    "/chronhibWebsite/main-es5.e6d06bdefbe7d634f71e.js": "dba5f5caf2118211086a9c48a95dcfbd6c6867bb",
+    "/chronhibWebsite/manifest.webmanifest": "605dfc89b1c053da2014a31b2816dfb196e3d3bc",
     "/chronhibWebsite/polyfills-es2015.dc4071ea26ddf014db10.js": "95905324d94b7ea097529ad814bf49b87ac7e79b",
     "/chronhibWebsite/polyfills-es5.8f4ffaa0acf927c82e07.js": "bb6e6759af259ec569eebd12911ef9697f6222db",
-    "/chronhibWebsite/runtime-es2015.3e28b39673c01380d8c3.js": "cea41c799b49568e3d9ea360e2e3c1b27300d8b8",
-    "/chronhibWebsite/runtime-es5.3e28b39673c01380d8c3.js": "eeeb37daf92e920ca0e91ac8aa907c4f4adf103b",
+    "/chronhibWebsite/runtime-es2015.78c96ceebd749edf1de8.js": "eba90844da61dea741817fbb519ff3694e25c12a",
+    "/chronhibWebsite/runtime-es5.78c96ceebd749edf1de8.js": "5b0907772c1b054efe318e5e10d2c1d79a0f15e2",
     "/chronhibWebsite/scripts.005580c97ad2b110b542.js": "40e96a760fdd2c47653f8530ee99fd2401f325b5",
     "/chronhibWebsite/styles.a6c97f34242dbad5bace.css": "4d3e00c264dc1a55672966ddfc453fb0f6dd7bd6"
   },
