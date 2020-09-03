@@ -5,7 +5,7 @@ import { TableDataService } from '../../../services/table-data.service';
 import Handsontable from 'handsontable';
 import { HotTableRegisterer } from '@handsontable/angular';
 import * as _ from 'lodash';
-import { ApiPostBody } from 'src/app/interfaces/api-post-body';
+import { ApiPostBody } from '../../../interfaces/api-post-body';
 declare const $: any;
 @Component({
   selector: 'app-table',
@@ -228,7 +228,7 @@ export class TableComponent implements OnInit {
     if (this.before !== this.after && this.before !== '') {
       // For the mini table
       this.dataTable[this.before].headers.forEach((header: string) => {
-        this.columnsMini.push(this.columnSettings(this, this.before, header));
+        this.columnsMini.push(this.columnSettings(this, this.before, header, 'text'));
       });
       this.getTableData(this.before);
       // Plugins go here
@@ -237,7 +237,7 @@ export class TableComponent implements OnInit {
         // console.log(this.dataTable[this.before]);
         // console.log([...Array((this.dataTable[this.before].headers.length)).keys()]);
         const headerArr = [...this.dataTable[this.before].headers];
-        const tableFilter = ['Textual_Unit','Translation'];
+        const tableFilter = ['Textual_Unit', 'Translation'];
         this.hotRegisterer.getInstance(this.instance + 'Mini').updateSettings({
           hiddenColumns: {
             columns: headerArr
@@ -252,7 +252,75 @@ export class TableComponent implements OnInit {
     }
     this.dataTable[this.after].headers.forEach((header: string) => {
       // For the main table
-      this.columns.push(this.columnSettings(this, this.after, header));
+      console.log(header);
+      switch (header) {
+        case 'Rel.':
+          return this.columns.push(
+            this.columnSettings(this, this.after, header, 'dropdown', ['Yes', 'No', 'Maybe'], 'autocomplete')
+          );
+        case 'Trans.':
+          return this.columns.push(
+            this.columnSettings(
+              this,
+              this.after,
+              header,
+              'dropdown',
+              ['trans.', 'intrans.', 'pass.', 'unclear'],
+              'autocomplete'
+            )
+          );
+        case 'Depend.':
+          return this.columns.push(
+            this.columnSettings(
+              this,
+              this.after,
+              header,
+              'dropdown',
+              ['absolute', 'conjunct', 'deuterotonic', 'prototonic'],
+              'autocomplete'
+            )
+          );
+        case 'Depon.':
+          return this.columns.push(
+            this.columnSettings(this, this.after, header, 'dropdown', ['Yes', 'No', 'Maybe'], 'autocomplete')
+          );
+        case 'Contr.':
+          return this.columns.push(
+            this.columnSettings(this, this.after, header, 'dropdown', ['Yes', 'No', 'Maybe'], 'autocomplete')
+          );
+        case 'Augm.':
+          return this.columns.push(
+            this.columnSettings(this, this.after, header, 'dropdown', ['Yes', 'No', 'Maybe'], 'autocomplete')
+          );
+        case 'Hiat.':
+          return this.columns.push(
+            this.columnSettings(this, this.after, header, 'dropdown', ['Yes', 'No', 'Maybe'], 'autocomplete')
+          );
+        case 'Mut.':
+          return this.columns.push(
+            this.columnSettings(
+              this,
+              this.after,
+              header,
+              'dropdown',
+              ['+ Nasalization', '- Nasalization', '+ Lenition', '- Lenition', '+ Gemination', '- Gemination'],
+              'autocomplete'
+            )
+          );
+        case 'Causing_Mut.':
+          return this.columns.push(
+            this.columnSettings(
+              this,
+              this.after,
+              header,
+              'dropdown',
+              ['+ Nasalization', '- Nasalization', '+ Lenition', '- Lenition', '+ Gemination', '- Gemination'],
+              'autocomplete'
+            )
+          );
+        default:
+          return this.columns.push(this.columnSettings(this, this.after, header, 'text'));
+      }
     });
 
     // this.dataset = [];
@@ -262,11 +330,12 @@ export class TableComponent implements OnInit {
     // console.log(this.columns, this.dataset);
     this.getTableData(this.after);
   }
-  columnSettings(that, table, header) {
+  columnSettings(that: any, table: string, header: string, type: string, source?: any[], renderer?: string) {
     return {
       data: header,
       title: _.capitalize(header.replace(/_/g, ' ')),
-      type: 'text',
+      type,
+      source: source,
       colWidths: function (index: number): number | string {
         // console.log('Index: ', index + ' ' + that.dataTable[that.after].headers[index]);
         const indexTitle = that.dataTable[that.after].headers[index];
@@ -337,72 +406,72 @@ export class TableComponent implements OnInit {
             return 150;
         }
       },
-      renderer: function (_instance, td, _row, _col, prop, value, _cellProperties) {
-        // console.log(that);
+      renderer:
+        renderer ||
+        function (_instance, td, _row, _col, prop, value, _cellProperties) {
+          // console.log(that);
 
-        const escaped = Handsontable.helper.stringify(value);
-        // console.log('Renderer Variables: ', { instance, td, row, col, prop, value, cellProperties });
-        // if (escaped.indexOf('http') === 0) {
-        if (escaped.indexOf('http') === 0) {
-          // Create anchor element.
-          const a = document.createElement('a');
-          // Create the text node for anchor element
-          const link = document.createTextNode(value);
-          // Append the text node to anchor element
-          a.appendChild(link);
-          // Set the title
-          a.title = value;
-          // Set the href property
-          a.href = value;
-          Handsontable.dom.addEvent(a, 'mousedown', function (event) {
-            event.preventDefault();
-          });
-
-          Handsontable.dom.empty(td);
-          td.appendChild(a);
-          // Make it centered
-          td.style.textAlign = 'center';
-        } else {
-          if (
-            (table === 'text' && prop === 'Text_ID') ||
-            (table === 'sentences' && prop === 'Text_Unit_ID') ||
-            (table === 'morphology' && prop === 'Lemma')
-          ) {
-            const dtableIndex = that.tableData.tables.names.indexOf(table) + 1;
-
-            const queryParams = {
-              page: 0,
-              limit: 0,
-              fprop: prop,
-              fval: value,
-              dtable: that.tableData.tables.names[dtableIndex],
-              ctable: table
-            };
-            const a = document.createElement('span');
-            const linkText = document.createTextNode(value);
-            a.appendChild(linkText);
-            a.className = 'btn-link';
-            // a.href = '/tables?' + queryString;
+          const escaped = Handsontable.helper.stringify(value);
+          // console.log('Renderer Variables: ', { instance, td, row, col, prop, value, cellProperties });
+          // if (escaped.indexOf('http') === 0) {
+          if (escaped.indexOf('http') === 0) {
+            // Create anchor element.
+            const a = document.createElement('a');
+            // Create the text node for anchor element
+            const link = document.createTextNode(value);
+            // Append the text node to anchor element
+            a.appendChild(link);
+            // Set the title
+            a.title = value;
+            // Set the href property
+            a.href = value;
             Handsontable.dom.addEvent(a, 'mousedown', function (event) {
               event.preventDefault();
             });
-            Handsontable.dom.empty(td);
-            a.addEventListener('click', () => {
-              console.log(that);
 
-              that.ngZone.run(() => that.router.navigate(['/tables'], { queryParams }));
-            });
+            Handsontable.dom.empty(td);
             td.appendChild(a);
+            // Make it centered
             td.style.textAlign = 'center';
           } else {
-            Handsontable.renderers.TextRenderer.apply(this, arguments);
-            td.style.whiteSpace = that.wordWrap ? 'normal' : 'nowrap';
-            return td;
+            if (
+              (table === 'text' && prop === 'Text_ID') ||
+              (table === 'sentences' && prop === 'Text_Unit_ID') ||
+              (table === 'morphology' && prop === 'Lemma')
+            ) {
+              const dtableIndex = that.tableData.tables.names.indexOf(table) + 1;
+
+              const queryParams = {
+                page: 0,
+                limit: 0,
+                fprop: prop,
+                fval: value,
+                dtable: that.tableData.tables.names[dtableIndex],
+                ctable: table
+              };
+              const a = document.createElement('span');
+              const linkText = document.createTextNode(value);
+              a.appendChild(linkText);
+              a.className = 'btn-link';
+              // a.href = '/tables?' + queryString;
+              Handsontable.dom.addEvent(a, 'mousedown', function (event) {
+                event.preventDefault();
+              });
+              Handsontable.dom.empty(td);
+              a.addEventListener('click', () => {
+                that.ngZone.run(() => that.router.navigate(['/tables'], { queryParams }));
+              });
+              td.appendChild(a);
+              td.style.textAlign = 'center';
+            } else {
+              Handsontable.renderers.TextRenderer.apply(this, arguments);
+              td.style.whiteSpace = that.wordWrap ? 'normal' : 'nowrap';
+              return td;
+            }
           }
+          td.style.whiteSpace = that.wordWrap ? 'normal' : 'nowrap';
+          return td;
         }
-        td.style.whiteSpace = that.wordWrap ? 'normal' : 'nowrap';
-        return td;
-      }
     };
   }
   getTableData(table) {

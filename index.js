@@ -49,10 +49,10 @@ console.log({ port, host, password, database, node_env, user, jwt_secret, jwt_ex
 const app = express();
 const server = http.createServer(app);
 // mysql table queries
-const SELECT_ALL_TEXT_QUERY = 'SELECT * FROM TEXT ORDER BY Sort_ID ASC LIMIT 100';
-const SELECT_ALL_LEMMATA_QUERY = 'SELECT * FROM LEMMATA ORDER BY ID ASC LIMIT 100';
-const SELECT_ALL_MORPHOLOGY_QUERY = 'SELECT * FROM MORPHOLOGY ORDER BY Text_Unit_ID, Sort_ID ASC LIMIT 100';
-const SELECT_ALL_SENTENCES_QUERY = 'SELECT * FROM SENTENCES ORDER BY Sort_ID ASC LIMIT 100';
+const SELECT_ALL_TEXT_QUERY = 'SELECT * FROM `TEXT` ORDER BY `Sort_ID` ASC LIMIT 100';
+const SELECT_ALL_LEMMATA_QUERY = 'SELECT * FROM `LEMMATA` ORDER BY `ID` ASC LIMIT 100';
+const SELECT_ALL_MORPHOLOGY_QUERY = 'SELECT * FROM `MORPHOLOGY` ORDER BY `Text_Unit_ID`, `Sort_ID` ASC LIMIT 100';
+const SELECT_ALL_SENTENCES_QUERY = 'SELECT * FROM `SENTENCES` ORDER BY `Sort_ID` ASC LIMIT 100';
 
 const tables = {
   text: SELECT_ALL_TEXT_QUERY,
@@ -120,7 +120,7 @@ app.post(`/${appName}/register`, (req, res) => {
       })
     );
   }
-  connection.query('SELECT Email FROM USERS WHERE Email = ?', [email], async (error, result) => {
+  connection.query('SELECT `Email` FROM `USERS` WHERE `Email` = ?', [email], async (error, result) => {
     if (error) {
       console.log(error);
       console.log(result);
@@ -144,7 +144,7 @@ app.post(`/${appName}/register`, (req, res) => {
     let hashedPassword = await bcrypt.hash(password, 10);
     console.log(hashedPassword);
     return connection.query(
-      'INSERT INTO USERS SET ?',
+      'INSERT INTO `USERS` SET ?',
       { First_Name: firstName, Last_Name: lastName, Email: email, Password: hashedPassword },
       (error, result) => {
         if (error) {
@@ -187,7 +187,7 @@ app.post(`/${appName}/login`, (req, res) => {
       })
     );
   }
-  connection.query('SELECT * FROM USERS WHERE Email = ?', [email], async (error, result) => {
+  connection.query('SELECT * FROM `USERS` WHERE `Email` = ?', [email], async (error, result) => {
     console.log(result);
     if (result && result.length === 0) {
       return res.status(401).json(
@@ -229,7 +229,7 @@ app.post(`/${appName}/isLoggedIn`, (req, res) => {
     const decoded = jwt.verify(req.body.token, jwt_secret);
     // console.log(decoded);
     if (decoded.exp > 0) {
-      connection.query('SELECT * FROM USERS WHERE User_ID = ?', [decoded.id], async (error, result) => {
+      connection.query('SELECT * FROM `USERS` WHERE `User_ID` = ?', [decoded.id], async (error, result) => {
         console.log(result[0]);
         console.log(result[0].Password);
         const { First_Name, Last_Name, Email } = result[0];
@@ -249,7 +249,8 @@ app.post(`/${appName}/api/`, (req, res) => {
     // if the row is moved
     const updateQueries = [];
     values[0].forEach(rowData => {
-      let query = `UPDATE ${table.toUpperCase()} SET Sort_ID = ${rowData.Sort_ID} WHERE ID = ${rowData.ID};`;
+      let query =
+        'UPDATE `' + table.toUpperCase() + '` SET `Sort_ID` = ' + rowData.Sort_ID + ' WHERE `ID` = ' + rowData.ID + ';';
       updateQueries.push(query);
     });
     updateQueries.forEach(updateQuery => {
@@ -273,7 +274,16 @@ app.post(`/${appName}/api/`, (req, res) => {
       console.log(value);
       let { id, fieldProperty, fieldValue } = value;
       console.table({ id, fieldProperty, fieldValue });
-      let updateQuery = `UPDATE ${table.toUpperCase()} SET ${fieldProperty} = "${fieldValue}" WHERE ID = ${id};`;
+      let updateQuery =
+        'UPDATE `' +
+        table.toUpperCase() +
+        '` SET `' +
+        fieldProperty +
+        '` = "' +
+        fieldValue +
+        '" WHERE `ID` = ' +
+        id +
+        ';';
       console.log('Post Query: ', updateQuery);
       connection.query(updateQuery, (err, results) => {
         if (err) {
@@ -313,7 +323,7 @@ app.get(`/${appName}/api/`, (req, res) => {
       console.log('Start Row:', startRow);
       endRow = startRow + parseInt(limit, 10); // gets the ending row of the query
       console.log('End Row:', endRow);
-      between = ` AND Sort_ID BETWEEN ${startRow} AND ${endRow} `;
+      between = ' AND `Sort_ID` BETWEEN ' + startRow + ' AND ' + endRow + ' ';
       console.log('Between:', between);
       limit = '';
     } else {
@@ -327,14 +337,26 @@ app.get(`/${appName}/api/`, (req, res) => {
       // beforeQuery
       if (currentTable !== destinationTable) {
         // if not the same table
-        beforeQuery = `SELECT * FROM ${currentTable.toUpperCase()} WHERE ${fieldProperty} = "${fieldValue}"`;
+        beforeQuery =
+          'SELECT * FROM `' + currentTable.toUpperCase() + '` WHERE `' + fieldProperty + '` = "' + fieldValue + '"';
       }
       // afterQuery
-      afterQuery = `SELECT * FROM ${destinationTable.toUpperCase()} WHERE ${fieldProperty} = "${fieldValue}"${between}ORDER BY ${
-        fieldProperty + ', '
-      }Sort_ID ASC${limit}`;
+      afterQuery =
+        'SELECT * FROM `' +
+        destinationTable.toUpperCase() +
+        '` WHERE `' +
+        fieldProperty +
+        '` = "' +
+        fieldValue +
+        '"' +
+        between +
+        'ORDER BY ' +
+        fieldProperty +
+        ', `Sort_ID` ASC' +
+        limit;
     } else {
-      afterQuery = `SELECT * FROM ${destinationTable.toUpperCase()}${between}ORDER BY Sort_ID ASC${limit}`;
+      afterQuery =
+        'SELECT * FROM `' + destinationTable.toUpperCase() + '`' + between + 'ORDER BY `Sort_ID` ASC' + limit;
     }
     // console.log('beforeQuery:', beforeQuery);
     // console.log('afterQuery:', afterQuery);

@@ -1,7 +1,7 @@
-<div class="row mb-3 mt-3" #appTable (click)="scrollToTable()">
+<div class="row mb-3 mt-3" #appTable>
   <div class="col">
     <div class="card shadow w-100">
-      <div class="card-header border-0 pb-2">
+      <div class="card-header border-0 pb-2" (click)="scrollToTable()">
         <div class="card-title text-uppercase mb-0 float-left">
           <h2 class="mb-0 font-weight-bolder text-dark">
             {{ after | titlecase }}
