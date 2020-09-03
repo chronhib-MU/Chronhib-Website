@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, ElementRef, ViewChild } from '@angular/core';
+import { Component, OnInit, Input, ElementRef, ViewChild, NgZone } from '@angular/core';
 import { Location } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { TableDataService } from '../../../services/table-data.service';
@@ -91,7 +91,8 @@ export class TableComponent implements OnInit {
     public tableData: TableDataService,
     private router: Router,
     private route: ActivatedRoute,
-    private location: Location
+    private location: Location,
+    private ngZone: NgZone
   ) {
     this.dataTable = {
       text: this.tableData.tables.text,
@@ -262,7 +263,7 @@ export class TableComponent implements OnInit {
       title: _.capitalize(header.replace(/_/g, ' ')),
       type: 'text',
       colWidths: function (index: number): number | string {
-        console.log('Index: ', index + ' ' + that.dataTable[that.after].headers[index]);
+        // console.log('Index: ', index + ' ' + that.dataTable[that.after].headers[index]);
         const indexTitle = that.dataTable[that.after].headers[index];
         switch (table) {
           // column widths for text table
@@ -332,6 +333,8 @@ export class TableComponent implements OnInit {
         }
       },
       renderer: function (_instance, td, _row, _col, prop, value, _cellProperties) {
+        // console.log(that);
+
         const escaped = Handsontable.helper.stringify(value);
         // console.log('Renderer Variables: ', { instance, td, row, col, prop, value, cellProperties });
         // if (escaped.indexOf('http') === 0) {
@@ -380,6 +383,8 @@ export class TableComponent implements OnInit {
             });
             Handsontable.dom.empty(td);
             a.addEventListener('click', () => {
+              console.log(that);
+
               that.ngZone.run(() => that.router.navigate(['/tables'], { queryParams }));
             });
             td.appendChild(a);

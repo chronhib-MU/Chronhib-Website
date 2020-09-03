@@ -183,7 +183,7 @@ app.post(`/${appName}/login`, (req, res) => {
       JSON.stringify({
         message: 'Please provide a password.',
         title: 'No password provided!',
-        type: 'error',
+        type: 'error'
       })
     );
   }
