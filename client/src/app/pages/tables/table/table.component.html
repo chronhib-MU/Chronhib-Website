@@ -3,10 +3,13 @@
     <div class="card shadow w-100">
       <div class="card-header border-0 pb-2" (click)="scrollToTable()">
         <div class="card-title text-uppercase mb-0 float-left">
+          <h5 *ngIf="before && after !== before" class="mb-0 font-weight-bold text-muted">{{ before | titlecase }}</h5>
           <h2 class="mb-0 font-weight-bolder text-dark">
             {{ after | titlecase }}
+            <span *ngIf="after !== 'text' && tableData.currentApiQuery.fval">
+              {{ ' - ' + tableData.currentApiQuery.fval }}
+            </span>
           </h2>
-          <h5 *ngIf="before && after !== before" class="mb-0 font-weight-bold text-muted">{{ before | titlecase }}</h5>
         </div>
 
         <div class="btn-group float-right" *ngIf="edit">
