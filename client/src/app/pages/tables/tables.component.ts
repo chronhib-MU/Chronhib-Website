@@ -20,7 +20,7 @@ export class TablesComponent implements OnInit, OnDestroy {
     this.routeParams = this.route.paramMap.subscribe(params => {
       // 'table' is the variable name from 'admin-layout-routing'
       this.table = params.get('table');
-      console.log('Table: ', this.table);
+      // console.log('Table: ', this.table);
 
       if (this.tableData.tables.names.indexOf(this.table) > -1) {
         this.before = '';
@@ -33,7 +33,7 @@ export class TablesComponent implements OnInit, OnDestroy {
 
       this.tableQuery = tableParams.params;
       // console.log({ ...paramMap.keys, ...paramMap });
-      console.log('Table Query: ', this.tableQuery);
+      // console.log('Table Query: ', this.tableQuery);
       // Checks
       if (this.table == null && Object.keys(this.tableQuery).length === 0 && this.tableQuery.constructor === Object) {
         this.router.navigate(['/tables'], {

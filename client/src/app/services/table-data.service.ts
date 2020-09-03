@@ -38,14 +38,14 @@ export class TableDataService {
       .join('&');
     // console.log(window.location.origin);
     // console.log('apiQuery:', apiQuery);
-    console.log(environment.apiUrl);
+    // console.log(environment.apiUrl);
     // Checks if the query was a table name e.g. 'text', 'sentences' etc. else it has to be an API query object
     if (this.tables.names.indexOf(apiQuery) > -1 && typeof apiQuery === 'string') {
       this.fetchedTable = this.http.get(`${environment.apiUrl}${apiQuery}`) as Observable<{
         data: { afterTable: []; beforeTable: [] };
       }>;
       const { data } = await this.fetchedTable.toPromise();
-      console.log(`${apiQuery}: `, data.afterTable);
+      // console.log(`${apiQuery}: `, data.afterTable);
       this.tables[apiQuery].data = data.afterTable;
       this.tables[apiQuery].headers = Object.keys(this.tables[apiQuery].data[0]);
       // console.log(this.tables[apiQuery].headers);
@@ -54,7 +54,7 @@ export class TableDataService {
         data: { afterTable: []; beforeTable: [] };
       }>;
       const { data } = await this.fetchedTable.toPromise();
-      console.log(`${queryString}: `, data);
+      // console.log(`${queryString}: `, data);
       if (apiQuery.dtable !== apiQuery.ctable) {
         this.tables[apiQuery.ctable].data = data.beforeTable;
         this.tables[apiQuery.ctable].headers = Object.keys(this.tables[apiQuery.ctable].data[0]);
@@ -89,16 +89,16 @@ export class TableDataService {
       // const queryString = Object.keys(filteredApiBody)
       //   .map(key => key + '=' + filteredApiBody[key])
       //   .join('&');
-      console.log(`Before ${apiBody.table} with `, apiBody, `to ${environment.apiUrl}?`);
+      // console.log(`Before ${apiBody.table} with `, apiBody, `to ${environment.apiUrl}?`);
 
-      console.log(`Updated ${filteredApiBody.table} with `, filteredApiBody, `to ${environment.apiUrl}?`);
+      // console.log(`Updated ${filteredApiBody.table} with `, filteredApiBody, `to ${environment.apiUrl}?`);
       if (filteredApiBody.values.length > 0) {
         const postedTable: Observable<ApiPostBody> = this.http.post<ApiPostBody>(
           `${environment.apiUrl}?`,
           filteredApiBody
         ) as Observable<ApiPostBody>;
         await postedTable.toPromise();
-        console.log('Done updating!');
+        console.log('Table has finished updating!');
       } else {
         console.log('The values were the same! No changes made.');
       }

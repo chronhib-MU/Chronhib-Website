@@ -13,10 +13,10 @@ const dotenv = require('dotenv');
 const compression = require('compression');
 const helmet = require('helmet');
 const { parse } = require('path');
-console.log(`pathname ${__filename}`);
-console.log(`dirname ${path.dirname(__filename)}`);
+// console.log(`pathname ${__filename}`);
+// console.log(`dirname ${path.dirname(__filename)}`);
 
-console.log(__dirname);
+// console.log(__dirname);
 
 const result = dotenv.config();
 if (result.error) {
@@ -45,7 +45,7 @@ const user = process.env.USER || USER;
 const jwt_secret = process.env.JWT_SECRET || JWT_SECRET;
 const jwt_expires_in = process.env.JWT_EXPIRES_IN || JWT_EXPIRES_IN;
 const jwt_cookie_expires = parseInt(process.env.JWT_COOKIE_EXPIRES || JWT_COOKIE_EXPIRES);
-console.log({ port, host, password, database, node_env, user, jwt_secret, jwt_expires_in, jwt_cookie_expires });
+// console.table({ port, host, password, database, node_env, user, jwt_secret, jwt_expires_in, jwt_cookie_expires });
 const app = express();
 const server = http.createServer(app);
 // mysql table queries
@@ -84,11 +84,11 @@ connection.connect(err => {
   }
 }); */
 const folderLoc = 'client/dist/';
-console.log('Static Folder:', path.join(__dirname, folderLoc));
+// console.log('Static Folder:', path.join(__dirname, folderLoc));
 
 // const appName = __dirname.split(path.sep).pop();
 const appName = 'chronhibWebsite';
-console.log('App Name:', appName);
+// console.log('App Name:', appName);
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(cookieParser());
@@ -122,8 +122,8 @@ app.post(`/${appName}/register`, (req, res) => {
   }
   connection.query('SELECT `Email` FROM `USERS` WHERE `Email` = ?', [email], async (error, result) => {
     if (error) {
-      console.log(error);
-      console.log(result);
+      // console.log(error);
+      // console.log(result);
       return error;
     }
 
@@ -142,16 +142,16 @@ app.post(`/${appName}/register`, (req, res) => {
 
     // Encrypt password
     let hashedPassword = await bcrypt.hash(password, 10);
-    console.log(hashedPassword);
+    // console.log(hashedPassword);
     return connection.query(
       'INSERT INTO `USERS` SET ?',
       { First_Name: firstName, Last_Name: lastName, Email: email, Password: hashedPassword },
       (error, result) => {
         if (error) {
-          console.log(error);
+          // console.log(error);
           return error;
         } else {
-          console.log(result);
+          // console.log(result);
           return res.json(
             JSON.stringify({
               message: 'Please login with your new account details.',
@@ -188,7 +188,7 @@ app.post(`/${appName}/login`, (req, res) => {
     );
   }
   connection.query('SELECT * FROM `USERS` WHERE `Email` = ?', [email], async (error, result) => {
-    console.log(result);
+    // console.log(result);
     if (result && result.length === 0) {
       return res.status(401).json(
         JSON.stringify({
@@ -210,7 +210,7 @@ app.post(`/${appName}/login`, (req, res) => {
       const token = jwt.sign({ id }, jwt_secret, {
         expiresIn: jwt_expires_in
       });
-      console.log('The token is: ' + token);
+      // console.log('The token is: ' + token);
       res.status(200).json(
         JSON.stringify({
           message: 'You have been successfully logged in.',
@@ -230,8 +230,7 @@ app.post(`/${appName}/isLoggedIn`, (req, res) => {
     // console.log(decoded);
     if (decoded.exp > 0) {
       connection.query('SELECT * FROM `USERS` WHERE `User_ID` = ?', [decoded.id], async (error, result) => {
-        console.log(result[0]);
-        console.log(result[0].Password);
+        // console.log(result[0]);
         const { First_Name, Last_Name, Email } = result[0];
         res.status(200).json(JSON.stringify({ First_Name, Last_Name, Email }));
       });
@@ -243,7 +242,7 @@ app.post(`/${appName}/isLoggedIn`, (req, res) => {
 
 app.post(`/${appName}/api/`, (req, res) => {
   //To access POST variable use req.body() methods.
-  console.log('Post Variable: ', req.body);
+  // console.log('Post Variable: ', req.body);
   const { table, command, values } = req.body;
   if (command === 'moveRow') {
     // if the row is moved
@@ -254,10 +253,10 @@ app.post(`/${appName}/api/`, (req, res) => {
       updateQueries.push(query);
     });
     updateQueries.forEach(updateQuery => {
-      console.log('Post Query: ', updateQuery);
+      // console.log('Post Query: ', updateQuery);
       connection.query(updateQuery, (err, results) => {
         if (err) {
-          console.log('Error: ', err);
+          // console.log('Error: ', err);
           return res.send(err);
         } else {
           return res.status(200);
@@ -271,7 +270,7 @@ app.post(`/${appName}/api/`, (req, res) => {
   } else {
     // if the row needs to be updated
     values.forEach(value => {
-      console.log(value);
+      // console.log(value);
       let { id, fieldProperty, fieldValue } = value;
       console.table({ id, fieldProperty, fieldValue });
       let updateQuery =
@@ -284,10 +283,10 @@ app.post(`/${appName}/api/`, (req, res) => {
         '" WHERE `ID` = ' +
         id +
         ';';
-      console.log('Post Query: ', updateQuery);
+      // console.log('Post Query: ', updateQuery);
       connection.query(updateQuery, (err, results) => {
         if (err) {
-          console.log('Error: ', err);
+          // console.log('Error: ', err);
           return res.send(err);
         } else {
           return res.status(200);
@@ -320,11 +319,11 @@ app.get(`/${appName}/api/`, (req, res) => {
       between = ' ';
     if (parseInt(limit, 10) && parseInt(page, 10)) {
       startRow = (parseInt(page, 10) - 1) * parseInt(limit, 10); // gets the starting row of the query
-      console.log('Start Row:', startRow);
+      // console.log('Start Row:', startRow);
       endRow = startRow + parseInt(limit, 10); // gets the ending row of the query
-      console.log('End Row:', endRow);
+      // console.log('End Row:', endRow);
       between = ' AND `Sort_ID` BETWEEN ' + startRow + ' AND ' + endRow + ' ';
-      console.log('Between:', between);
+      // console.log('Between:', between);
       limit = '';
     } else {
       limit = limit === '0' ? '' : ' LIMIT ' + (parseInt(limit, 10) - 1); // if limit is 0 then there's no limit
@@ -364,7 +363,7 @@ app.get(`/${appName}/api/`, (req, res) => {
       afterTable = [];
     connection.query(afterQuery, (err, results) => {
       if (err) {
-        console.log('Error: ', err);
+        // console.log('Error: ', err);
         return res.send(err);
       } else {
         afterTable = results;
@@ -372,7 +371,7 @@ app.get(`/${appName}/api/`, (req, res) => {
       if (beforeQuery !== '') {
         connection.query(beforeQuery, (err, results) => {
           if (err) {
-            console.log('Error: ', err);
+            // console.log('Error: ', err);
             return res.send(err);
           } else {
             beforeTable = results;
@@ -389,12 +388,12 @@ app.get(`/${appName}/api/`, (req, res) => {
       }
     });
   } else {
-    console.log(
+    /*console.log(
       'Go to:\n' +
         Object.keys(tables)
           .map(path => `/${appName}/api/${path} to see the ${path} table,`)
           .join('\n')
-    );
+    );*/
     res.send(
       'Go to:<br/>' +
         Object.keys(tables)
@@ -406,9 +405,9 @@ app.get(`/${appName}/api/`, (req, res) => {
 
 // handles all the basic get api table queries
 app.get(`/${appName}/api/:path`, (req, res) => {
-  console.log(req.params.path);
+  // console.log(req.params.path);
   const path = req.params.path;
-  console.log(tables[path]);
+  // console.log(tables[path]);
   // if the first character is a question mark and therefore a query
   if (path in tables) {
     connection.query(tables[path], (err, results) => {

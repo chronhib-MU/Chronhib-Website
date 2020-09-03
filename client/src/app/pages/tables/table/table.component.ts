@@ -115,7 +115,7 @@ export class TableComponent implements OnInit {
     this.routeQueryParams = this.route.queryParamMap.subscribe(async _paramMap => {
       await this.refresh();
 
-      console.log('updated');
+      // console.log('updated');
     });
     // need this to push the dataset
     this.fetchedTable();
@@ -125,12 +125,12 @@ export class TableComponent implements OnInit {
       if (hook === 'afterChange') {
         this.hotSettings[that.edit ? 1 : 0][hook] = function () {
           if (arguments[1] !== 'loadData') {
-            console.log(hook, arguments);
+            // console.log(hook, arguments);
             const tableData = this.getData();
-            console.log(tableData);
+            // console.log(tableData);
             const values = [];
             arguments[0].forEach(value => {
-              console.log('value:', value);
+              // console.log('value:', value);
               if (value[2] !== value[3]) {
                 const fieldProperty = value[1];
                 values.push({
@@ -145,19 +145,20 @@ export class TableComponent implements OnInit {
               command: arguments[1],
               values
             };
-            console.log('Result:', res);
+            // console.log('Result:', res);
             if (that.edit && res.command !== 'loadData') {
               that.tableData.updateTable(res).then(() => {
                 that.history.push(res);
-                console.log('History: ', that.history);
+                // console.log('History: ', that.history);
                 // that.refresh();
               });
             }
           }
         };
       } else if (hook === 'afterRowMove') {
+        // TODO: refactor this
         this.hotSettings[that.edit ? 1 : 0][hook] = function () {
-          console.log(this);
+          // console.log(this);
           const tableData = this.getData();
           const newValues = tableData.map((row, i) => {
             const sortId = i + 1;
@@ -169,18 +170,19 @@ export class TableComponent implements OnInit {
             command: 'moveRow',
             values: [newValues]
           };
-          console.log('Result:', res);
+          // console.log('Result:', res);
           if (that.edit) {
             that.tableData.updateTable(res).then(() => {
               that.history.push(res);
-              console.log('History: ', that.history);
+              // console.log('History: ', that.history);
               // that.refresh();
             });
           }
         };
       } else if (hook === 'afterCreateRow') {
+        // TODO: And this
         this.hotSettings[that.edit ? 1 : 0][hook] = function () {
-          console.log(this);
+          // console.log(this);
           const tableData = this.getData();
           const newValues = tableData.map((row, i) => {
             const sortId = i + 1;
@@ -191,11 +193,11 @@ export class TableComponent implements OnInit {
             command: 'createRow',
             values: [newValues]
           };
-          console.log('Result:', res);
+          // console.log('Result:', res);
           if (that.edit) {
             that.tableData.updateTable(res).then(() => {
               that.history.push(res);
-              console.log('History: ', that.history);
+              // console.log('History: ', that.history);
               // that.refresh();
             });
           }
@@ -232,7 +234,7 @@ export class TableComponent implements OnInit {
       });
       this.getTableData(this.before);
       // Plugins go here
-      console.log('What is this.before?', this.before);
+      // console.log('What is this.before?', this.before);
       if (this.before === 'sentences') {
         // console.log(this.dataTable[this.before]);
         // console.log([...Array((this.dataTable[this.before].headers.length)).keys()]);
@@ -243,7 +245,6 @@ export class TableComponent implements OnInit {
             columns: headerArr
               .map((val, i) => i)
               .filter((_val, i) => {
-                console.log(i, headerArr[i], i !== 7);
                 return !tableFilter.includes(headerArr[i]);
               })
           }
@@ -252,7 +253,7 @@ export class TableComponent implements OnInit {
     }
     this.dataTable[this.after].headers.forEach((header: string) => {
       // For the main table
-      console.log(header);
+      // console.log(header);
       switch (header) {
         case 'Rel.':
           return this.columns.push(
@@ -519,16 +520,16 @@ export class TableComponent implements OnInit {
         readOnly: !this.edit
       });
     } else {
-      console.log(variable, this.wordWrap);
+      // console.log(variable, this.wordWrap);
       this.wordWrap = !this.wordWrap;
       this.fetchedTable();
     }
   }
   changeID(direction) {
     const urlParams = new URLSearchParams(window.location.search);
-    console.log(urlParams.toString());
+    // console.log(urlParams.toString());
     if (urlParams.has('fval') && (this.before === 'text' || this.before === 'sentences')) {
-      console.log('Got it: ', urlParams.get('fval'));
+      // console.log('Got it: ', urlParams.get('fval'));
       let fVal = urlParams.get('fval');
       const fValArr = fVal.split('-');
       let numVal = parseInt(fValArr[fValArr.length - 1], 10);
@@ -546,14 +547,14 @@ export class TableComponent implements OnInit {
       } else {
         // if its the text_unit_ID from the Sentences table e.g. S0001-1
         fVal = `${fValArr[0]}-${numVal}`;
-        console.log(fVal);
+        // console.log(fVal);
       }
       urlParams.set('fval', fVal);
-      console.log(urlParams.toString());
+      // console.log(urlParams.toString());
       const queryParams = JSON.parse(
         '{"' + decodeURI(urlParams.toString()).replace(/"/g, '\\"').replace(/&/g, '","').replace(/=/g, '":"') + '"}'
       );
-      console.log(queryParams);
+      // console.log(queryParams);
       this.router.navigate(['/tables'], { queryParams });
     }
   }
@@ -564,7 +565,7 @@ export class TableComponent implements OnInit {
     this.location.forward();
   }
   scrollToTable() {
-    console.log('App Table Height: ', this.appTable.nativeElement.scrollHeight);
+    // console.log('App Table Height: ', this.appTable.nativeElement.scrollHeight);
     // window.scrollTo({ top: this.appTable.nativeElement.scrollHeight, behavior: 'smooth' })
     this.appTable.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }

@@ -46,27 +46,27 @@ export class AuthService {
     }
   };
   async logOut() {
-    console.log(`I'm out`);
+    console.log('Logged out');
     localStorage.removeItem(`${window.location.origin}token`);
     await this.isLoggedIn(null);
     this.router.navigate(['/login']);
   }
   async login(loginForm) {
-    console.log('Authenticated: ', this.authenticated);
+    console.log('Authenticated Status: ', this.authenticated);
     if (this.authenticated) {
       this.logOut();
     }
     try {
-      console.table(loginForm.value);
+      // console.table(loginForm.value);
       const { email, password } = loginForm.value;
-      console.log(loginForm.value);
+      // console.log(loginForm.value);
       const userData = { email, password };
       const signedInForm: Observable<string> = this.http.post<string>(
         `${environment.wsUrl}login/`,
         userData
       ) as Observable<string>;
       const res: string = await signedInForm.toPromise();
-      console.log(JSON.parse(res));
+      // console.log(JSON.parse(res));
       const { message, title, type, token } = JSON.parse(res);
       localStorage.setItem(`${window.location.origin}token`, token);
       this.showToaster(message, title, type);
@@ -74,24 +74,24 @@ export class AuthService {
       loginForm.reset();
       this.router.navigate(['/tables']);
     } catch (error) {
-      console.log(error.message);
+      console.error(error.message);
       const res: string = error.error;
-      console.log(JSON.parse(res));
+      // console.log(JSON.parse(res));
       const { message, title, type } = JSON.parse(res);
       this.showToaster(message, title, type);
     }
   }
 
   async register(registerForm) {
-    console.table(registerForm.value);
+    // console.table(registerForm.value);
     const { firstName, lastName, email, password, confirmPassword, accessCode } = registerForm.value;
-    console.log(registerForm.value);
+    // console.log(registerForm.value);
     if (accessCode !== '100' || registerForm.invalid) {
       this.attempts++;
-      console.log('Attempts: ', this.attempts);
+      // console.log('Attempts: ', this.attempts);
       if (this.attempts === 3) {
         // Start Timeout countdown
-        console.log('Starting now: ', Date.now());
+        // console.log('Starting now: ', Date.now());
         const t: Date = new Date(Date.now());
         t.setMinutes(t.getMinutes() + this.timeout);
         const countDownDate = t.getTime();
@@ -127,12 +127,12 @@ export class AuthService {
           newUserData
         ) as Observable<string>;
         const res: string = await registeredForm.toPromise();
-        console.log(JSON.parse(res));
+        // console.log(JSON.parse(res));
         const { message, title, type } = JSON.parse(res);
         this.showToaster(message, title, type);
         registerForm.reset();
       } catch (error) {
-        console.log(error);
+        console.error(error);
       }
     }
   }
@@ -143,11 +143,11 @@ export class AuthService {
       }) as Observable<string>).toPromise();
       const userData = JSON.parse(userDataString);
       const { First_Name, Last_Name, Email } = userData;
-      console.log(userData);
+      // console.log(userData);
       this.user = { firstName: First_Name, lastName: Last_Name, email: Email };
       this.authenticated = true;
     } catch (error) {
-      console.log(error);
+      console.error(error);
       this.user = {
         firstName: '',
         lastName: '',
