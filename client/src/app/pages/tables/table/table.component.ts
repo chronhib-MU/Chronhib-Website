@@ -236,11 +236,16 @@ export class TableComponent implements OnInit {
       if (this.before === 'sentences') {
         // console.log(this.dataTable[this.before]);
         // console.log([...Array((this.dataTable[this.before].headers.length)).keys()]);
-        const headerArr = [...Array(this.dataTable[this.before].headers.length).keys()];
-
+        const headerArr = [...this.dataTable[this.before].headers];
+        const tableFilter = ['Textual_Unit','Translation'];
         this.hotRegisterer.getInstance(this.instance + 'Mini').updateSettings({
           hiddenColumns: {
-            columns: headerArr.filter((_val, i) => i !== 7)
+            columns: headerArr
+              .map((val, i) => i)
+              .filter((_val, i) => {
+                console.log(i, headerArr[i], i !== 7);
+                return !tableFilter.includes(headerArr[i]);
+              })
           }
         });
       }
