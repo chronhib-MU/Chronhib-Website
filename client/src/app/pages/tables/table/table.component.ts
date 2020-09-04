@@ -237,7 +237,7 @@ export class TableComponent implements OnInit {
       this.getTableData(this.before);
       // Plugins go here
       // console.log('What is this.before?', this.before);
-      if (this.before === 'sentences') {
+      if (this.hotRegisterer.getInstance(this.instance + 'Mini') && this.before === 'sentences') {
         // console.log(this.dataTable[this.before]);
         // console.log([...Array((this.dataTable[this.before].headers.length)).keys()]);
         const headerArr = [...this.dataTable[this.before].headers];

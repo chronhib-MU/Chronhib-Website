@@ -2,55 +2,71 @@
   <div class="col">
     <div class="card shadow w-100">
       <div class="card-header border-0 pb-2" (click)="scrollToTable()">
-        <div class="card-title text-uppercase mb-0 float-left">
-          <h5 *ngIf="before && after !== before" class="mb-0 font-weight-bold text-muted">{{ before | titlecase }}</h5>
-          <h2 class="mb-0 font-weight-bolder text-dark">
-            {{ after | titlecase }}
-            <span *ngIf="after !== 'text' && tableData.currentApiQuery.fval">
-              {{ ' - ' + tableData.currentApiQuery.fval }}
-            </span>
-          </h2>
-        </div>
+        <div class="row">
+          <div class="card-title text-uppercase mb-0 col">
+            <h5 *ngIf="before && after !== before" class="mb-0 font-weight-bold text-muted">
+              {{ before | titlecase }}
+            </h5>
+            <h2 class="mb-0 font-weight-bolder text-dark">
+              {{ after | titlecase }}
+              <span *ngIf="after !== 'text' && tableData.currentApiQuery.fval">
+                {{ ' - ' + tableData.currentApiQuery.fval }}
+              </span>
+            </h2>
+          </div>
 
-        <div class="btn-group float-right" *ngIf="edit">
-          <label class="btn btn-secondary px-3 py-2" (click)="undo()"> Undo </label>
-          <label class="btn btn-secondary px-3 py-2" (click)="redo()"> Redo </label>
+          <div class="btn-group col-auto pr-0">
+            <label class="btn btn-secondary px-3 py-2" (click)="toggleMode('edit')">
+              Edit <i class="fa fa-toggle-on" *ngIf="edit"></i><i class="fa fa-toggle-off" *ngIf="!edit"></i>
+            </label>
+            <label class="btn btn-secondary px-3 py-2" (click)="refresh()">
+              Refresh <i class="fa fa-refresh"></i>
+            </label>
+          </div>
+          <div class="btn-group col-auto">
+            <label class="btn btn-secondary px-3 py-2" (click)="toggleMode('wordWrap')">
+              Word-Wrap <i class="fa fa-toggle-on" *ngIf="wordWrap"></i
+              ><i class="fa fa-toggle-off" *ngIf="!wordWrap"></i>
+            </label>
+          </div>
+          <div class="btn-group col-auto pl-0" *ngIf="edit">
+            <label class="btn btn-secondary px-3 py-2" (click)="undo()"> Undo </label>
+            <label class="btn btn-secondary px-3 py-2" (click)="redo()"> Redo </label>
+          </div>
         </div>
-        <div class="btn-group float-right pr-3">
-          <label class="btn btn-secondary px-3 py-2" (click)="toggleMode('wordWrap')">
-            Word-Wrap <i class="fa fa-toggle-on" *ngIf="wordWrap"></i><i class="fa fa-toggle-off" *ngIf="!wordWrap"></i>
-          </label>
-        </div>
-        <div class="btn-group float-right pr-3">
-          <label class="btn btn-secondary px-3 py-2" (click)="toggleMode('edit')">
-            Edit <i class="fa fa-toggle-on" *ngIf="edit"></i><i class="fa fa-toggle-off" *ngIf="!edit"></i>
-          </label>
-          <label class="btn btn-secondary px-3 py-2" (click)="refresh()"> Refresh <i class="fa fa-refresh"></i> </label>
-        </div>
-        <br />
       </div>
-      <div class="mx-4 mb-1">
-        <div class="float-left">
+      <div class="mx-2 mb-2 row justify-content-between">
+        <div class="text-left col-auto">
           <label class="btn btn-secondary px-3 py-2" (click)="goBack()"><i class="fas fa-arrow-left"></i></label>
           <label
             class="btn btn-secondary px-3 py-2"
             (click)="changeID('previous')"
             [hidden]="after === 'text' || after === 'lemmata'"
-            ><i class="fas fa-angle-double-left"></i
-          ></label>
+          >
+            <i class="fas fa-angle-double-left"></i>
+          </label>
         </div>
-        <div class="float-right">
+        <div *ngIf="before === 'sentences' && dataTable[this.before].data[0]" class="text-center col">
+          <h4>
+            {{ dataTable[this.before].data[0].Textual_Unit }}
+          </h4>
+          <h4>
+            {{ dataTable[this.before].data[0].Translation }}
+          </h4>
+        </div>
+        <div class="text-right col-auto">
           <label
             class="btn btn-secondary px-3 py-2"
             (click)="changeID('next')"
             [hidden]="after.toLowerCase() === 'text' || after.toLowerCase() === 'lemmata'"
-            ><i class="fas fa-angle-double-right"></i
-          ></label>
+          >
+            <i class="fas fa-angle-double-right"></i>
+          </label>
           <label class="btn btn-secondary px-3 py-2" (click)="goForward()"><i class="fas fa-arrow-right"></i></label>
         </div>
       </div>
       <hot-table
-        *ngIf="before && after !== before && after !== 'lemmata'"
+        *ngIf="before && after !== before && after !== 'lemmata' && before !== 'sentences'"
         #hotMini
         [hotId]="instance + 'Mini'"
         [columns]="after === 'lemmata' ? columns : columnsMini"
