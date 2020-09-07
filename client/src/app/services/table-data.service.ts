@@ -28,7 +28,7 @@ export class TableDataService {
     }
   };
   fetchedTable: Observable<{ data: { afterTable: []; beforeTable: [] } }>;
-  currentApiQuery: ApiGetQuery | string;
+  currentApiQuery: any;
   constructor(private http: HttpClient) {}
   // Fetches table data from the API
   fetchTable = async (apiQuery: ApiGetQuery | string) => {
