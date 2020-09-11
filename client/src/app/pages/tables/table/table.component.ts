@@ -131,7 +131,7 @@ export class TableComponent implements OnInit {
             const tableData = this.getData();
             // console.log(tableData);
             const values = [];
-            arguments[0].forEach(value => {
+            arguments[0].forEach((value: any[]) => {
               // console.log('value:', value);
               if (value[2] !== value[3]) {
                 const fieldProperty = value[1];
@@ -162,7 +162,7 @@ export class TableComponent implements OnInit {
         this.hotSettings[that.edit ? 1 : 0][hook] = function () {
           // console.log(this);
           const tableData = this.getData();
-          const newValues = tableData.map((row, i) => {
+          const newValues = tableData.map((row: { [x: string]: any }, i: number) => {
             const sortId = i + 1;
             return { ID: row['1'], Sort_ID: sortId };
           });
@@ -186,7 +186,7 @@ export class TableComponent implements OnInit {
         this.hotSettings[that.edit ? 1 : 0][hook] = function () {
           // console.log(this);
           const tableData = this.getData();
-          const newValues = tableData.map((row, i) => {
+          const newValues = tableData.map((row: { [x: string]: any }, i: number) => {
             const sortId = i + 1;
             return { ID: row['1'], Sort_ID: sortId };
           });
@@ -211,8 +211,8 @@ export class TableComponent implements OnInit {
   }
   async fetchedTable() {
     const { data } = await this.tableData.fetchedTable.toPromise();
-    // console.table('After:', this.after);
-    // console.table('Before:', this.before);
+    // console.table('After: ' + this.after);
+    // console.table('Before: ' + this.before);
     // console.log(`Datatable[${this.after}]: `, data.afterTable);
 
     // If this is a scenario where there is a before table
@@ -253,9 +253,18 @@ export class TableComponent implements OnInit {
         });
       }
     }
-    this.dataTable[this.after].headers.forEach((header: string) => {
+    await this.dataTable[this.after].headers.forEach((header: string) => {
       // For the main table
       // console.log(header);
+      // console.log({
+      // this: this,
+      //   after: this.after,
+      //   header,
+      //   type: 'dropdown',
+      //   source: ['Yes', 'No', 'Maybe'],
+      //   renderer: 'autocomplete'
+      // });
+
       switch (header) {
         case 'Rel.':
           return this.columns.push(
@@ -331,88 +340,38 @@ export class TableComponent implements OnInit {
     //   this.dataset.push(row);
     // });
     // console.log(this.columns, this.dataset);
+    if (this.before && this.after !== this.before && this.after === 'lemmata') {
+      const beforeColWidths = this.dataTable[this.before].headers.map((val: any, index: any) =>
+        this.getColWidths(index, this.before)
+      );
+      const getBeforeColWidths = (index: string | number) => beforeColWidths[index];
+      this.hotRegisterer.getInstance(this.instance + 'Mini').updateSettings({ colWidths: getBeforeColWidths });
+    }
+    const afterColWidths = this.dataTable[this.after].headers.map((val: any, index: any) =>
+      this.getColWidths(index, this.after)
+    );
+    const getAfterColWidths = (index: string | number) => afterColWidths[index];
+    this.hotRegisterer.getInstance(this.instance).updateSettings({ colWidths: getAfterColWidths });
     this.getTableData(this.after);
   }
   columnSettings(that: any, table: string, header: string, type: string, source?: any[], renderer?: string) {
-    console.log('I got in here!');
-    return {
+    // console.log('I got in here!');
+    // console.log({ that, table, header, type, source, renderer });
+    const settingsObj: any = {
       data: header,
       title: _.capitalize(header.replace(/_/g, ' ')),
       type,
-      source: source,
-      colWidths: function (index: number): number | string {
-        // console.log('Index: ', index + ' ' + that.dataTable[that.after].headers[index]);
-        const indexTitle = that.dataTable[that.after].headers[index];
-        switch (table) {
-          // column widths for text table
-          case 'text':
-            switch (indexTitle) {
-              case 'ID':
-                return 50;
-              case 'Text_ID':
-                return 75;
-              case 'MSS':
-                return 400;
-              case 'Digital_MSS':
-                return 200;
-              case 'Date':
-                return 300;
-              case 'Edition':
-                return 300;
-              case 'Dating_Criteria':
-                return 600;
-              case 'Created_Date':
-                return 100;
-              case 'MS_Checked':
-                return 300;
-              case 'Reason_Of_MS_Choice_And_Editorial_Policy':
-                return 300;
-              default:
-                return;
-            }
-          // column widths for sentences table
-          case 'sentences':
-            switch (indexTitle) {
-              case 'ID':
-                return 50;
-              case 'Text_ID':
-                return 75;
-              case 'Textual_Unit':
-                return 300;
-              case 'Translation':
-                return 300;
-              default:
-                return;
-            }
-          // column widths for morphology table
-          case 'morphology':
-            switch (indexTitle) {
-              case 'Text_ID':
-                return 100;
-              case 'Comments':
-                return 250;
-              default:
-                return;
-            }
-          // column widths for lemmata table
-          case 'lemmata':
-            switch (indexTitle) {
-              case 'Etymology':
-                return 200;
-              case 'Comments':
-                return 300;
-              case 'DIL_Headword':
-                return 200;
-              default:
-                return;
-            }
-          default:
-            return 150;
-        }
-      },
       renderer:
         renderer ||
-        function (_instance, td, _row, _col, prop, value, _cellProperties) {
+        function (
+          _instance: any,
+          td: HTMLElement,
+          _row: any,
+          _col: any,
+          prop: string,
+          value: string,
+          _cellProperties: any
+        ) {
           // console.log(that);
 
           const escaped = Handsontable.helper.stringify(value);
@@ -477,11 +436,76 @@ export class TableComponent implements OnInit {
           return td;
         }
     };
+    if (source) {
+      settingsObj.source = source;
+    }
+    // console.log(settingsObj);
+
+    return settingsObj;
   }
-  getTableData(table) {
+  getColWidths(index: number, table: string) {
+    // console.log('Index: ', index + ' ' + that.dataTable[that.after].headers[index]);
+    const indexTitle = this.dataTable[table].headers[index];
+    switch (indexTitle) {
+      case 'Comments':
+        return 250;
+      case 'Created_Date':
+        return 150;
+      case 'Date':
+        return 300;
+      case 'Dating_Criteria':
+        return 600;
+      case 'Digital_MSS':
+        return 200;
+      case 'DIL_Headword':
+        return 200;
+      case 'Edition':
+        return 300;
+      case 'Etymology':
+        return 200;
+      case 'ID':
+        return 50;
+      case 'MSS':
+        return 400;
+      case 'MS_Checked':
+        return 125;
+      case 'Onomastic_Complex':
+        return 175;
+      case 'Onomastic_Usage':
+        return 175;
+      case 'Phrase_structure_tree':
+        return 200;
+      case 'Problematic_Form':
+        return 175;
+      case 'Reason_Of_MS_Choice_And_Editorial_Policy':
+        return 350;
+      case 'Secondary_Meaning':
+        return 200;
+      case 'SpecialCharacter':
+        return 175;
+      case 'Syntactic_Unit_Translation':
+        return 250;
+      case 'Text_ID':
+        return 75;
+      case 'Textual_Unit':
+        return 300;
+      case 'Translation':
+        return 300;
+      case 'Translation_From_Latin':
+        return 225;
+      case 'Translation_Notes':
+        return 250;
+      case 'Variant_Readings':
+        return 200;
+      default:
+        return 150;
+    }
+  }
+
+  getTableData(table: string) {
     return this.dataTable[table].data;
   }
-  getRows(table) {
+  getRows(table: string | number) {
     return this.dataTable[table].data.map((row: { Sort_ID: any }) => row.Sort_ID);
   }
   undo() {
@@ -512,7 +536,7 @@ export class TableComponent implements OnInit {
     //   this.hotInstance.loadData(this.getTableData(this.after));
     //   this.hotInstance.render();
   }
-  toggleMode(variable) {
+  toggleMode(variable: string) {
     if (variable === 'edit') {
       this.edit = !this.edit;
       this.hotInstance = this.hotRegisterer.getInstance(this.instance);
@@ -528,7 +552,7 @@ export class TableComponent implements OnInit {
       this.fetchedTable();
     }
   }
-  changeID(direction) {
+  changeID(direction: string) {
     const urlParams = new URLSearchParams(window.location.search);
     // console.log(urlParams.toString());
     if (urlParams.has('fval') && (this.before === 'text' || this.before === 'sentences')) {
