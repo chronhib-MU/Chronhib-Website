@@ -2,7 +2,7 @@
 .table-card-container {
   // margin-top: 1.5rem;
   .card {
-    width: 18vw;
+    width: 10vw;
     margin: 0 auto;
     .card-body {
       padding: 0.5rem;
@@ -29,6 +29,14 @@
           display: none;
         }
       }
+    }
+  }
+}
+@media (max-width: 767.98px) {
+  .col,
+  .table-card-container {
+    .card {
+      width: 25vw;
     }
   }
 }

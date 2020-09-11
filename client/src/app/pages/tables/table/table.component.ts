@@ -334,6 +334,7 @@ export class TableComponent implements OnInit {
     this.getTableData(this.after);
   }
   columnSettings(that: any, table: string, header: string, type: string, source?: any[], renderer?: string) {
+    console.log('I got in here!');
     return {
       data: header,
       title: _.capitalize(header.replace(/_/g, ' ')),

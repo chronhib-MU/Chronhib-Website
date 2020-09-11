@@ -1,19 +1,29 @@
-<div class="header bg-gradient-image pb-8 pt-5">
+<div class="header bg-gradient-image pb-7 pt-4">
   <div class="container-fluid">
     <div class="header-body">
       <ng-container *ngIf="!table">
         <div class="row">
           <div
             *ngFor="let table of tableData.tables.names; let key = index"
-            class="col justify-content-around table-card-container mb-3 col-xs-6 col-sm-6 col-md-3"
+            class="col justify-content-around align-content-center table-card-container mb-3 col-6 col-sm-6 col-md-3"
             [id]="'table-card-' + key"
           >
-            <div class="card">
+            <a class="d-md-none" [routerLink]="['/tables/', table]">
+              <div class="card">
+                <div class="card-body">
+                  <div class="card-title text-uppercase font-weight-bolder text-dark mb-0">
+                    {{ table | titlecase }}
+                  </div>
+                </div>
+              </div>
+            </a>
+            <div class="card d-none d-md-flex">
               <div class="card-body">
                 <div class="card-title text-uppercase font-weight-bolder text-dark mb-0">
                   {{ table | titlecase }}
                 </div>
               </div>
+
               <a [routerLink]="['/tables/', table]">
                 <div id="img-container" class="w-100">
                   <img
