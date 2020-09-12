@@ -590,10 +590,7 @@ export class TableComponent implements OnInit {
     }
   }
   goBack() {
-    const urlParams = new URLSearchParams(window.location.search);
-    console.log(urlParams.get('fval'));
-
-    // this.location.back();
+    this.location.back();
   }
   goForward() {
     this.location.forward();
