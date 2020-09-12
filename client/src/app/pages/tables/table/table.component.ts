@@ -364,6 +364,7 @@ export class TableComponent implements OnInit {
       data: header,
       title: _.capitalize(header.replace(/_/g, ' ')),
       type,
+      readOnly: header === 'ID' || !this.edit ? true : false,
       renderer:
         renderer ||
         function (
@@ -547,8 +548,24 @@ export class TableComponent implements OnInit {
         manualRowMove: this.edit,
         manualColumnFreeze: this.edit,
         contextMenu: this.edit,
-        readOnly: !this.edit
+        readOnly: !this.edit,
+        disableVisualSelection: !this.edit
       });
+      this.columns.forEach(column => {
+        column.readOnly = !this.edit;
+      });
+      this.columnsMini.forEach(column => {
+        column.readOnly = !this.edit;
+      });
+      if (this.hotRegisterer.getInstance(this.instance + 'Mini')) {
+        this.hotRegisterer.getInstance(this.instance + 'Mini').updateSettings({
+          manualRowMove: this.edit,
+          manualColumnFreeze: this.edit,
+          contextMenu: this.edit,
+          readOnly: !this.edit,
+          disableVisualSelection: !this.edit
+        });
+      }
     } else {
       // console.log(variable, this.wordWrap);
       this.wordWrap = !this.wordWrap;
