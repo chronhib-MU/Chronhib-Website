@@ -39,29 +39,34 @@ export class TableDataService {
     // console.log(window.location.origin);
     // console.log('apiQuery:', apiQuery);
     // console.log(environment.apiUrl);
-    // Checks if the query was a table name e.g. 'text', 'sentences' etc. else it has to be an API query object
-    if (this.tables.names.indexOf(apiQuery) > -1 && typeof apiQuery === 'string') {
-      this.fetchedTable = this.http.get(`${environment.apiUrl}${apiQuery}`) as Observable<{
-        data: { afterTable: []; beforeTable: [] };
-      }>;
-      const { data } = await this.fetchedTable.toPromise();
-      // console.log(`${apiQuery}: `, data.afterTable);
-      this.tables[apiQuery].data = data.afterTable;
-      this.tables[apiQuery].headers = Object.keys(this.tables[apiQuery].data[0]);
-      // console.log(this.tables[apiQuery].headers);
-    } else if (typeof apiQuery !== 'string') {
-      this.fetchedTable = this.http.get(`${environment.apiUrl}?${queryString}`) as Observable<{
-        data: { afterTable: []; beforeTable: [] };
-      }>;
-      const { data } = await this.fetchedTable.toPromise();
-      // console.log(`${queryString}: `, data);
-      if (apiQuery.dtable !== apiQuery.ctable) {
-        this.tables[apiQuery.ctable].data = data.beforeTable;
-        this.tables[apiQuery.ctable].headers = Object.keys(this.tables[apiQuery.ctable].data[0]);
+    try {
+      // Checks if the query was a table name e.g. 'text', 'sentences' etc. else it has to be an API query object
+      if (this.tables.names.indexOf(apiQuery) > -1 && typeof apiQuery === 'string') {
+        this.fetchedTable = this.http.get(`${environment.apiUrl}${apiQuery}`) as Observable<{
+          data: { afterTable: []; beforeTable: [] };
+        }>;
+        const { data } = await this.fetchedTable.toPromise();
+        // console.log(`${apiQuery}: `, data.afterTable);
+        this.tables[apiQuery].data = data.afterTable;
+        this.tables[apiQuery].headers = Object.keys(this.tables[apiQuery].data[0]);
+        // console.log(this.tables[apiQuery].headers);
+      } else if (typeof apiQuery !== 'string') {
+        this.fetchedTable = this.http.get(`${environment.apiUrl}?${queryString}`) as Observable<{
+          data: { afterTable: []; beforeTable: [] };
+        }>;
+        const { data } = await this.fetchedTable.toPromise();
+        // console.log(`${queryString}: `, data);
+        if (apiQuery.dtable !== apiQuery.ctable) {
+          this.tables[apiQuery.ctable].data = data.beforeTable;
+          this.tables[apiQuery.ctable].headers = Object.keys(this.tables[apiQuery.ctable].data[0]);
+        }
+        this.tables[apiQuery.dtable].data = data.afterTable;
+        this.tables[apiQuery.dtable].headers = Object.keys(this.tables[apiQuery.dtable].data[0]);
+        // console.log(this.tables[apiQuery.dtable].headers);
       }
-      this.tables[apiQuery.dtable].data = data.afterTable;
-      this.tables[apiQuery.dtable].headers = Object.keys(this.tables[apiQuery.dtable].data[0]);
-      // console.log(this.tables[apiQuery.dtable].headers);
+    } catch (error) {
+      console.log('Invalid request made!');
+      return;
     }
   };
   updateTable = async (apiBody: ApiPostBody) => {

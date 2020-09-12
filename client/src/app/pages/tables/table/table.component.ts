@@ -210,21 +210,26 @@ export class TableComponent implements OnInit {
     // $hooksList = $('#hooksList');
   }
   async fetchedTable() {
-    const { data } = await this.tableData.fetchedTable.toPromise();
-    // console.table('After: ' + this.after);
-    // console.table('Before: ' + this.before);
-    // console.log(`Datatable[${this.after}]: `, data.afterTable);
+    try {
+      const { data } = await this.tableData.fetchedTable.toPromise();
+      // console.table('After: ' + this.after);
+      // console.table('Before: ' + this.before);
+      // console.log(`Datatable[${this.after}]: `, data.afterTable);
 
-    // If this is a scenario where there is a before table
-    if (this.before !== this.after && this.before !== '') {
-      this.dataTable[this.before].data = data.beforeTable;
-      this.dataTable[this.before].headers = Object.keys(this.dataTable[this.before].data[0]);
-      this.dataTable[this.before].headers.splice(0, 0, this.dataTable[this.before].headers.pop());
+      // If this is a scenario where there is a before table
+      if (this.before !== this.after && this.before !== '') {
+        this.dataTable[this.before].data = data.beforeTable;
+        this.dataTable[this.before].headers = Object.keys(this.dataTable[this.before].data[0]);
+        this.dataTable[this.before].headers.splice(0, 0, this.dataTable[this.before].headers.pop());
+      }
+      this.dataTable[this.after].data = data.afterTable;
+      this.dataTable[this.after].headers = Object.keys(this.dataTable[this.after].data[0]);
+      this.dataTable[this.after].headers.splice(0, 0, this.dataTable[this.after].headers.pop());
+      // console.table(this.dataTable);
+    } catch (error) {
+      console.log('Invalid request made!');
+      return;
     }
-    this.dataTable[this.after].data = data.afterTable;
-    this.dataTable[this.after].headers = Object.keys(this.dataTable[this.after].data[0]);
-    this.dataTable[this.after].headers.splice(0, 0, this.dataTable[this.after].headers.pop());
-    // console.table(this.dataTable);
     this.columns = [];
     this.columnsMini = [];
 
@@ -235,19 +240,17 @@ export class TableComponent implements OnInit {
         this.columnsMini.push(this.columnSettings(this, this.before, header, 'text'));
       });
       this.getTableData(this.before);
-      // Plugins go here
-      // console.log('What is this.before?', this.before);
-      if (this.hotRegisterer.getInstance(this.instance + 'Mini') && this.before === 'sentences') {
+      if (this.hotRegisterer.getInstance(this.instance)) {
         // console.log(this.dataTable[this.before]);
         // console.log([...Array((this.dataTable[this.before].headers.length)).keys()]);
-        const headerArr = [...this.dataTable[this.before].headers];
-        const tableFilter = ['Textual_Unit', 'Translation'];
-        this.hotRegisterer.getInstance(this.instance + 'Mini').updateSettings({
+        const headerArr = [...this.dataTable[this.after].headers];
+        const columnFilter = ['Sort_ID', 'TextID'];
+        this.hotRegisterer.getInstance(this.instance).updateSettings({
           hiddenColumns: {
             columns: headerArr
               .map((val, i) => i)
               .filter((_val, i) => {
-                return !tableFilter.includes(headerArr[i]);
+                return columnFilter.includes(headerArr[i]);
               })
           }
         });
@@ -340,7 +343,7 @@ export class TableComponent implements OnInit {
     //   this.dataset.push(row);
     // });
     // console.log(this.columns, this.dataset);
-    if (this.before && this.after !== this.before && this.after === 'lemmata') {
+    if (this.hotRegisterer.getInstance(this.instance + 'Mini')) {
       const beforeColWidths = this.dataTable[this.before].headers.map((val: any, index: any) =>
         this.getColWidths(index, this.before)
       );
@@ -464,7 +467,7 @@ export class TableComponent implements OnInit {
       case 'Etymology':
         return 200;
       case 'ID':
-        return 50;
+        return 75;
       case 'MSS':
         return 400;
       case 'MS_Checked':
@@ -557,36 +560,40 @@ export class TableComponent implements OnInit {
     // console.log(urlParams.toString());
     if (urlParams.has('fval') && (this.before === 'text' || this.before === 'sentences')) {
       // console.log('Got it: ', urlParams.get('fval'));
-      let fVal = urlParams.get('fval');
-      const fValArr = fVal.split('-');
-      let numVal = parseInt(fValArr[fValArr.length - 1], 10);
+      let fVal = urlParams.get('fval'); // 0001 or S0001-1 format
+      const fValArr = fVal.split('-'); // ['0001'] or ['S0001','1']
+      let numVal = parseInt(fValArr[fValArr.length - 1], 10); // gives the last value as a number
       direction === 'next' ? numVal++ : numVal--;
       if (numVal === 0) {
-        return;
-      }
-      if (fValArr.length === 1) {
-        // if its the textID from the Text table e.g. 0001
-        const stringVal = numVal.toString(); // convert numVal back to String
-        fVal =
-          Array(4 - stringVal.length)
-            .fill('0')
-            .join('') + stringVal;
+        return; // cause there are no more texts / sentences in the text
       } else {
-        // if its the text_unit_ID from the Sentences table e.g. S0001-1
-        fVal = `${fValArr[0]}-${numVal}`;
-        // console.log(fVal);
+        if (this.before === 'text') {
+          // if its the textID from the Text table e.g. 0001
+          const stringVal = numVal.toString(); // convert numVal back to String
+          fVal =
+            Array(4 - stringVal.length)
+              .fill('0')
+              .join('') + stringVal;
+        } else {
+          // if its the text_unit_ID from the Sentences table e.g. S0001-1
+          fVal = `${fValArr[0]}-${numVal}`;
+          // console.log(fVal);
+        }
+        urlParams.set('fval', fVal);
+        // console.log(urlParams.toString());
+        const queryParams = JSON.parse(
+          '{"' + decodeURI(urlParams.toString()).replace(/"/g, '\\"').replace(/&/g, '","').replace(/=/g, '":"') + '"}'
+        );
+        // console.log(queryParams);
+        this.router.navigate(['/tables'], { queryParams });
       }
-      urlParams.set('fval', fVal);
-      // console.log(urlParams.toString());
-      const queryParams = JSON.parse(
-        '{"' + decodeURI(urlParams.toString()).replace(/"/g, '\\"').replace(/&/g, '","').replace(/=/g, '":"') + '"}'
-      );
-      // console.log(queryParams);
-      this.router.navigate(['/tables'], { queryParams });
     }
   }
   goBack() {
-    this.location.back();
+    const urlParams = new URLSearchParams(window.location.search);
+    console.log(urlParams.get('fval'));
+
+    // this.location.back();
   }
   goForward() {
     this.location.forward();
