@@ -387,6 +387,77 @@ app.get(`/${appName}/api/`, (req, res) => {
         });
       }
     });
+  } else if (typeof req.query.search === 'string') {
+    console.log(req.query.search);
+    // const searchQuery = JSON.parse(req.query.search);
+    const searchQuery = [
+      { table: 'MORPHOLOGY', column: '*', operator: '', comparator: '', comparatorVal: '' },
+      { table: 'MORPHOLOGY', column: 'Morph', operator: '', comparator: 'ends with', comparatorVal: '' },
+      { table: 'MORPHOLOGY', column: 'Analysis', operator: 'AND', comparator: '=', comparatorVal: 'gen.sg.' },
+      { table: 'LEMMATA', column: 'Class.', operator: 'AND', comparator: '=', comparatorVal: 'i' }
+    ];
+    console.log(searchQuery);
+    let selectedTablesArr = [],
+      fromTablesArr = [],
+      whereConditionsArr = [];
+    for (let val of searchQuery) {
+      // Creates the string that goes after the SELECT DISTINCT part
+      let selectedTable = '`' + val.table + '` . ';
+      selectedTable += val.column === '*' ? '*' : '`' + val.column + '`';
+      selectedTablesArr.push(selectedTable);
+      // Adds all the tables for the FROM part
+      fromTablesArr.push(val.table);
+      let whereCondition = '';
+      if (val.comparator) {
+        if (val.operator) {
+          // Adds AND/ORs if they exist
+          whereCondition += val.operator + ' ';
+        }
+        // Adds the table.column reference
+        whereCondition += '`' + val.table + '` . `' + val.column + '` ';
+        // Converts the comparator to sql where conditions
+        switch (val.comparator) {
+          case 'contains':
+            whereCondition += `LIKE '%` + val.comparatorVal + `%'`;
+            break;
+          case 'starts with':
+            whereCondition += `LIKE '` + val.comparatorVal + `%'`;
+            break;
+          case 'ends with':
+            whereCondition += `LIKE '%` + val.comparatorVal + `'`;
+            break;
+          default:
+            whereCondition += val.comparator + ` '` + val.comparatorVal + `'`;
+            break;
+        }
+      }
+      whereConditionsArr.push(whereCondition);
+    }
+    let selectedTables = selectedTablesArr.join(', '),
+      fromTables = fromTablesArr.filter((val, index, self) => index == self.indexOf(val)).join(', '), // Removes duplicates from the array
+      whereConditions = whereConditionsArr.join(' ');
+    // Just checking to see if we've gotten everything right so far
+    console.log(selectedTables);
+    console.log(fromTables);
+    console.log(whereConditions);
+    const finalQuery =
+      'SELECT DISTINCT ' +
+      selectedTables +
+      ' FROM ' +
+      fromTables +
+      (whereConditions ? ' WHERE ' + whereConditions : '') +
+      ';';
+    console.log(finalQuery);
+    connection.query(finalQuery, (err, results) => {
+      if (err) {
+        // console.log('Error: ', err);
+        return res.send(err);
+      } else {
+        return res.json({
+          data: results
+        });
+      }
+    });
   } else {
     /*console.log(
       'Go to:\n' +

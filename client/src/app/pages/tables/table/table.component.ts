@@ -172,7 +172,7 @@ export class TableComponent implements OnInit {
             command: 'moveRow',
             values: [newValues]
           };
-          // console.log('Result:', res);
+          console.log('Result:', res);
           if (that.edit) {
             that.tableData.updateTable(res).then(() => {
               that.history.push(res);
@@ -195,12 +195,12 @@ export class TableComponent implements OnInit {
             command: 'createRow',
             values: [newValues]
           };
-          // console.log('Result:', res);
+          console.log('Result:', res);
           if (that.edit) {
             that.tableData.updateTable(res).then(() => {
               that.history.push(res);
-              // console.log('History: ', that.history);
-              // that.refresh();
+              console.log('History: ', that.history);
+              that.refresh();
             });
           }
         };
