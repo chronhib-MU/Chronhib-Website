@@ -379,62 +379,94 @@ export class TableComponent implements OnInit {
           // console.log(that);
 
           const escaped = Handsontable.helper.stringify(value);
-          // console.log('Renderer Variables: ', { instance, td, row, col, prop, value, cellProperties });
+          // console.log('Renderer Variables: ', { _instance, td, _row, _col, prop, value, _cellProperties });
           // if (escaped.indexOf('http') === 0) {
-          if (escaped.indexOf('http') === 0) {
-            // Create anchor element.
-            const a = document.createElement('a');
-            // Create the text node for anchor element
-            const link = document.createTextNode(value);
-            // Append the text node to anchor element
-            a.appendChild(link);
-            // Set the title
-            a.title = value;
-            // Set the href property
-            a.href = value;
-            Handsontable.dom.addEvent(a, 'mousedown', function (event) {
-              event.preventDefault();
-            });
-
+          if (escaped.indexOf('http') === 0 || escaped.indexOf('www') === 0) {
+            // Removes all the commas (;) from the dil headword column and splits them up into an array
+            const linksArr = escaped.replace(/;/g, '').split(' ');
             Handsontable.dom.empty(td);
-            td.appendChild(a);
+            for (const url of linksArr) {
+              // Just double-checking that no random characters ruin things
+              if (url.indexOf('http') === 0 || url.indexOf('www') === 0) {
+                // Create anchor element.
+                const a = document.createElement('a');
+                // Create the text node for anchor element
+                const link = document.createTextNode(url);
+                // Append the text node to anchor element
+                a.appendChild(link);
+                // Set the title
+                a.title = url + '/n';
+                // Set the href property
+                a.href = url;
+                Handsontable.dom.addEvent(a, 'mousedown', function (event) {
+                  event.preventDefault();
+                });
+                td.appendChild(a);
+              }
+            }
             // Make it centered
             td.style.textAlign = 'center';
           } else {
-            if (
-              (table === 'text' && prop === 'Text_ID') ||
-              (table === 'sentences' && prop === 'Text_Unit_ID') ||
-              (table === 'morphology' && prop === 'Lemma')
-            ) {
-              const dtableIndex = that.tableData.tables.names.indexOf(table) + 1;
-
-              const queryParams = {
+            let queryParams = {};
+            // if () {
+            //   queryParams = {
+            //     page: 0,
+            //     limit: 0,
+            //     fprop: prop,
+            //     fval: value,
+            //     dtable: 'text',
+            //     ctable: table
+            //   };
+            // } else
+            if ((table === 'sentences' && prop === 'Text_ID') || (table === 'text' && prop === 'Text_ID')) {
+              queryParams = {
                 page: 0,
                 limit: 0,
                 fprop: prop,
                 fval: value,
-                dtable: that.tableData.tables.names[dtableIndex],
-                ctable: table
+                dtable: 'sentences',
+                ctable: 'text'
               };
-              const a = document.createElement('span');
-              const linkText = document.createTextNode(value);
-              a.appendChild(linkText);
-              a.className = 'btn-link';
-              // a.href = '/tables?' + queryString;
-              Handsontable.dom.addEvent(a, 'mousedown', function (event) {
-                event.preventDefault();
-              });
-              Handsontable.dom.empty(td);
-              a.addEventListener('click', () => {
-                that.ngZone.run(() => that.router.navigate(['/tables'], { queryParams }));
-              });
-              td.appendChild(a);
-              td.style.textAlign = 'center';
+            } else if (
+              (table === 'morphology' && prop === 'Text_Unit_ID') ||
+              (table === 'sentences' && prop === 'Text_Unit_ID')
+            ) {
+              queryParams = {
+                page: 0,
+                limit: 0,
+                fprop: prop,
+                fval: value,
+                dtable: 'morphology',
+                ctable: 'sentences'
+              };
+            } else if ((table === 'morphology' && prop === 'Lemma') || (table === 'lemmata' && prop === 'Lemma')) {
+              queryParams = {
+                page: 0,
+                limit: 0,
+                fprop: prop,
+                fval: value,
+                dtable: 'lemmata',
+                ctable: 'morphology'
+              };
             } else {
               Handsontable.renderers.TextRenderer.apply(this, arguments);
               td.style.whiteSpace = that.wordWrap ? 'normal' : 'nowrap';
               return td;
             }
+            const a = document.createElement('span');
+            const linkText = document.createTextNode(value);
+            a.appendChild(linkText);
+            a.className = 'btn-link';
+            // a.href = '/tables?' + queryString;
+            Handsontable.dom.addEvent(a, 'mousedown', function (event) {
+              event.preventDefault();
+            });
+            Handsontable.dom.empty(td);
+            a.addEventListener('click', () => {
+              that.ngZone.run(() => that.router.navigate(['/tables'], { queryParams }));
+            });
+            td.appendChild(a);
+            td.style.textAlign = 'center';
           }
           td.style.whiteSpace = that.wordWrap ? 'normal' : 'nowrap';
           return td;
