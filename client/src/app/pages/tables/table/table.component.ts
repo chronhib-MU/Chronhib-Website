@@ -19,6 +19,8 @@ export class TableComponent implements OnInit {
   @ViewChild('appTable') appTable: ElementRef;
   private hotRegisterer = new HotTableRegisterer();
   wordWrap = true;
+  sort = false;
+  ref = false;
   instance = 'hot';
   // index 0 if edit mode false OR index 1 if edit mode true
   hotSettings: Handsontable.GridSettings[] = [
@@ -38,6 +40,7 @@ export class TableComponent implements OnInit {
       contextMenu: false,
       readOnly: true,
       // colWidths: 150,
+      columnSorting: false,
       wordWrap: true
     },
     {
@@ -56,6 +59,7 @@ export class TableComponent implements OnInit {
       contextMenu: true,
       readOnly: false,
       // colWidths: 150,
+      columnSorting: false,
       wordWrap: true
     }
   ];
@@ -114,13 +118,16 @@ export class TableComponent implements OnInit {
 
   ngOnInit(): void {
     const that = this;
+    this.sort = false;
+
     this.routeQueryParams = this.route.queryParamMap.subscribe(async _paramMap => {
-      await this.refresh();
+      this.sort = false;
+      this.refresh();
 
       // console.log('updated');
     });
     // need this to push the dataset
-    this.fetchedTable();
+    // this.fetchedTable();
     const hooks = Handsontable.hooks.getRegistered();
     hooks.forEach(hook => {
       // focuses on the results after changes cause they have before and after data
@@ -147,6 +154,10 @@ export class TableComponent implements OnInit {
               command: arguments[1],
               values
             };
+            // Checks for which table we're making changes on
+            if (this.rootElement.id === 'hotMini') {
+              res.table = that.before;
+            }
             // console.log('Result:', res);
             if (that.edit && res.command !== 'loadData') {
               that.tableData.updateTable(res).then(() => {
@@ -172,6 +183,10 @@ export class TableComponent implements OnInit {
             command: 'moveRow',
             values: [newValues]
           };
+          // Checks for which table we're making changes on
+          if (this.rootElement.id === 'hotMini') {
+            res.table = that.before;
+          }
           // console.log('Result:', res);
           if (that.edit) {
             that.tableData.updateTable(res).then(() => {
@@ -195,6 +210,10 @@ export class TableComponent implements OnInit {
             command: 'createRow',
             values: [newValues]
           };
+          // Checks for which table we're making changes on
+          if (this.rootElement.id === 'hotMini') {
+            res.table = that.before;
+          }
           // console.log('Result:', res);
           if (that.edit) {
             that.tableData.updateTable(res).then(() => {
@@ -210,6 +229,16 @@ export class TableComponent implements OnInit {
     // $hooksList = $('#hooksList');
   }
   async fetchedTable() {
+    if (this.hotRegisterer.getInstance(this.instance + 'Mini')) {
+      this.hotRegisterer.getInstance(this.instance + 'Mini').updateSettings({
+        columnSorting: this.sort
+      });
+    }
+    if (this.hotRegisterer.getInstance(this.instance)) {
+      this.hotRegisterer.getInstance(this.instance).updateSettings({
+        columnSorting: this.sort
+      });
+    }
     try {
       const { data } = await this.tableData.fetchedTable.toPromise();
       // console.table('After: ' + this.after);
@@ -217,125 +246,31 @@ export class TableComponent implements OnInit {
       // console.log(`Datatable[${this.after}]: `, data.afterTable);
 
       // If this is a scenario where there is a before table
-      if (this.before !== this.after && this.before !== '') {
+      if (this.before && this.before !== this.after) {
         this.dataTable[this.before].data = data.beforeTable;
         this.dataTable[this.before].headers = Object.keys(this.dataTable[this.before].data[0]);
+        // Moves Sort_ID to first while remove it from last in the before table
         this.dataTable[this.before].headers.splice(0, 0, this.dataTable[this.before].headers.pop());
       }
       this.dataTable[this.after].data = data.afterTable;
       this.dataTable[this.after].headers = Object.keys(this.dataTable[this.after].data[0]);
+      // Moves Sort_ID to first while remove it from last in the after table
       this.dataTable[this.after].headers.splice(0, 0, this.dataTable[this.after].headers.pop());
       // console.table(this.dataTable);
     } catch (error) {
       console.log('Invalid request made!');
-      return;
+      return error;
     }
     this.columns = [];
     this.columnsMini = [];
 
-    // If this is a scenario where there is a before table
-    if (this.before !== this.after && this.before !== '') {
-      // For the mini table
-      this.dataTable[this.before].headers.forEach((header: string) => {
-        this.columnsMini.push(this.columnSettings(this, this.before, header, 'text'));
+    if (this.before && this.before !== this.after) {
+      await this.dataTable[this.before].headers.forEach((header: string) => {
+        return this.columnRendererSettings(header, this.before, 'columnsMini');
       });
-      this.getTableData(this.before);
-      if (this.hotRegisterer.getInstance(this.instance)) {
-        // console.log(this.dataTable[this.before]);
-        // console.log([...Array((this.dataTable[this.before].headers.length)).keys()]);
-        const headerArr = [...this.dataTable[this.after].headers];
-        const columnFilter = ['Sort_ID', 'TextID'];
-        this.hotRegisterer.getInstance(this.instance).updateSettings({
-          hiddenColumns: {
-            columns: headerArr
-              .map((val, i) => i)
-              .filter((_val, i) => {
-                return columnFilter.includes(headerArr[i]);
-              })
-          }
-        });
-      }
     }
     await this.dataTable[this.after].headers.forEach((header: string) => {
-      // For the main table
-      // console.log(header);
-      // console.log({
-      // this: this,
-      //   after: this.after,
-      //   header,
-      //   type: 'dropdown',
-      //   source: ['Yes', 'No', 'Maybe'],
-      //   renderer: 'autocomplete'
-      // });
-
-      switch (header) {
-        case 'Rel.':
-          return this.columns.push(
-            this.columnSettings(this, this.after, header, 'dropdown', ['Yes', 'No', 'Maybe'], 'autocomplete')
-          );
-        case 'Trans.':
-          return this.columns.push(
-            this.columnSettings(
-              this,
-              this.after,
-              header,
-              'dropdown',
-              ['trans.', 'intrans.', 'pass.', 'unclear'],
-              'autocomplete'
-            )
-          );
-        case 'Depend.':
-          return this.columns.push(
-            this.columnSettings(
-              this,
-              this.after,
-              header,
-              'dropdown',
-              ['absolute', 'conjunct', 'deuterotonic', 'prototonic'],
-              'autocomplete'
-            )
-          );
-        case 'Depon.':
-          return this.columns.push(
-            this.columnSettings(this, this.after, header, 'dropdown', ['Yes', 'No', 'Maybe'], 'autocomplete')
-          );
-        case 'Contr.':
-          return this.columns.push(
-            this.columnSettings(this, this.after, header, 'dropdown', ['Yes', 'No', 'Maybe'], 'autocomplete')
-          );
-        case 'Augm.':
-          return this.columns.push(
-            this.columnSettings(this, this.after, header, 'dropdown', ['Yes', 'No', 'Maybe'], 'autocomplete')
-          );
-        case 'Hiat.':
-          return this.columns.push(
-            this.columnSettings(this, this.after, header, 'dropdown', ['Yes', 'No', 'Maybe'], 'autocomplete')
-          );
-        case 'Mut.':
-          return this.columns.push(
-            this.columnSettings(
-              this,
-              this.after,
-              header,
-              'dropdown',
-              ['+ Nasalization', '- Nasalization', '+ Lenition', '- Lenition', '+ Gemination', '- Gemination'],
-              'autocomplete'
-            )
-          );
-        case 'Causing_Mut.':
-          return this.columns.push(
-            this.columnSettings(
-              this,
-              this.after,
-              header,
-              'dropdown',
-              ['+ Nasalization', '- Nasalization', '+ Lenition', '- Lenition', '+ Gemination', '- Gemination'],
-              'autocomplete'
-            )
-          );
-        default:
-          return this.columns.push(this.columnSettings(this, this.after, header, 'text'));
-      }
+      return this.columnRendererSettings(header, this.after, 'columns');
     });
 
     // this.dataset = [];
@@ -348,15 +283,113 @@ export class TableComponent implements OnInit {
         this.getColWidths(index, this.before)
       );
       const getBeforeColWidths = (index: string | number) => beforeColWidths[index];
-      this.hotRegisterer.getInstance(this.instance + 'Mini').updateSettings({ colWidths: getBeforeColWidths });
+      const headerArr = [...this.dataTable[this.before].headers];
+      const columnFilter = ['Sort_ID', 'TextID'];
+      this.hotRegisterer.getInstance(this.instance + 'Mini').updateSettings({
+        colWidths: getBeforeColWidths,
+        hiddenColumns: {
+          columns: headerArr
+            .map((val, i) => i)
+            .filter((_val, i) => {
+              return columnFilter.includes(headerArr[i]);
+            })
+        },
+        columnSorting: this.sort
+      });
+      this.getTableData(this.before);
     }
-    const afterColWidths = this.dataTable[this.after].headers.map((val: any, index: any) =>
-      this.getColWidths(index, this.after)
-    );
-    const getAfterColWidths = (index: string | number) => afterColWidths[index];
-    this.hotRegisterer.getInstance(this.instance).updateSettings({ colWidths: getAfterColWidths });
-    this.getTableData(this.after);
+    if (this.hotRegisterer.getInstance(this.instance)) {
+      const afterColWidths = this.dataTable[this.after].headers.map((val: any, index: any) =>
+        this.getColWidths(index, this.after)
+      );
+      const getAfterColWidths = (index: string | number) => afterColWidths[index];
+      const headerArr = [...this.dataTable[this.after].headers];
+      const columnFilter = ['Sort_ID', 'TextID'];
+      this.hotRegisterer.getInstance(this.instance).updateSettings({
+        colWidths: getAfterColWidths,
+        hiddenColumns: {
+          columns: headerArr
+            .map((val, i) => i)
+            .filter((_val, i) => {
+              return columnFilter.includes(headerArr[i]);
+            })
+        },
+        columnSorting: this.sort
+      });
+      this.getTableData(this.after);
+    }
   }
+  columnRendererSettings(header: string, table, columnType) {
+    switch (header) {
+      case 'Rel.':
+        return this[columnType].push(
+          this.columnSettings(this, table, header, 'dropdown', ['Yes', 'No', 'Maybe'], 'autocomplete')
+        );
+      case 'Trans.':
+        return this[columnType].push(
+          this.columnSettings(
+            this,
+            table,
+            header,
+            'dropdown',
+            ['trans.', 'intrans.', 'pass.', 'unclear'],
+            'autocomplete'
+          )
+        );
+      case 'Depend.':
+        return this[columnType].push(
+          this.columnSettings(
+            this,
+            table,
+            header,
+            'dropdown',
+            ['absolute', 'conjunct', 'deuterotonic', 'prototonic'],
+            'autocomplete'
+          )
+        );
+      case 'Depon.':
+        return this[columnType].push(
+          this.columnSettings(this, table, header, 'dropdown', ['Yes', 'No', 'Maybe'], 'autocomplete')
+        );
+      case 'Contr.':
+        return this[columnType].push(
+          this.columnSettings(this, table, header, 'dropdown', ['Yes', 'No', 'Maybe'], 'autocomplete')
+        );
+      case 'Augm.':
+        return this[columnType].push(
+          this.columnSettings(this, table, header, 'dropdown', ['Yes', 'No', 'Maybe'], 'autocomplete')
+        );
+      case 'Hiat.':
+        return this[columnType].push(
+          this.columnSettings(this, table, header, 'dropdown', ['Yes', 'No', 'Maybe'], 'autocomplete')
+        );
+      case 'Mut.':
+        return this[columnType].push(
+          this.columnSettings(
+            this,
+            table,
+            header,
+            'dropdown',
+            ['+ Nasalization', '- Nasalization', '+ Legation', '- Lenition', '+ Gemination', '- Gemination'],
+            'autocomplete'
+          )
+        );
+      case 'Causing_Mut.':
+        return this[columnType].push(
+          this.columnSettings(
+            this,
+            table,
+            header,
+            'dropdown',
+            ['+ Nasalization', '- Nasalization', '+ Lenition', '- Lenition', '+ Gemination', '- Gemination'],
+            'autocomplete'
+          )
+        );
+      default:
+        return this[columnType].push(this.columnSettings(this, table, header, 'text'));
+    }
+  }
+
   columnSettings(that: any, table: string, header: string, type: string, source?: any[], renderer?: string) {
     // console.log('I got in here!');
     // console.log({ that, table, header, type, source, renderer });
@@ -396,8 +429,13 @@ export class TableComponent implements OnInit {
                 a.appendChild(link);
                 // Set the title
                 a.title = url + '/n';
+                a.target = '_blank';
                 // Set the href property
-                a.href = url;
+                if (url.indexOf('www') === 0) {
+                  a.href = 'http://' + url;
+                } else {
+                  a.href = url;
+                }
                 Handsontable.dom.addEvent(a, 'mousedown', function (event) {
                   event.preventDefault();
                 });
@@ -408,17 +446,18 @@ export class TableComponent implements OnInit {
             td.style.textAlign = 'center';
           } else {
             let queryParams = {};
-            // if () {
-            //   queryParams = {
-            //     page: 0,
-            //     limit: 0,
-            //     fprop: prop,
-            //     fval: value,
-            //     dtable: 'text',
-            //     ctable: table
-            //   };
-            // } else
-            if ((table === 'sentences' && prop === 'Text_ID') || (table === 'text' && prop === 'Text_ID')) {
+            // console.table({ table, before: that.before, after: that.after, prop });
+            // If this is the Text_ID column on and we're not on the text Table
+            if (that.after !== 'text' && prop === 'Text_ID') {
+              queryParams = {
+                page: 0,
+                limit: 0,
+                fprop: '',
+                fval: '',
+                dtable: 'text',
+                ctable: 'text'
+              };
+            } else if (table === that.after && table === 'text' && prop === 'Text_ID') {
               queryParams = {
                 page: 0,
                 limit: 0,
@@ -428,8 +467,20 @@ export class TableComponent implements OnInit {
                 ctable: 'text'
               };
             } else if (
-              (table === 'morphology' && prop === 'Text_Unit_ID') ||
-              (table === 'sentences' && prop === 'Text_Unit_ID')
+              (table === that.before && table === 'sentences' && prop === 'Text_Unit_ID') ||
+              (table === that.after && table === 'morphology' && prop === 'Text_Unit_ID')
+            ) {
+              queryParams = {
+                page: 0,
+                limit: 0,
+                fprop: 'Text_ID',
+                fval: value.split('-')[0].substr(1),
+                dtable: 'sentences',
+                ctable: 'text'
+              };
+            } else if (
+              (table === 'sentences' && prop === 'Text_Unit_ID') ||
+              (table === 'morphology' && prop === 'Text_Unit_ID')
             ) {
               queryParams = {
                 page: 0,
@@ -556,21 +607,12 @@ export class TableComponent implements OnInit {
       (this.hotInstance as any).redo();
     }
   }
-  refresh() {
-    // const queryString = window.location.href;
+  async refresh() {
+    await this.fetchedTable();
 
-    this.getTableData(this.after);
-    // console.log(this.getTableData(this.after));
-    // const search = location.search.substring(1);
-    // console.log('search: ', search);
-
-    // this.router.navigateByUrl('/tables?' + search);
-    // await this.tableData.fetchTable(this.tableData.currentApiQuery);
-    this.fetchedTable();
-
-    //   this.hotInstance = this.hotRegisterer.getInstance(this.instance);
-    //   this.hotInstance.loadData(this.getTableData(this.after));
-    //   this.hotInstance.render();
+    this.hotInstance = this.hotRegisterer.getInstance(this.instance);
+    this.hotInstance.loadData(this.getTableData(this.after));
+    this.hotInstance.render();
   }
   toggleMode(variable: string) {
     if (variable === 'edit') {
@@ -598,6 +640,13 @@ export class TableComponent implements OnInit {
           disableVisualSelection: !this.edit
         });
       }
+    } else if (variable === 'sort') {
+      // console.log(variable, this.wordWrap);
+      this.sort = !this.sort;
+      this.fetchedTable();
+    } else if (variable === 'ref') {
+      this.ref = !this.ref;
+      this.fetchedTable();
     } else {
       // console.log(variable, this.wordWrap);
       this.wordWrap = !this.wordWrap;
