@@ -25,6 +25,7 @@
     "helmet": "3.23.3",
     "http": "0.0.1-security",
     "jsonwebtoken": "^8.5.1",
+    "moment": "^2.29.0",
     "mysql": "^2.18.1",
     "nodemon": "^2.0.4",
     "path": "0.12.7",

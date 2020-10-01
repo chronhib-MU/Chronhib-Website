@@ -8,11 +8,27 @@ const mysql = require('mysql');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const cookieParser = require('cookie-parser');
+// @ts-ignore
 const { promisify } = require('util');
 const dotenv = require('dotenv');
 const compression = require('compression');
 const helmet = require('helmet');
+// @ts-ignore
 const { parse } = require('path');
+const moment = require('moment');
+const fs = require('fs');
+// let console = {};
+console.log = obj => {
+  let s = '';
+  if (typeof obj === 'string') s = obj;
+  else s = JSON.stringify(obj);
+  const momentFormat = 'dddd, MMMM Do YYYY, h:mm:ss a';
+  const dS = '[' + moment().format(momentFormat) + ']';
+  s = `[${dS}]\n${s}\n`;
+  fs.appendFile(`./logs/logs_${moment().format('DDMMYYYY')}.txt`, s, function (err) {
+    if (err) throw err;
+  });
+};
 // console.log(`pathname ${__filename}`);
 // console.log(`dirname ${path.dirname(__filename)}`);
 
@@ -44,6 +60,7 @@ const node_env = process.env.NODE_ENV || NODE_ENV;
 const user = process.env.USER || USER;
 const jwt_secret = process.env.JWT_SECRET || JWT_SECRET;
 const jwt_expires_in = process.env.JWT_EXPIRES_IN || JWT_EXPIRES_IN;
+// @ts-ignore
 const jwt_cookie_expires = parseInt(process.env.JWT_COOKIE_EXPIRES || JWT_COOKIE_EXPIRES);
 // console.table({ port, host, password, database, node_env, user, jwt_secret, jwt_expires_in, jwt_cookie_expires });
 const app = express();
@@ -83,6 +100,14 @@ connection.connect(err => {
     });
   }
 }); */
+// TODO: Fix unencrypted passwords on the client
+connection.query('SELECT `First_Name`,`Last_Name`,`Email`,`Password` FROM `USERS`', (err, results) => {
+  if (err) {
+    console.log(err);
+  } else {
+    console.table(results);
+  }
+});
 const folderLoc = 'client/dist/';
 // console.log('Static Folder:', path.join(__dirname, folderLoc));
 
@@ -146,6 +171,7 @@ app.post(`/${appName}/register`, (req, res) => {
     return connection.query(
       'INSERT INTO `USERS` SET ?',
       { First_Name: firstName, Last_Name: lastName, Email: email, Password: hashedPassword },
+      // @ts-ignore
       (error, result) => {
         if (error) {
           // console.log(error);
@@ -187,9 +213,10 @@ app.post(`/${appName}/login`, (req, res) => {
       })
     );
   }
+  // @ts-ignore
   connection.query('SELECT * FROM `USERS` WHERE `Email` = ?', [email], async (error, result) => {
-    // console.log(result);
-    if (result && result.length === 0) {
+    console.log(result);
+    if (!result || (result && result.length === 0)) {
       return res.status(401).json(
         JSON.stringify({
           message: 'Please check your email and try again.',
@@ -228,7 +255,9 @@ app.post(`/${appName}/isLoggedIn`, (req, res) => {
   } else {
     const decoded = jwt.verify(req.body.token, jwt_secret);
     // console.log(decoded);
+    // @ts-ignore
     if (decoded.exp > 0) {
+      // @ts-ignore
       connection.query('SELECT * FROM `USERS` WHERE `User_ID` = ?', [decoded.id], async (error, result) => {
         // console.log(result[0]);
         const { First_Name, Last_Name, Email } = result[0];
@@ -242,7 +271,7 @@ app.post(`/${appName}/isLoggedIn`, (req, res) => {
 
 app.post(`/${appName}/api/`, (req, res) => {
   //To access POST variable use req.body() methods.
-  // console.log('Post Variable: ', req.body);
+  console.log('Post Variable: ', req.body);
   const { table, command, values } = req.body;
   if (command === 'moveRow') {
     // if the row is moved
@@ -254,6 +283,7 @@ app.post(`/${appName}/api/`, (req, res) => {
     });
     updateQueries.forEach(updateQuery => {
       // console.log('Post Query: ', updateQuery);
+      // @ts-ignore
       connection.query(updateQuery, (err, results) => {
         if (err) {
           // console.log('Error: ', err);
@@ -284,6 +314,7 @@ app.post(`/${appName}/api/`, (req, res) => {
         id +
         ';';
       // console.log('Post Query: ', updateQuery);
+      // @ts-ignore
       connection.query(updateQuery, (err, results) => {
         if (err) {
           // console.log('Error: ', err);
@@ -428,6 +459,7 @@ app.get(`/${appName}/api/:path`, (req, res) => {
 });
 
 // redirect all the routes to the app and lets angular handle the routing
+// @ts-ignore
 app.get(`/${appName}/*`, (req, res) => {
   res.sendFile(path.resolve(__dirname, folderLoc + 'index.html'));
 });
