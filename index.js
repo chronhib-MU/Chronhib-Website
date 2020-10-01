@@ -387,14 +387,15 @@ app.get(`/${appName}/api/`, (req, res) => {
         });
       }
     });
-  } else if (typeof req.query.search === 'string') {
-    console.log(req.query.search);
+  } else if (req.query.search && typeof req.query.search === 'string') {
+    console.log(req.query.search); // A JSON String Object formatted like the searchQuery object below
     // const searchQuery = JSON.parse(req.query.search);
     const searchQuery = [
       { table: 'MORPHOLOGY', column: '*', operator: '', comparator: '', comparatorVal: '' },
       { table: 'MORPHOLOGY', column: 'Morph', operator: '', comparator: 'ends with', comparatorVal: '' },
       { table: 'MORPHOLOGY', column: 'Analysis', operator: 'AND', comparator: '=', comparatorVal: 'gen.sg.' },
-      { table: 'LEMMATA', column: 'Class.', operator: 'AND', comparator: '=', comparatorVal: 'i' }
+      { table: 'LEMMATA', column: 'Class.', operator: 'AND', comparator: '=', comparatorVal: 'i' },
+      { table: 'SENTENCES', column: 'Class.', operator: 'AND', comparator: '=', comparatorVal: 'i' }
     ];
     console.log(searchQuery);
     let selectedTablesArr = [],
