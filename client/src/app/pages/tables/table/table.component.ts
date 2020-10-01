@@ -319,69 +319,64 @@ export class TableComponent implements OnInit {
       this.getTableData(this.after);
     }
   }
-  columnRendererSettings(header: string, table, columnType) {
+  columnRendererSettings(header: any, table, columnType) {
+    // TODO: Remove in build after next
+    header = header.replace('.', ''); // For smooth transition of columns
     switch (header) {
-      case 'Rel.':
+      case 'Rel':
         return this[columnType].push(
-          this.columnSettings(this, table, header, 'dropdown', ['Yes', 'No', 'Maybe'], 'autocomplete')
+          this.columnSettings(this, table, header, 'dropdown', ['', 'Yes', 'No', 'Maybe'], 'autocomplete')
         );
-      case 'Trans.':
+      case 'Trans':
         return this[columnType].push(
           this.columnSettings(
             this,
             table,
             header,
             'dropdown',
-            ['trans.', 'intrans.', 'pass.', 'unclear'],
+            ['', 'trans.', 'intrans.', 'pass.', 'unclear'],
             'autocomplete'
           )
         );
-      case 'Depend.':
+      case 'Depend':
+        return this[columnType].push(
+          this.columnSettings(this, table, header, 'dropdown', ['', 'abs.', 'conj.', 'deut.', 'prot.'], 'autocomplete')
+        );
+      case 'Depon':
+        return this[columnType].push(
+          this.columnSettings(this, table, header, 'dropdown', ['', 'Yes', 'No', 'Maybe'], 'autocomplete')
+        );
+      case 'Contr':
+        return this[columnType].push(
+          this.columnSettings(this, table, header, 'dropdown', ['', 'Yes', 'No', 'Maybe'], 'autocomplete')
+        );
+      case 'Augm':
+        return this[columnType].push(
+          this.columnSettings(this, table, header, 'dropdown', ['', 'Yes', 'No', 'Maybe'], 'autocomplete')
+        );
+      case 'Hiat':
+        return this[columnType].push(
+          this.columnSettings(this, table, header, 'dropdown', ['', 'Yes', 'No', 'Maybe'], 'autocomplete')
+        );
+      case 'Mut':
         return this[columnType].push(
           this.columnSettings(
             this,
             table,
             header,
             'dropdown',
-            ['absolute', 'conjunct', 'deuterotonic', 'prototonic'],
+            ['', '+ Nas.', '- Nas.', '+ Len.', '- Len.', '+ Gem.', '- Gem.'],
             'autocomplete'
           )
         );
-      case 'Depon.':
-        return this[columnType].push(
-          this.columnSettings(this, table, header, 'dropdown', ['Yes', 'No', 'Maybe'], 'autocomplete')
-        );
-      case 'Contr.':
-        return this[columnType].push(
-          this.columnSettings(this, table, header, 'dropdown', ['Yes', 'No', 'Maybe'], 'autocomplete')
-        );
-      case 'Augm.':
-        return this[columnType].push(
-          this.columnSettings(this, table, header, 'dropdown', ['Yes', 'No', 'Maybe'], 'autocomplete')
-        );
-      case 'Hiat.':
-        return this[columnType].push(
-          this.columnSettings(this, table, header, 'dropdown', ['Yes', 'No', 'Maybe'], 'autocomplete')
-        );
-      case 'Mut.':
+      case 'Causing_Mut':
         return this[columnType].push(
           this.columnSettings(
             this,
             table,
             header,
             'dropdown',
-            ['+ Nasalization', '- Nasalization', '+ Legation', '- Lenition', '+ Gemination', '- Gemination'],
-            'autocomplete'
-          )
-        );
-      case 'Causing_Mut.':
-        return this[columnType].push(
-          this.columnSettings(
-            this,
-            table,
-            header,
-            'dropdown',
-            ['+ Nasalization', '- Nasalization', '+ Lenition', '- Lenition', '+ Gemination', '- Gemination'],
+            ['', '+ Nas.', '- Nas.', '+ Len.', '- Len.', '+ Gem.', '- Gem.'],
             'autocomplete'
           )
         );
@@ -534,14 +529,24 @@ export class TableComponent implements OnInit {
     // console.log('Index: ', index + ' ' + that.dataTable[that.after].headers[index]);
     const indexTitle = this.dataTable[table].headers[index];
     switch (indexTitle) {
+      case 'Augm':
+        return 75;
+      case 'Causing_Mut':
+        return 115;
       case 'Comments':
         return 250;
+      case 'Contr':
+        return 75;
       case 'Created_Date':
         return 150;
       case 'Date':
         return 300;
       case 'Dating_Criteria':
         return 600;
+      case 'Depend':
+        return 75;
+      case 'Depon':
+        return 75;
       case 'Digital_MSS':
         return 200;
       case 'DIL_Headword':
@@ -550,12 +555,18 @@ export class TableComponent implements OnInit {
         return 300;
       case 'Etymology':
         return 200;
+      case 'Hiat':
+        return 75;
       case 'ID':
         return 75;
+      case 'Latin_Text':
+        return 250;
       case 'MSS':
         return 400;
       case 'MS_Checked':
         return 125;
+      case 'Mut':
+        return 75;
       case 'Onomastic_Complex':
         return 175;
       case 'Onomastic_Usage':
@@ -566,6 +577,8 @@ export class TableComponent implements OnInit {
         return 175;
       case 'Reason_Of_MS_Choice_And_Editorial_Policy':
         return 350;
+      case 'Rel':
+        return 75;
       case 'Secondary_Meaning':
         return 200;
       case 'SpecialCharacter':
@@ -576,6 +589,8 @@ export class TableComponent implements OnInit {
         return 75;
       case 'Textual_Unit':
         return 300;
+      case 'Trans':
+        return 75;
       case 'Translation':
         return 300;
       case 'Translation_From_Latin':
