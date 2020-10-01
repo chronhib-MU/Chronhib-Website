@@ -25,7 +25,7 @@ console.log = obj => {
   const momentFormat = 'dddd, MMMM Do YYYY, h:mm:ss a';
   const dS = '[' + moment().format(momentFormat) + ']';
   s = `[${dS}]\n${s}\n`;
-  fs.appendFile(`./logs/logs_${moment().format('DDMMYYYY')}.txt`, s, function (err) {
+  fs.appendFile(`./logs/${node_env.toLowerCase()}/logs_${moment().format('DDMMYYYY')}.txt`, s, function (err) {
     if (err) throw err;
   });
 };
