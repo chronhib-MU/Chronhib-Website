@@ -25,12 +25,12 @@
     "@angular/router": "10.0.4",
     "@handsontable/angular": "^6.0.1",
     "@ng-bootstrap/ng-bootstrap": "6.0.3",
-    "bcryptjs": "^2.4.3",
     "bootstrap": "^4.5.2",
     "bootstrap-table": "^1.17.1",
     "chart.js": "2.9.3",
     "clipboard": "2.0.6",
     "core-js": "3.6.5",
+    "crypto-js": "^4.0.0",
     "handsontable": "^8.0.0",
     "jquery": "^3.5.0",
     "ngx-clipboard": "13.0.0",
@@ -62,5 +62,8 @@
     "ts-node": "8.6.2",
     "tslint": "~6.1.0",
     "typescript": "3.9.7"
+  },
+  "browser": {
+    "crypto": false
   }
 }
