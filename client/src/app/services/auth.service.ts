@@ -6,6 +6,7 @@ import { Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import { NotificationService } from '../services/notification.service';
+import * as CryptoJS from 'crypto-js';
 
 @Injectable({
   providedIn: 'root'
@@ -61,6 +62,8 @@ export class AuthService {
       const { email, password } = loginForm.value;
       // console.log(loginForm.value);
       const userData = { email, password };
+      userData.password = CryptoJS.SHA512(userData.password).toString(CryptoJS.enc.Base64);
+      console.log(userData);
       const signedInForm: Observable<string> = this.http.post<string>(
         `${environment.wsUrl}login/`,
         userData
@@ -122,6 +125,7 @@ export class AuthService {
     } else {
       try {
         const newUserData = { firstName, lastName, email, password };
+        newUserData.password = CryptoJS.SHA512(newUserData.password).toString(CryptoJS.enc.Base64);
         const registeredForm: Observable<string> = this.http.post<string>(
           `${environment.wsUrl}register`,
           newUserData

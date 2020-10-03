@@ -20,6 +20,9 @@
 .pointer {
   cursor: pointer !important;
 }
+select {
+  text-rendering: auto !important; // Potential fix for dropdown to safari 14 changes
+}
 .table {
   color: #222;
 }
@@ -76,6 +79,9 @@
     td {
       // white-space: normal;
       word-wrap: break-word;
+      & > a {
+        display: block;
+      }
     }
     thead th {
       font-size: 0.8125rem;

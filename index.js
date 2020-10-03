@@ -8,18 +8,36 @@ const mysql = require('mysql');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const cookieParser = require('cookie-parser');
+// @ts-ignore
 const { promisify } = require('util');
 const dotenv = require('dotenv');
 const compression = require('compression');
 const helmet = require('helmet');
+// @ts-ignore
 const { parse } = require('path');
+const log4js = require('log4js');
+log4js.configure({
+  appenders: { node: { type: 'file', filename: 'node.log' } },
+  categories: { default: { appenders: ['node'], level: 'trace' } }
+});
+
+const logger = log4js.getLogger('node');
+// logger.trace('Entering cheese testing');
+// logger.debug('Got cheese.');
+// logger.info('Cheese is Comté.');
+// logger.warn('Cheese is quite smelly.');
+// logger.error('Cheese is too ripe!');
+// logger.fatal('Cheese was breeding ground for listeria.');
 // console.log(`pathname ${__filename}`);
 // console.log(`dirname ${path.dirname(__filename)}`);
+logger.trace(`pathname ${__filename}`);
+logger.trace(`dirname ${path.dirname(__filename)}`);
 
 // console.log(__dirname);
-
+logger.trace(__dirname);
 const result = dotenv.config();
 if (result.error) {
+  logger.error(result.error);
   throw result.error;
 }
 
@@ -44,8 +62,10 @@ const node_env = process.env.NODE_ENV || NODE_ENV;
 const user = process.env.USER || USER;
 const jwt_secret = process.env.JWT_SECRET || JWT_SECRET;
 const jwt_expires_in = process.env.JWT_EXPIRES_IN || JWT_EXPIRES_IN;
+// @ts-ignore
 const jwt_cookie_expires = parseInt(process.env.JWT_COOKIE_EXPIRES || JWT_COOKIE_EXPIRES);
 // console.table({ port, host, password, database, node_env, user, jwt_secret, jwt_expires_in, jwt_cookie_expires });
+logger.debug({ port, host, password, database, node_env, user, jwt_secret, jwt_expires_in, jwt_cookie_expires });
 const app = express();
 const server = http.createServer(app);
 // mysql table queries
@@ -70,25 +90,42 @@ const connection = mysql.createConnection(dbconfig);
 
 connection.connect(err => {
   if (err) {
+    logger.error('Error: ', err);
     return err;
   }
 });
 // console.log(connection);
+// logger.debug(connection);
 /* connection.query(tables['text'], (err, results) => {
   if (err) {
     console.log(err);
+    logger.error('Error: ', err);
   } else {
     console.log('TEXT TABLE: ', {
       data: results
     });
+    logger.debug('TEXT TABLE: ', {
+      data: results
+    });
   }
 }); */
+// TODO: Fix unencrypted passwords on the client
+connection.query('SELECT `First_Name`,`Last_Name`,`Email`,`Password` FROM `USERS`', (err, results) => {
+  if (err) {
+    console.log(err);
+    logger.error('Error: ', err);
+  } else {
+    console.table(results);
+    logger.debug(results);
+  }
+});
 const folderLoc = 'client/dist/';
 // console.log('Static Folder:', path.join(__dirname, folderLoc));
 
 // const appName = __dirname.split(path.sep).pop();
 const appName = 'chronhibWebsite';
 // console.log('App Name:', appName);
+logger.info('App Name:', appName);
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(cookieParser());
@@ -102,8 +139,14 @@ app.use(cors()).use(bodyParser.json());
 app.post(`/${appName}/register`, (req, res) => {
   // Creates a new account
   console.table(req.body);
+  logger.trace(req.body);
   const { firstName, lastName, email, password } = req.body;
   if (!email) {
+    logger.error({
+      message: 'Please provide an email to create an account.',
+      title: 'No email provided!',
+      type: 'error'
+    });
     return res.json(
       JSON.stringify({
         message: 'Please provide an email to create an account.',
@@ -112,6 +155,11 @@ app.post(`/${appName}/register`, (req, res) => {
       })
     );
   } else if (!password) {
+    logger.error({
+      message: 'Please provide a password.',
+      title: 'No password provided!',
+      type: 'error'
+    });
     return res.json(
       JSON.stringify({
         message: 'Please provide a password.',
@@ -124,10 +172,16 @@ app.post(`/${appName}/register`, (req, res) => {
     if (error) {
       // console.log(error);
       // console.log(result);
+      logger.error(error);
       return error;
     }
 
     if (result && result.length > 0) {
+      logger.error({
+        message: 'Please try a different email.',
+        title: 'Email already registered!',
+        type: 'error'
+      });
       return res.json(
         JSON.stringify({
           message: 'Please try a different email.',
@@ -137,21 +191,30 @@ app.post(`/${appName}/register`, (req, res) => {
       );
     } else {
       console.table(result);
-      console.table(error);
+      logger.debug(result);
     }
 
     // Encrypt password
     let hashedPassword = await bcrypt.hash(password, 10);
     // console.log(hashedPassword);
+    logger.trace(hashedPassword);
     return connection.query(
       'INSERT INTO `USERS` SET ?',
       { First_Name: firstName, Last_Name: lastName, Email: email, Password: hashedPassword },
+      // @ts-ignore
       (error, result) => {
         if (error) {
           // console.log(error);
+          logger.error(error);
           return error;
         } else {
           // console.log(result);
+          logger.debug(result);
+          logger.info({
+            message: 'Please login with your new account details.',
+            title: 'Registration successful!',
+            type: 'success'
+          });
           return res.json(
             JSON.stringify({
               message: 'Please login with your new account details.',
@@ -168,8 +231,15 @@ app.post(`/${appName}/register`, (req, res) => {
 app.post(`/${appName}/login`, (req, res) => {
   // Signs user in
   console.table(req.body);
+  logger.trace(req.body);
   const { email, password } = req.body;
   if (!email) {
+    logger.error({
+      message: 'Please provide an email to login.',
+      title: 'No email provided!',
+      type: 'error',
+      error: req.body
+    });
     return res.json(
       JSON.stringify({
         message: 'Please provide an email to login.',
@@ -179,6 +249,11 @@ app.post(`/${appName}/login`, (req, res) => {
       })
     );
   } else if (!password) {
+    logger.error({
+      message: 'Please provide a password.',
+      title: 'No password provided!',
+      type: 'error'
+    });
     return res.json(
       JSON.stringify({
         message: 'Please provide a password.',
@@ -187,9 +262,16 @@ app.post(`/${appName}/login`, (req, res) => {
       })
     );
   }
+  // @ts-ignore
   connection.query('SELECT * FROM `USERS` WHERE `Email` = ?', [email], async (error, result) => {
-    // console.log(result);
-    if (result && result.length === 0) {
+    console.log(result);
+    logger.trace(result);
+    if (!result || (result && result.length === 0)) {
+      logger.error({
+        message: 'Please check your email and try again.',
+        title: 'Email not registered!',
+        type: 'error'
+      });
       return res.status(401).json(
         JSON.stringify({
           message: 'Please check your email and try again.',
@@ -198,7 +280,12 @@ app.post(`/${appName}/login`, (req, res) => {
         })
       );
     } else if (!(await bcrypt.compareSync(password, result[0].Password))) {
-      res.status(401).json(
+      logger.error({
+        message: 'Please double-check your password.',
+        title: 'Incorrect password!',
+        type: 'error'
+      });
+      return res.status(401).json(
         JSON.stringify({
           message: 'Please double-check your password.',
           title: 'Incorrect password!',
@@ -211,7 +298,13 @@ app.post(`/${appName}/login`, (req, res) => {
         expiresIn: jwt_expires_in
       });
       // console.log('The token is: ' + token);
-      res.status(200).json(
+      logger.info({
+        message: 'You have been successfully logged in.',
+        title: 'Login successful!',
+        type: 'success',
+        token
+      });
+      return res.status(200).json(
         JSON.stringify({
           message: 'You have been successfully logged in.',
           title: 'Login successful!',
@@ -224,18 +317,23 @@ app.post(`/${appName}/login`, (req, res) => {
 });
 app.post(`/${appName}/isLoggedIn`, (req, res) => {
   if (!req.body.token) {
-    res.status(401).json();
+    logger.warn('401`- Unauthorized!');
+    return res.status(401).json();
   } else {
     const decoded = jwt.verify(req.body.token, jwt_secret);
     // console.log(decoded);
+    // @ts-ignore
     if (decoded.exp > 0) {
+      // @ts-ignore
       connection.query('SELECT * FROM `USERS` WHERE `User_ID` = ?', [decoded.id], async (error, result) => {
         // console.log(result[0]);
         const { First_Name, Last_Name, Email } = result[0];
-        res.status(200).json(JSON.stringify({ First_Name, Last_Name, Email }));
+        logger.info({ First_Name, Last_Name, Email });
+        return res.status(200).json(JSON.stringify({ First_Name, Last_Name, Email }));
       });
     } else {
-      res.status(401).json();
+      logger.warn('401`- Unauthorized!');
+      return res.status(401).json();
     }
   }
 });
@@ -243,6 +341,7 @@ app.post(`/${appName}/isLoggedIn`, (req, res) => {
 app.post(`/${appName}/api/`, (req, res) => {
   //To access POST variable use req.body() methods.
   // console.log('Post Variable: ', req.body);
+  logger.trace('Post Variable: ', req.body);
   const { table, command, values } = req.body;
   if (command === 'moveRow') {
     // if the row is moved
@@ -254,11 +353,15 @@ app.post(`/${appName}/api/`, (req, res) => {
     });
     updateQueries.forEach(updateQuery => {
       // console.log('Post Query: ', updateQuery);
+      logger.info('Post Query: ', updateQuery);
+      // @ts-ignore
       connection.query(updateQuery, (err, results) => {
         if (err) {
           // console.log('Error: ', err);
+          logger.error('Error: ', err);
           return res.send(err);
         } else {
+          logger.info('Success: ', results);
           return res.status(200);
         }
         // console.log({ beforeTable, afterTable });
@@ -267,6 +370,7 @@ app.post(`/${appName}/api/`, (req, res) => {
   } else if (command === 'createRow') {
     // if a row is created
     console.log(values);
+    logger.trace(values);
   } else {
     // if the row needs to be updated
     values.forEach(value => {
@@ -284,11 +388,14 @@ app.post(`/${appName}/api/`, (req, res) => {
         id +
         ';';
       // console.log('Post Query: ', updateQuery);
+      // @ts-ignore
       connection.query(updateQuery, (err, results) => {
         if (err) {
           // console.log('Error: ', err);
+          logger.error('Error: ', err);
           return res.send(err);
         } else {
+          logger.info('Success: ', results);
           return res.status(200);
         }
         // console.log({ beforeTable, afterTable });
@@ -299,6 +406,7 @@ app.post(`/${appName}/api/`, (req, res) => {
 // Handles all the advanced get api table queries
 app.get(`/${appName}/api/`, (req, res) => {
   console.table(req.query);
+  logger.trace(req.query);
   if (
     typeof req.query.page === 'string' &&
     typeof req.query.limit === 'string' &&
@@ -359,11 +467,14 @@ app.get(`/${appName}/api/`, (req, res) => {
     }
     // console.log('beforeQuery:', beforeQuery);
     // console.log('afterQuery:', afterQuery);
+    logger.trace('beforeQuery:', beforeQuery);
+    logger.trace('afterQuery:', afterQuery);
     let beforeTable = [],
       afterTable = [];
     connection.query(afterQuery, (err, results) => {
       if (err) {
         // console.log('Error: ', err);
+        logger.error('Error: ', err);
         return res.send(err);
       } else {
         afterTable = results;
@@ -372,16 +483,19 @@ app.get(`/${appName}/api/`, (req, res) => {
         connection.query(beforeQuery, (err, results) => {
           if (err) {
             // console.log('Error: ', err);
+            logger.error('Error: ', err);
             return res.send(err);
           } else {
             beforeTable = results;
           }
           // console.log({ beforeTable, afterTable });
+          logger.info(results);
           return res.json({
             data: { beforeTable, afterTable }
           });
         });
       } else {
+        logger.info(results);
         return res.json({
           data: { beforeTable, afterTable }
         });
@@ -480,13 +594,16 @@ app.get(`/${appName}/api/:path`, (req, res) => {
   // console.log(req.params.path);
   const path = req.params.path;
   // console.log(tables[path]);
+  logger.trace(req.params.path);
   // if the first character is a question mark and therefore a query
   if (path in tables) {
     connection.query(tables[path], (err, results) => {
       if (err) {
+        logger.error(err);
         return res.send(err);
       } else {
         // console.log(results);
+        logger.info(results);
         return res.json({
           data: { beforeTable: {}, afterTable: results }
         });
@@ -500,6 +617,7 @@ app.get(`/${appName}/api/:path`, (req, res) => {
 });
 
 // redirect all the routes to the app and lets angular handle the routing
+// @ts-ignore
 app.get(`/${appName}/*`, (req, res) => {
   res.sendFile(path.resolve(__dirname, folderLoc + 'index.html'));
 });

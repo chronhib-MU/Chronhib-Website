@@ -19,11 +19,18 @@
             <label class="btn btn-secondary px-3 py-2" (click)="toggleMode('edit')">
               Edit <i class="fa fa-toggle-on" *ngIf="edit"></i><i class="fa fa-toggle-off" *ngIf="!edit"></i>
             </label>
-            <label class="btn btn-secondary px-3 py-2" (click)="refresh()">
-              Refresh <i class="fa fa-refresh"></i>
+            <label
+              *ngIf="before && (after === 'sentences' || after === 'morphology')"
+              class="btn btn-secondary px-3 py-2"
+              (click)="toggleMode('ref')"
+            >
+              Ref. <i class="fa fa-toggle-on" *ngIf="ref"></i><i class="fa fa-toggle-off" *ngIf="!ref"></i>
             </label>
           </div>
           <div class="btn-group col-auto">
+            <label class="btn btn-secondary px-3 py-2" (click)="toggleMode('sort')">
+              Sort <i class="fa fa-toggle-on" *ngIf="sort"></i><i class="fa fa-toggle-off" *ngIf="!sort"></i>
+            </label>
             <label class="btn btn-secondary px-3 py-2" (click)="toggleMode('wordWrap')">
               Word-Wrap <i class="fa fa-toggle-on" *ngIf="wordWrap"></i
               ><i class="fa fa-toggle-off" *ngIf="!wordWrap"></i>
@@ -46,12 +53,26 @@
             <i class="fas fa-angle-double-left"></i>
           </label>
         </div>
-        <div *ngIf="before === 'sentences' && dataTable[this.before].data[0]" class="text-center col">
+        <div
+          *ngIf="before && before !== after && after === 'morphology' && dataTable[before]?.data[0]"
+          class="text-center col"
+        >
           <h4>
-            {{ dataTable[this.before].data[0].Textual_Unit }}
+            {{ dataTable[before].data[0].Textual_Unit }}
           </h4>
           <h4 class="text-muted">
-            {{ dataTable[this.before].data[0].Translation }}
+            {{ dataTable[before].data[0].Translation }}
+          </h4>
+        </div>
+        <div
+          *ngIf="before && before !== after && after === 'sentences' && dataTable[before]?.data[0]"
+          class="text-center col"
+        >
+          <h4 class="mt-2">
+            {{ dataTable[before].data[0].Title.replaceAll('_', ' ') }}
+          </h4>
+          <h4 class="text-muted">
+            {{ dataTable[before].data[0].Translation }}
           </h4>
         </div>
         <div class="text-right col-auto">
@@ -65,15 +86,16 @@
           <label class="btn btn-secondary px-3 py-2" (click)="goForward()"><i class="fas fa-arrow-right"></i></label>
         </div>
       </div>
+      <!-- Shows when we're not on the letter tables and not on the Text, Morphology, Lemmata -->
       <hot-table
-        *ngIf="before && after !== before && after !== 'lemmata' && before !== 'sentences'"
+        *ngIf="before && after !== 'text' && after !== 'lemmata' && ref"
         #hotMini
         [hotId]="instance + 'Mini'"
-        [columns]="after === 'lemmata' ? columns : columnsMini"
-        [rowHeaders]="after === 'lemmata' ? getRows(after) : null"
+        [columns]="columnsMini"
+        [rowHeaders]="null"
         [colHeaders]="true"
-        [data]="getTableData(after === 'lemmata' ? after : before)"
-        [settings]="hotSettings[after === 'lemmata' ? 1 : 0]"
+        [data]="getTableData(before)"
+        [settings]="hotSettings[edit ? 1 : 0]"
         [height]="110"
         className="htCenter"
         licenseKey="non-commercial-and-evaluation"
@@ -88,7 +110,7 @@
         [rowHeaders]="getRows(after)"
         [colHeaders]="true"
         [data]="getTableData(after)"
-        [settings]="hotSettings[this.edit ? 1 : 0]"
+        [settings]="hotSettings[edit ? 1 : 0]"
         [height]="before && after !== before && after === 'lemmata' ? 100 : '70vh'"
         className="htCenter"
         licenseKey="non-commercial-and-evaluation"
@@ -103,7 +125,7 @@
         [rowHeaders]="getRows(before)"
         [colHeaders]="true"
         [data]="getTableData(before)"
-        [settings]="hotSettings[after === 'lemmata' ? 1 : 0]"
+        [settings]="hotSettings[edit ? 1 : 0]"
         [height]="'70vh'"
         className="htCenter"
         licenseKey="non-commercial-and-evaluation"

@@ -58,10 +58,10 @@
             <span>Support</span>
           </a>
           <div class="dropdown-divider" [hidden]="!authService.authenticated"></div>
-          <span (click)="authService.logOut()" class="dropdown-item" [hidden]="!authService.authenticated">
+          <a (click)="authService.logOut()" class="dropdown-item pointer" [hidden]="!authService.authenticated">
             <i class="ni ni-lock-circle-open text-marigold"></i>
             <span>Logout</span>
-          </span>
+          </a>
         </div>
       </li>
     </ul>
