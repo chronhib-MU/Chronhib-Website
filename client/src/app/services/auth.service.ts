@@ -63,14 +63,14 @@ export class AuthService {
       // console.log(loginForm.value);
       const userData = { email, password };
       userData.password = CryptoJS.SHA512(userData.password).toString(CryptoJS.enc.Base64);
-      console.log(userData);
+      // console.log(userData);
       const signedInForm: Observable<string> = this.http.post<string>(
         `${environment.wsUrl}login/`,
         userData
       ) as Observable<string>;
-      const res: string = await signedInForm.toPromise();
-      // console.log(JSON.parse(res));
-      const { message, title, type, token } = JSON.parse(res);
+      const res: any = await signedInForm.toPromise();
+      // console.log(res);
+      const { message, title, type, token } = res;
       localStorage.setItem(`${window.location.origin}token`, token);
       this.showToaster(message, title, type);
       await this.isLoggedIn(token);
@@ -78,9 +78,9 @@ export class AuthService {
       this.router.navigate(['/tables']);
     } catch (error) {
       console.error(error.message);
-      const res: string = error.error;
-      // console.log(JSON.parse(res));
-      const { message, title, type } = JSON.parse(res);
+      const res: any = error.error;
+      // console.log(res);
+      const { message, title, type } = res;
       this.showToaster(message, title, type);
     }
   }
@@ -130,9 +130,9 @@ export class AuthService {
           `${environment.wsUrl}register`,
           newUserData
         ) as Observable<string>;
-        const res: string = await registeredForm.toPromise();
-        // console.log(JSON.parse(res));
-        const { message, title, type } = JSON.parse(res);
+        const res: any = await registeredForm.toPromise();
+        // console.log(res);
+        const { message, title, type } = res;
         this.showToaster(message, title, type);
         registerForm.reset();
       } catch (error) {
@@ -142,10 +142,12 @@ export class AuthService {
   }
   async isLoggedIn(token) {
     try {
-      const userDataString: string = await (this.http.post<string>(`${environment.wsUrl}isLoggedIn`, {
-        token
-      }) as Observable<string>).toPromise();
-      const userData = JSON.parse(userDataString);
+      const userData: { First_Name; Last_Name; Email } = await (this.http.post<string>(
+        `${environment.wsUrl}isLoggedIn`,
+        {
+          token
+        }
+      ) as Observable<any>).toPromise();
       const { First_Name, Last_Name, Email } = userData;
       // console.log(userData);
       this.user = { firstName: First_Name, lastName: Last_Name, email: Email };

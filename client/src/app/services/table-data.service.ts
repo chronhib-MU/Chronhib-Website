@@ -1,3 +1,4 @@
+import { AuthService } from './auth.service';
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -29,7 +30,7 @@ export class TableDataService {
   };
   fetchedTable: Observable<{ data: { afterTable: []; beforeTable: [] } }>;
   currentApiQuery: any;
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private authService: AuthService) {}
   // Fetches table data from the API
   fetchTable = async (apiQuery: ApiGetQuery | string) => {
     this.currentApiQuery = apiQuery;
@@ -74,7 +75,8 @@ export class TableDataService {
       const filteredApiBody = {
         table: apiBody.table,
         values: [],
-        command: apiBody.command
+        command: apiBody.command,
+        requestedBy: this.authService.user
       };
       if (filteredApiBody.command === 'moveRow') {
         // filteredApiBody.values.push(apiBody.values[0]);
@@ -100,7 +102,8 @@ export class TableDataService {
       if (filteredApiBody.values.length > 0) {
         const postedTable: Observable<ApiPostBody> = this.http.post<ApiPostBody>(
           `${environment.apiUrl}?`,
-          filteredApiBody
+          JSON.stringify(filteredApiBody),
+          { headers: { 'content-type': 'application/json' } }
         ) as Observable<ApiPostBody>;
         await postedTable.toPromise();
         console.log('Table has finished updating!');

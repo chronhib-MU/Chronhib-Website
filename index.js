@@ -22,6 +22,7 @@ log4js.configure({
 });
 
 const logger = log4js.getLogger('node');
+// Quick Reference for logger:
 // logger.trace('Entering cheese testing');
 // logger.debug('Got cheese.');
 // logger.info('Cheese is Comté.');
@@ -126,8 +127,8 @@ const folderLoc = 'client/dist/';
 const appName = 'chronhibWebsite';
 // console.log('App Name:', appName);
 logger.info('App Name:', appName);
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json());
+app.use(bodyParser.json({ limit: '50mb' }));
+app.use(bodyParser.urlencoded({ limit: '50mb', extended: true, parameterLimit: 1000 }));
 app.use(cookieParser());
 app.use(compression()); // Compress all routes
 app.use(helmet()); // Protect against well known vulnerabilities
@@ -136,7 +137,7 @@ app.use(`/${appName}/`, express.static(path.join(__dirname, folderLoc)));
 app.use(`/${appName}/assets/`, express.static(path.join(__dirname, folderLoc + 'assets/')));
 app.use(cors()).use(bodyParser.json());
 
-app.post(`/${appName}/register`, (req, res) => {
+app.post(`/${appName}/register`, (req, res, next) => {
   // Creates a new account
   console.table(req.body);
   logger.trace(req.body);
@@ -147,7 +148,8 @@ app.post(`/${appName}/register`, (req, res) => {
       title: 'No email provided!',
       type: 'error'
     });
-    return res.json(
+    res.setHeader('Content-Type', 'application/json');
+    res.status(401).end(
       JSON.stringify({
         message: 'Please provide an email to create an account.',
         title: 'No email provided!',
@@ -160,7 +162,8 @@ app.post(`/${appName}/register`, (req, res) => {
       title: 'No password provided!',
       type: 'error'
     });
-    return res.json(
+    res.setHeader('Content-Type', 'application/json');
+    res.status(401).end(
       JSON.stringify({
         message: 'Please provide a password.',
         title: 'No password provided!',
@@ -168,64 +171,75 @@ app.post(`/${appName}/register`, (req, res) => {
       })
     );
   }
-  connection.query('SELECT `Email` FROM `USERS` WHERE `Email` = ?', [email], async (error, result) => {
-    if (error) {
-      // console.log(error);
-      // console.log(result);
-      logger.error(error);
-      return error;
-    }
+  connection.query(
+    'SELECT `Email` FROM `USERS` WHERE `Email` = ?',
+    [connection.escape(email)],
+    async (error, result) => {
+      if (error) {
+        // console.log(error);
+        // console.log(result);
+        logger.error(error);
+        next(error);
+      }
 
-    if (result && result.length > 0) {
-      logger.error({
-        message: 'Please try a different email.',
-        title: 'Email already registered!',
-        type: 'error'
-      });
-      return res.json(
-        JSON.stringify({
+      if (result && result.length > 0) {
+        logger.error({
           message: 'Please try a different email.',
           title: 'Email already registered!',
           type: 'error'
-        })
-      );
-    } else {
-      console.table(result);
-      logger.debug(result);
-    }
+        });
+        res.setHeader('Content-Type', 'application/json');
+        res.status(401).end(
+          JSON.stringify({
+            message: 'Please try a different email.',
+            title: 'Email already registered!',
+            type: 'error'
+          })
+        );
+      } else {
+        console.table(result);
+        logger.debug(result);
+      }
 
-    // Encrypt password
-    let hashedPassword = await bcrypt.hash(password, 10);
-    // console.log(hashedPassword);
-    logger.trace(hashedPassword);
-    return connection.query(
-      'INSERT INTO `USERS` SET ?',
-      { First_Name: firstName, Last_Name: lastName, Email: email, Password: hashedPassword },
-      // @ts-ignore
-      (error, result) => {
-        if (error) {
-          // console.log(error);
-          logger.error(error);
-          return error;
-        } else {
-          // console.log(result);
-          logger.debug(result);
-          logger.info({
-            message: 'Please login with your new account details.',
-            title: 'Registration successful!',
-            type: 'success'
-          });
-          return res.json(
-            JSON.stringify({
+      // Encrypt password
+      let hashedPassword = await bcrypt.hash(password, 10);
+      // console.log(hashedPassword);
+      logger.trace(hashedPassword);
+      connection.query(
+        'INSERT INTO `USERS` SET ?',
+        {
+          First_Name: connection.escape(firstName),
+          Last_Name: connection.escape(lastName),
+          Email: connection.escape(email),
+          Password: connection.escape(hashedPassword)
+        },
+        // @ts-ignore
+        (error, result) => {
+          if (error) {
+            // console.log(error);
+            logger.error(error);
+            next(error);
+          } else {
+            // console.log(result);
+            logger.debug(result);
+            logger.info({
               message: 'Please login with your new account details.',
               title: 'Registration successful!',
               type: 'success'
-            })
-          );
+            });
+            res.setHeader('Content-Type', 'application/json');
+            res.status(200).end(
+              JSON.stringify({
+                message: 'Please login with your new account details.',
+                title: 'Registration successful!',
+                type: 'success'
+              })
+            );
+          }
         }
-      }
-    );
-  });
+      );
+    }
+  );
 });
 
 app.post(`/${appName}/login`, (req, res) => {
@@ -240,7 +254,8 @@ app.post(`/${appName}/login`, (req, res) => {
       type: 'error',
       error: req.body
     });
-    return res.json(
+    res.setHeader('Content-Type', 'application/json');
+    res.status(401).end(
       JSON.stringify({
         message: 'Please provide an email to login.',
         title: 'No email provided!',
@@ -254,7 +269,7 @@ app.post(`/${appName}/login`, (req, res) => {
       title: 'No password provided!',
       type: 'error'
     });
-    return res.json(
+    res.status(401).end(
       JSON.stringify({
         message: 'Please provide a password.',
         title: 'No password provided!',
@@ -263,7 +278,7 @@ app.post(`/${appName}/login`, (req, res) => {
     );
   }
   // @ts-ignore
-  connection.query('SELECT * FROM `USERS` WHERE `Email` = ?', [email], async (error, result) => {
+  connection.query('SELECT * FROM `USERS` WHERE `Email` = ?', [connection.escape(email)], async (error, result) => {
     console.log(result);
     logger.trace(result);
     if (!result || (result && result.length === 0)) {
@@ -272,7 +287,8 @@ app.post(`/${appName}/login`, (req, res) => {
         title: 'Email not registered!',
         type: 'error'
       });
-      return res.status(401).json(
+      res.setHeader('Content-Type', 'application/json');
+      res.status(401).end(
         JSON.stringify({
           message: 'Please check your email and try again.',
           title: 'Email not registered!',
@@ -285,7 +301,8 @@ app.post(`/${appName}/login`, (req, res) => {
         title: 'Incorrect password!',
         type: 'error'
       });
-      return res.status(401).json(
+      res.setHeader('Content-Type', 'application/json');
+      res.status(401).end(
         JSON.stringify({
           message: 'Please double-check your password.',
           title: 'Incorrect password!',
@@ -304,7 +321,8 @@ app.post(`/${appName}/login`, (req, res) => {
         type: 'success',
         token
       });
-      return res.status(200).json(
+      res.setHeader('Content-Type', 'application/json');
+      res.status(200).end(
         JSON.stringify({
           message: 'You have been successfully logged in.',
           title: 'Login successful!',
@@ -318,56 +336,76 @@ app.post(`/${appName}/login`, (req, res) => {
 app.post(`/${appName}/isLoggedIn`, (req, res) => {
   if (!req.body.token) {
     logger.warn('401`- Unauthorized!');
-    return res.status(401).json();
+    res.setHeader('Content-Type', 'application/json');
+    res.status(401).end(
+      JSON.stringify({
+        message: 'You need to be logged in to access this page.',
+        title: 'Access Denied!',
+        type: 'error'
+      })
+    );
   } else {
     const decoded = jwt.verify(req.body.token, jwt_secret);
     // console.log(decoded);
     // @ts-ignore
     if (decoded.exp > 0) {
-      // @ts-ignore
-      connection.query('SELECT * FROM `USERS` WHERE `User_ID` = ?', [decoded.id], async (error, result) => {
-        // console.log(result[0]);
-        const { First_Name, Last_Name, Email } = result[0];
-        logger.info({ First_Name, Last_Name, Email });
-        return res.status(200).json(JSON.stringify({ First_Name, Last_Name, Email }));
-      });
+      connection.query(
+        'SELECT * FROM `USERS` WHERE `User_ID` = ?',
+        // @ts-ignore
+        [connection.escape(decoded.id)],
+        async (error, result) => {
+          // console.log(result[0]);
+          const { First_Name, Last_Name, Email } = result[0];
+          logger.info({ First_Name, Last_Name, Email });
+          res.setHeader('Content-Type', 'application/json');
+          res.status(200).end(JSON.stringify({ First_Name, Last_Name, Email }));
+        }
+      );
     } else {
       logger.warn('401`- Unauthorized!');
-      return res.status(401).json();
+      res.setHeader('Content-Type', 'application/json');
+      res.status(401).end(
+        JSON.stringify({
+          message: 'You need to be logged in to access this page.',
+          title: 'Access Denied!',
+          type: 'error'
+        })
+      );
     }
   }
 });
 
-app.post(`/${appName}/api/`, (req, res) => {
+app.post(`/${appName}/api/`, (req, res, next) => {
   //To access POST variable use req.body() methods.
-  // console.log('Post Variable: ', req.body);
+  console.log('Post Variable: ', req.body);
   logger.trace('Post Variable: ', req.body);
   const { table, command, values } = req.body;
+  // const values = JSON.parse(valuesString);
   if (command === 'moveRow') {
     // if the row is moved
     const updateQueries = [];
     values[0].forEach(rowData => {
-      let query =
-        'UPDATE `' + table.toUpperCase() + '` SET `Sort_ID` = ' + rowData.Sort_ID + ' WHERE `ID` = ' + rowData.ID + ';';
-      updateQueries.push(query);
+      let query = 'UPDATE ?? SET `Sort_ID` = ? WHERE `ID` = ?;';
+      updateQueries.push({ query, values: [table.toUpperCase(), rowData.Sort_ID, connection.escape(rowData.ID)] });
     });
     updateQueries.forEach(updateQuery => {
       // console.log('Post Query: ', updateQuery);
       logger.info('Post Query: ', updateQuery);
       // @ts-ignore
-      connection.query(updateQuery, (err, results) => {
+      connection.query(updateQuery.query, updateQuery.values, (err, results) => {
         if (err) {
           // console.log('Error: ', err);
           logger.error('Error: ', err);
-          return res.send(err);
+          next(err);
         } else {
           logger.info('Success: ', results);
-          return res.status(200);
+          res.status(200);
         }
         // console.log({ beforeTable, afterTable });
       });
     });
   } else if (command === 'createRow') {
+    // TODO: Create Rows
     // if a row is created
     console.log(values);
     logger.trace(values);
@@ -377,34 +415,30 @@ app.post(`/${appName}/api/`, (req, res) => {
       // console.log(value);
       let { id, fieldProperty, fieldValue } = value;
       console.table({ id, fieldProperty, fieldValue });
-      let updateQuery =
-        'UPDATE `' +
-        table.toUpperCase() +
-        '` SET `' +
-        fieldProperty +
-        '` = "' +
-        fieldValue +
-        '" WHERE `ID` = ' +
-        id +
-        ';';
+      let updateQuery = 'UPDATE ?? SET ?? = ? WHERE `ID` = ?;';
       // console.log('Post Query: ', updateQuery);
+      logger.trace('Post Query: ', updateQuery);
       // @ts-ignore
-      connection.query(updateQuery, (err, results) => {
-        if (err) {
-          // console.log('Error: ', err);
-          logger.error('Error: ', err);
-          return res.send(err);
-        } else {
-          logger.info('Success: ', results);
-          return res.status(200);
+      connection.query(
+        updateQuery,
+        [table.toUpperCase(), fieldProperty, connection.escape(fieldValue), id],
+        (err, results) => {
+          if (err) {
+            // console.log('Error: ', err);
+            logger.error('Error: ', err);
+            next(err);
+          } else {
+            logger.info('Success: ', results);
+            res.status(200);
+          }
+          // console.log({ beforeTable, afterTable });
         }
-        // console.log({ beforeTable, afterTable });
-      });
+      );
     });
   }
 });
 // Handles all the advanced get api table queries
-app.get(`/${appName}/api/`, (req, res) => {
+app.get(`/${appName}/api/`, (req, res, next) => {
   console.table(req.query);
   logger.trace(req.query);
   if (
@@ -416,25 +450,29 @@ app.get(`/${appName}/api/`, (req, res) => {
     typeof req.query.ctable === 'string'
   ) {
     // console.log('Got into search parameters!');
-    let page = req.query.page || '0'; // pagination page number
-    let limit = req.query.limit || '0'; // pagination limit (how many rows per page)
-    let fieldProperty = req.query.fprop || ''; // the property to filter by
-    let fieldValue = req.query.fval || ''; // the value of the property to filter by
-    let destinationTable = req.query.dtable || 'text'; // the table we're navigating to
-    let currentTable = req.query.ctable || 'text'; // the table we're navigating from
+    let page = connection.escape(req.query.page) || '0'; // pagination page number
+    let limit = connection.escape(req.query.limit) || '0'; // pagination limit (how many rows per page)
+    let fieldProperty = connection.escape(req.query.fprop) || ''; // the property to filter by
+    let fieldValue = connection.escape(req.query.fval) || ''; // the value of the property to filter by
+    let destinationTable = connection.escape(req.query.dtable) || 'text'; // the table we're navigating to
+    let currentTable = connection.escape(req.query.ctable) || 'text'; // the table we're navigating from
     let startRow,
       endRow,
       between = ' ';
+    let beforeQueryValues = [currentTable.toUpperCase(), fieldProperty, fieldValue];
+    let afterQueryValues = [destinationTable.toUpperCase()];
     if (parseInt(limit, 10) && parseInt(page, 10)) {
-      startRow = (parseInt(page, 10) - 1) * parseInt(limit, 10); // gets the starting row of the query
+      startRow = (parseInt(page, 10) - 1) * parseInt(limit, 10); // gets the starting row number of the query
       // console.log('Start Row:', startRow);
-      endRow = startRow + parseInt(limit, 10); // gets the ending row of the query
+      endRow = startRow + parseInt(limit, 10); // gets the ending row number of the query
       // console.log('End Row:', endRow);
-      between = ' AND `Sort_ID` BETWEEN ' + startRow + ' AND ' + endRow + ' ';
+      between = ' AND `Sort_ID` BETWEEN ? AND ? ';
+      afterQueryValues.push(startRow.toString(), endRow.toString());
       // console.log('Between:', between);
       limit = '';
     } else {
-      limit = limit === '0' ? '' : ' LIMIT ' + (parseInt(limit, 10) - 1); // if limit is 0 then there's no limit
+      limit = limit === '0' ? '' : ' LIMIT ?'; // if limit is 0 then there's no limit
+      afterQueryValues.push((parseInt(limit, 10) - 1).toString());
     }
     let beforeQuery = '',
       afterQuery = '';
@@ -444,26 +482,14 @@ app.get(`/${appName}/api/`, (req, res) => {
       // beforeQuery
       if (currentTable !== destinationTable) {
         // if not the same table
-        beforeQuery =
-          'SELECT * FROM `' + currentTable.toUpperCase() + '` WHERE `' + fieldProperty + '` = "' + fieldValue + '"';
+        beforeQuery = 'SELECT * FROM ?? WHERE ?? = ?';
       }
       // afterQuery
-      afterQuery =
-        'SELECT * FROM `' +
-        destinationTable.toUpperCase() +
-        '` WHERE `' +
-        fieldProperty +
-        '` = "' +
-        fieldValue +
-        '"' +
-        between +
-        'ORDER BY ' +
-        fieldProperty +
-        ', `Sort_ID` ASC' +
-        limit;
+      afterQuery = 'SELECT * FROM ? WHERE ?? = ?' + between + 'ORDER BY ??, `Sort_ID` ASC' + limit;
+      afterQueryValues.splice(1, 0, fieldProperty, fieldValue);
+      afterQueryValues.splice(-2, 0, fieldProperty);
     } else {
-      afterQuery =
-        'SELECT * FROM `' + destinationTable.toUpperCase() + '`' + between + 'ORDER BY `Sort_ID` ASC' + limit;
+      afterQuery = 'SELECT * FROM ??' + between + 'ORDER BY `Sort_ID` ASC' + limit;
     }
     // console.log('beforeQuery:', beforeQuery);
     // console.log('afterQuery:', afterQuery);
@@ -471,34 +497,40 @@ app.get(`/${appName}/api/`, (req, res) => {
     logger.trace('afterQuery:', afterQuery);
     let beforeTable = [],
       afterTable = [];
-    connection.query(afterQuery, (err, results) => {
+    connection.query(afterQuery, afterQueryValues, (err, results) => {
       if (err) {
         // console.log('Error: ', err);
         logger.error('Error: ', err);
-        return res.send(err);
+        next(err);
       } else {
         afterTable = results;
       }
       if (beforeQuery !== '') {
-        connection.query(beforeQuery, (err, results) => {
+        connection.query(beforeQuery, beforeQueryValues, (err, results) => {
           if (err) {
             // console.log('Error: ', err);
             logger.error('Error: ', err);
-            return res.send(err);
+            next(err);
           } else {
             beforeTable = results;
           }
           // console.log({ beforeTable, afterTable });
           logger.info(results);
-          return res.json({
-            data: { beforeTable, afterTable }
-          });
+          res.setHeader('Content-Type', 'application/json');
+          res.status(200).end(
+            JSON.stringify({
+              data: { beforeTable, afterTable }
+            })
+          );
         });
       } else {
         logger.info(results);
-        return res.json({
-          data: { beforeTable, afterTable }
-        });
+        res.setHeader('Content-Type', 'application/json');
+        res.status(200).end(
+          JSON.stringify({
+            data: { beforeTable, afterTable }
+          })
+        );
       }
     });
   } else if (req.query.search && typeof req.query.search === 'string') {
@@ -506,16 +538,15 @@ app.get(`/${appName}/api/`, (req, res) => {
     // const searchQuery = JSON.parse(req.query.search);
     const searchQuery = [
       { table: 'MORPHOLOGY', column: '*', operator: '', comparator: '', comparatorVal: '' },
-      { table: 'MORPHOLOGY', column: 'Morph', operator: '', comparator: 'ends with', comparatorVal: '' },
+      { table: 'MORPHOLOGY', column: 'Morph', operator: '', comparator: 'ends with', comparatorVal: '.' },
       { table: 'MORPHOLOGY', column: 'Analysis', operator: 'AND', comparator: '=', comparatorVal: 'gen.sg.' },
-      { table: 'LEMMATA', column: 'Class.', operator: 'AND', comparator: '=', comparatorVal: 'i' },
-      { table: 'SENTENCES', column: 'Class.', operator: 'AND', comparator: '=', comparatorVal: 'i' }
+      { table: 'LEMMATA', column: 'Class.', operator: 'AND', comparator: '=', comparatorVal: 'i' }
     ];
     console.log(searchQuery);
     let selectedTablesArr = [],
       fromTablesArr = [],
       whereConditionsArr = [];
-    for (let val of searchQuery) {
+    searchQuery.forEach(val => {
       // Creates the string that goes after the SELECT DISTINCT part
       let selectedTable = '`' + val.table + '` . ';
       selectedTable += val.column === '*' ? '*' : '`' + val.column + '`';
@@ -533,21 +564,21 @@ app.get(`/${appName}/api/`, (req, res) => {
         // Converts the comparator to sql where conditions
         switch (val.comparator) {
           case 'contains':
-            whereCondition += `LIKE '%` + val.comparatorVal + `%'`;
+            whereCondition += 'LIKE ' + connection.escape('%' + val.comparatorVal + '%');
             break;
           case 'starts with':
-            whereCondition += `LIKE '` + val.comparatorVal + `%'`;
+            whereCondition += 'LIKE ' + connection.escape(val.comparatorVal + '%');
             break;
           case 'ends with':
-            whereCondition += `LIKE '%` + val.comparatorVal + `'`;
+            whereCondition += 'LIKE ' + connection.escape('%' + val.comparatorVal);
             break;
           default:
-            whereCondition += val.comparator + ` '` + val.comparatorVal + `'`;
+            whereCondition += val.comparator + ' ' + connection.escape(val.comparatorVal);
             break;
         }
       }
       whereConditionsArr.push(whereCondition);
-    }
+    });
     let selectedTables = selectedTablesArr.join(', '),
       fromTables = fromTablesArr.filter((val, index, self) => index == self.indexOf(val)).join(', '), // Removes duplicates from the array
       whereConditions = whereConditionsArr.join(' ');
@@ -566,11 +597,14 @@ app.get(`/${appName}/api/`, (req, res) => {
     connection.query(finalQuery, (err, results) => {
       if (err) {
         // console.log('Error: ', err);
-        return res.send(err);
+        next(err);
       } else {
-        return res.json({
-          data: results
-        });
+        res.setHeader('Content-Type', 'application/json');
+        res.status(200).end(
+          JSON.stringify({
+            data: results
+          })
+        );
       }
     });
   } else {
@@ -590,7 +624,7 @@ app.get(`/${appName}/api/`, (req, res) => {
 });
 
 // handles all the basic get api table queries
-app.get(`/${appName}/api/:path`, (req, res) => {
+app.get(`/${appName}/api/:path`, (req, res, next) => {
   // console.log(req.params.path);
   const path = req.params.path;
   // console.log(tables[path]);
@@ -600,13 +634,16 @@ app.get(`/${appName}/api/:path`, (req, res) => {
     connection.query(tables[path], (err, results) => {
       if (err) {
         logger.error(err);
-        return res.send(err);
+        next(err);
       } else {
         // console.log(results);
         logger.info(results);
-        return res.json({
-          data: { beforeTable: {}, afterTable: results }
-        });
+        res.setHeader('Content-Type', 'application/json');
+        res.status(200).end(
+          JSON.stringify({
+            data: { beforeTable: {}, afterTable: results }
+          })
+        );
       }
     });
   } else {
