@@ -1,11 +1,12 @@
+import { AuthService } from './../../../services/auth.service';
 import { Component, OnInit, Input, ElementRef, ViewChild, NgZone } from '@angular/core';
 import { Location } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { TableDataService } from '../../../services/table-data.service';
 import Handsontable from 'handsontable';
 import { HotTableRegisterer } from '@handsontable/angular';
-import * as _ from 'lodash';
 import { ApiPostBody } from '../../../interfaces/api-post-body';
+import * as _ from 'lodash';
 declare const $: any;
 @Component({
   selector: 'app-table',
@@ -95,6 +96,7 @@ export class TableComponent implements OnInit {
 
   constructor(
     public tableData: TableDataService,
+    private authService: AuthService,
     private router: Router,
     private route: ActivatedRoute,
     private location: Location,
@@ -152,7 +154,8 @@ export class TableComponent implements OnInit {
             const res = {
               table: that.after,
               command: arguments[1],
-              values
+              values,
+              user: this.authService.user
             };
             // Checks for which table we're making changes on
             if (this.rootElement.id === 'hotMini') {
@@ -209,7 +212,8 @@ export class TableComponent implements OnInit {
           const res: ApiPostBody = {
             table: that.after,
             command: 'createRow',
-            values: [newValues]
+            values: [newValues],
+            user: this.authService.user
           };
           console.log('Result:', res);
           // Checks for which table we're making changes on
