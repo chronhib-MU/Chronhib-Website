@@ -110,7 +110,6 @@ connection.connect(err => {
     });
   }
 }); */
-// TODO: Fix unencrypted passwords on the client
 connection.query('SELECT `First_Name`,`Last_Name`,`Email`,`Password` FROM `USERS`', (err, results) => {
   if (err) {
     console.log(err);
@@ -208,10 +207,10 @@ app.post(`/${appName}/register`, (req, res, next) => {
       connection.query(
         'INSERT INTO `USERS` SET ?',
         {
-          First_Name: connection.escape(firstName),
-          Last_Name: connection.escape(lastName),
-          Email: connection.escape(email),
-          Password: connection.escape(hashedPassword)
+          First_Name: firstName,
+          Last_Name: lastName,
+          Email: email,
+          Password: hashedPassword
         },
         // @ts-ignore
         (error, result) => {
@@ -278,7 +277,7 @@ app.post(`/${appName}/login`, (req, res) => {
     );
   }
   // @ts-ignore
-  connection.query('SELECT * FROM `USERS` WHERE `Email` = ?', [connection.escape(email)], async (error, result) => {
+  connection.query('SELECT * FROM `USERS` WHERE `Email` = ?', [email], async (error, result) => {
     console.log(result);
     logger.trace(result);
     if (!result || (result && result.length === 0)) {
@@ -450,12 +449,12 @@ app.get(`/${appName}/api/`, (req, res, next) => {
     typeof req.query.ctable === 'string'
   ) {
     // console.log('Got into search parameters!');
-    let page = connection.escape(req.query.page) || '0'; // pagination page number
-    let limit = connection.escape(req.query.limit) || '0'; // pagination limit (how many rows per page)
-    let fieldProperty = connection.escape(req.query.fprop) || ''; // the property to filter by
-    let fieldValue = connection.escape(req.query.fval) || ''; // the value of the property to filter by
-    let destinationTable = connection.escape(req.query.dtable) || 'text'; // the table we're navigating to
-    let currentTable = connection.escape(req.query.ctable) || 'text'; // the table we're navigating from
+    let page = req.query.page || '0'; // pagination page number
+    let limit = req.query.limit || '0'; // pagination limit (how many rows per page)
+    let fieldProperty = req.query.fprop || ''; // the property to filter by
+    let fieldValue = req.query.fval || ''; // the value of the property to filter by
+    let destinationTable = req.query.dtable || 'text'; // the table we're navigating to
+    let currentTable = req.query.ctable || 'text'; // the table we're navigating from
     let startRow,
       endRow,
       between = ' ';
@@ -471,8 +470,8 @@ app.get(`/${appName}/api/`, (req, res, next) => {
       // console.log('Between:', between);
       limit = '';
     } else {
+      if (limit !== '0') afterQueryValues.push((parseInt(limit, 10) - 1).toString());
       limit = limit === '0' ? '' : ' LIMIT ?'; // if limit is 0 then there's no limit
-      afterQueryValues.push((parseInt(limit, 10) - 1).toString());
     }
     let beforeQuery = '',
       afterQuery = '';
@@ -485,14 +484,21 @@ app.get(`/${appName}/api/`, (req, res, next) => {
         beforeQuery = 'SELECT * FROM ?? WHERE ?? = ?';
       }
       // afterQuery
-      afterQuery = 'SELECT * FROM ? WHERE ?? = ?' + between + 'ORDER BY ??, `Sort_ID` ASC' + limit;
+      afterQuery = 'SELECT * FROM ?? WHERE ?? = ?' + between + 'ORDER BY ??, `Sort_ID` ASC' + limit;
+      console.log('before:', afterQueryValues);
       afterQueryValues.splice(1, 0, fieldProperty, fieldValue);
-      afterQueryValues.splice(-2, 0, fieldProperty);
+      if (limit) {
+        afterQueryValues.splice(-2, 0, fieldProperty);
+      } else {
+        afterQueryValues.push(fieldProperty);
+      }
     } else {
       afterQuery = 'SELECT * FROM ??' + between + 'ORDER BY `Sort_ID` ASC' + limit;
     }
     // console.log('beforeQuery:', beforeQuery);
+    // console.log('beforeQuery:', beforeQueryValues);
     // console.log('afterQuery:', afterQuery);
+    // console.log('afterQuery:', afterQueryValues);
     logger.trace('beforeQuery:', beforeQuery);
     logger.trace('afterQuery:', afterQuery);
     let beforeTable = [],
@@ -517,7 +523,8 @@ app.get(`/${appName}/api/`, (req, res, next) => {
           // console.log({ beforeTable, afterTable });
           logger.info(results);
           res.setHeader('Content-Type', 'application/json');
-          res.status(200).end(
+          // Needs to be returned since its inside another connection query
+          return res.status(200).end(
             JSON.stringify({
               data: { beforeTable, afterTable }
             })
@@ -540,7 +547,7 @@ app.get(`/${appName}/api/`, (req, res, next) => {
       { table: 'MORPHOLOGY', column: '*', operator: '', comparator: '', comparatorVal: '' },
       { table: 'MORPHOLOGY', column: 'Morph', operator: '', comparator: 'ends with', comparatorVal: '.' },
       { table: 'MORPHOLOGY', column: 'Analysis', operator: 'AND', comparator: '=', comparatorVal: 'gen.sg.' },
-      { table: 'LEMMATA', column: 'Class.', operator: 'AND', comparator: '=', comparatorVal: 'i' }
+      { table: 'LEMMATA', column: 'Class', operator: 'AND', comparator: '=', comparatorVal: 'i' }
     ];
     console.log(searchQuery);
     let selectedTablesArr = [],
@@ -623,13 +630,11 @@ app.get(`/${appName}/api/`, (req, res, next) => {
   }
 });
 
-// handles all the basic get api table queries
 app.get(`/${appName}/api/:path`, (req, res, next) => {
   // console.log(req.params.path);
   const path = req.params.path;
   // console.log(tables[path]);
   logger.trace(req.params.path);
-  // if the first character is a question mark and therefore a query
   if (path in tables) {
     connection.query(tables[path], (err, results) => {
       if (err) {
