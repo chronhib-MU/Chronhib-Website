@@ -155,7 +155,7 @@ export class TableComponent implements OnInit {
               table: that.after,
               command: arguments[1],
               values,
-              user: this.authService.user
+              user: that.authService.user
             };
             // Checks for which table we're making changes on
             if (this.rootElement.id === 'hotMini') {
@@ -185,7 +185,7 @@ export class TableComponent implements OnInit {
             table: that.after,
             command: 'moveRow',
             values: [newValues],
-            user: this.authService.user
+            user: that.authService.user
           };
           console.log('Result:', res);
           // Checks for which table we're making changes on
@@ -214,7 +214,7 @@ export class TableComponent implements OnInit {
             table: that.after,
             command: 'createRow',
             values: [newValues],
-            user: this.authService.user
+            user: that.authService.user
           };
           console.log('Result:', res);
           // Checks for which table we're making changes on

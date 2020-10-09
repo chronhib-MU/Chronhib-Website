@@ -68,7 +68,7 @@ const jwt_expires_in = process.env.JWT_EXPIRES_IN || JWT_EXPIRES_IN;
 // @ts-ignore
 const jwt_cookie_expires = parseInt(process.env.JWT_COOKIE_EXPIRES || JWT_COOKIE_EXPIRES);
 // console.table({ port, host, password, database, node_env, user, jwt_secret, jwt_expires_in, jwt_cookie_expires });
-logger.debug({ port, host, password, database, node_env, user, jwt_secret, jwt_expires_in, jwt_cookie_expires });
+// logger.debug({ port, host, password, database, node_env, user, jwt_secret, jwt_expires_in, jwt_cookie_expires });
 const app = express();
 const server = http.createServer(app);
 // mysql table queries
@@ -118,7 +118,7 @@ connection.query('SELECT `First_Name`,`Last_Name`,`Email`,`Password` FROM `USERS
     logger.error('Error: ', err);
   } else {
     console.table(results);
-    logger.debug(results);
+    // logger.debug(results);
   }
 });
 const folderLoc = 'client/dist/';
@@ -388,7 +388,7 @@ app.post(`/${appName}/api/`, (req, res, next) => {
     });
     updateQueries.forEach(updateQuery => {
       // console.log('Post Query: ', updateQuery);
-      logger.info('Post Query: ', updateQuery);
+      // logger.info('Post Query: ', updateQuery);
       // @ts-ignore
       connection.query(updateQuery.query, updateQuery.values, (err, results) => {
         if (err) {
@@ -396,7 +396,7 @@ app.post(`/${appName}/api/`, (req, res, next) => {
           logger.error('Error: ', err);
           next(err);
         } else {
-          logger.info('Success: ', results);
+          // logger.info('Success: ', results);
           res.status(200);
         }
         // console.log({ beforeTable, afterTable });
@@ -406,7 +406,7 @@ app.post(`/${appName}/api/`, (req, res, next) => {
     // TODO: Create Rows
     // if a row is created
     console.log(values);
-    logger.trace(values);
+    // logger.trace(values);
   } else {
     // if the row needs to be updated
     values.forEach(value => {
@@ -415,7 +415,7 @@ app.post(`/${appName}/api/`, (req, res, next) => {
       console.table({ id, fieldProperty, fieldValue });
       let updateQuery = 'UPDATE ?? SET ?? = ? WHERE `ID` = ?;';
       // console.log('Post Query: ', updateQuery);
-      logger.trace('Post Query: ', updateQuery);
+      // logger.trace('Post Query: ', updateQuery);
       // @ts-ignore
       connection.query(
         updateQuery,
@@ -426,7 +426,7 @@ app.post(`/${appName}/api/`, (req, res, next) => {
             logger.error('Error: ', err);
             next(err);
           } else {
-            logger.info('Success: ', results);
+            // logger.info('Success: ', results);
             res.status(200);
           }
           // console.log({ beforeTable, afterTable });
@@ -633,7 +633,7 @@ app.get(`/${appName}/api/:path`, (req, res, next) => {
   // console.log(req.params.path);
   const path = req.params.path;
   // console.log(tables[path]);
-  logger.trace(req.params.path);
+  // logger.trace(req.params.path);
   if (path in tables) {
     connection.query(tables[path], (err, results) => {
       if (err) {
@@ -641,7 +641,7 @@ app.get(`/${appName}/api/:path`, (req, res, next) => {
         next(err);
       } else {
         // console.log(results);
-        logger.info(results);
+        // logger.info(results);
         res.setHeader('Content-Type', 'application/json');
         res.status(200).end(
           JSON.stringify({
