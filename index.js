@@ -196,10 +196,11 @@ app.post(`/${appName}/register`, (req, res, next) => {
             type: 'error'
           })
         );
-      } else {
-        console.table(result);
-        logger.debug(result);
       }
+      // else {
+      //   console.table(result);
+      //   logger.debug(result);
+      // }
 
       // Encrypt password
       let hashedPassword = await bcrypt.hash(password, 10);
@@ -220,12 +221,12 @@ app.post(`/${appName}/register`, (req, res, next) => {
             next(error);
           } else {
             // console.log(result);
-            logger.debug(result);
-            logger.info({
-              message: 'Please login with your new account details.',
-              title: 'Registration successful!',
-              type: 'success'
-            });
+            // logger.debug(result);/
+            // logger.info({
+            //   message: 'Please login with your new account details.',
+            //   title: 'Registration successful!',
+            //   type: 'success'
+            // });
             res.setHeader('Content-Type', 'application/json');
             res.status(200).end(
               JSON.stringify({
@@ -312,12 +313,12 @@ app.post(`/${appName}/login`, (req, res) => {
         expiresIn: jwt_expires_in
       });
       // console.log('The token is: ' + token);
-      logger.info({
-        message: 'You have been successfully logged in.',
-        title: 'Login successful!',
-        type: 'success',
-        token
-      });
+      // logger.info({
+      //   message: 'You have been successfully logged in.',
+      //   title: 'Login successful!',
+      //   type: 'success',
+      //   token
+      // });
       res.setHeader('Content-Type', 'application/json');
       res.status(200).end(
         JSON.stringify({
@@ -353,7 +354,7 @@ app.post(`/${appName}/isLoggedIn`, (req, res) => {
         async (error, result) => {
           // console.log(result[0]);
           const { First_Name, Last_Name, Email } = result[0];
-          logger.info({ First_Name, Last_Name, Email });
+          // logger.info({ First_Name, Last_Name, Email });
           res.setHeader('Content-Type', 'application/json');
           res.status(200).end(JSON.stringify({ First_Name, Last_Name, Email }));
         }
@@ -519,7 +520,7 @@ app.get(`/${appName}/api/`, (req, res, next) => {
             beforeTable = results;
           }
           // console.log({ beforeTable, afterTable });
-          logger.info(results);
+          // logger.info(results);
           res.setHeader('Content-Type', 'application/json');
           // Needs to be returned since its inside another connection query
           return res.status(200).end(
@@ -529,7 +530,7 @@ app.get(`/${appName}/api/`, (req, res, next) => {
           );
         });
       } else {
-        logger.info(results);
+        // logger.info(results);
         res.setHeader('Content-Type', 'application/json');
         res.status(200).end(
           JSON.stringify({
