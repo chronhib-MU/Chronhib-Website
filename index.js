@@ -171,75 +171,71 @@ app.post(`/${appName}/register`, (req, res, next) => {
       })
     );
   }
-  connection.query(
-    'SELECT `Email` FROM `USERS` WHERE `Email` = ?',
-    [connection.escape(email)],
-    async (error, result) => {
-      if (error) {
-        // console.log(error);
-        // console.log(result);
-        logger.error(error);
-        next(error);
-      }
+  connection.query('SELECT `Email` FROM `USERS` WHERE `Email` = ?', email, async (error, result) => {
+    if (error) {
+      // console.log(error);
+      // console.log(result);
+      logger.error(error);
+      next(error);
+    }
 
-      if (result && result.length > 0) {
-        logger.error({
+    if (result && result.length > 0) {
+      logger.error({
+        message: 'Please try a different email.',
+        title: 'Email already registered!',
+        type: 'error'
+      });
+      res.setHeader('Content-Type', 'application/json');
+      res.status(401).end(
+        JSON.stringify({
           message: 'Please try a different email.',
           title: 'Email already registered!',
           type: 'error'
-        });
-        res.setHeader('Content-Type', 'application/json');
-        res.status(401).end(
-          JSON.stringify({
-            message: 'Please try a different email.',
-            title: 'Email already registered!',
-            type: 'error'
-          })
-        );
-      } else {
-        console.table(result);
-        logger.debug(result);
-      }
+        })
+      );
+    } else {
+      console.table(result);
+      logger.debug(result);
+    }
 
-      // Encrypt password
-      let hashedPassword = await bcrypt.hash(password, 10);
-      // console.log(hashedPassword);
-      logger.trace(hashedPassword);
-      connection.query(
-        'INSERT INTO `USERS` SET ?',
-        {
-          First_Name: connection.escape(firstName),
-          Last_Name: connection.escape(lastName),
-          Email: connection.escape(email),
-          Password: connection.escape(hashedPassword)
-        },
-        // @ts-ignore
-        (error, result) => {
-          if (error) {
-            // console.log(error);
-            logger.error(error);
-            next(error);
-          } else {
-            // console.log(result);
-            logger.debug(result);
-            logger.info({
+    // Encrypt password
+    let hashedPassword = await bcrypt.hash(password, 10);
+    // console.log(hashedPassword);
+    logger.trace(hashedPassword);
+    connection.query(
+      'INSERT INTO `USERS` SET ?',
+      {
+        First_Name: firstName,
+        Last_Name: lastName,
+        Email: email,
+        Password: hashedPassword
+      },
+      // @ts-ignore
+      (error, result) => {
+        if (error) {
+          // console.log(error);
+          logger.error(error);
+          next(error);
+        } else {
+          // console.log(result);
+          logger.debug(result);
+          logger.info({
+            message: 'Please login with your new account details.',
+            title: 'Registration successful!',
+            type: 'success'
+          });
+          res.setHeader('Content-Type', 'application/json');
+          res.status(200).end(
+            JSON.stringify({
               message: 'Please login with your new account details.',
               title: 'Registration successful!',
               type: 'success'
-            });
-            res.setHeader('Content-Type', 'application/json');
-            res.status(200).end(
-              JSON.stringify({
-                message: 'Please login with your new account details.',
-                title: 'Registration successful!',
-                type: 'success'
-              })
-            );
-          }
+            })
+          );
         }
-      );
-    }
-  );
+      }
+    );
+  });
 });
 
 app.post(`/${appName}/login`, (req, res) => {
@@ -278,7 +274,7 @@ app.post(`/${appName}/login`, (req, res) => {
     );
   }
   // @ts-ignore
-  connection.query('SELECT * FROM `USERS` WHERE `Email` = ?', [connection.escape(email)], async (error, result) => {
+  connection.query('SELECT * FROM `USERS` WHERE `Email` = ?', email, async (error, result) => {
     console.log(result);
     logger.trace(result);
     if (!result || (result && result.length === 0)) {
@@ -352,7 +348,7 @@ app.post(`/${appName}/isLoggedIn`, (req, res) => {
       connection.query(
         'SELECT * FROM `USERS` WHERE `User_ID` = ?',
         // @ts-ignore
-        [connection.escape(decoded.id)],
+        [decoded.id],
         async (error, result) => {
           // console.log(result[0]);
           const { First_Name, Last_Name, Email } = result[0];
@@ -386,7 +382,7 @@ app.post(`/${appName}/api/`, (req, res, next) => {
     const updateQueries = [];
     values[0].forEach(rowData => {
       let query = 'UPDATE ?? SET `Sort_ID` = ? WHERE `ID` = ?;';
-      updateQueries.push({ query, values: [table.toUpperCase(), rowData.Sort_ID, connection.escape(rowData.ID)] });
+      updateQueries.push({ query, values: [table.toUpperCase(), rowData.Sort_ID, rowData.ID] });
     });
     updateQueries.forEach(updateQuery => {
       // console.log('Post Query: ', updateQuery);
@@ -419,21 +415,17 @@ app.post(`/${appName}/api/`, (req, res, next) => {
       // console.log('Post Query: ', updateQuery);
       logger.trace('Post Query: ', updateQuery);
       // @ts-ignore
-      connection.query(
-        updateQuery,
-        [table.toUpperCase(), fieldProperty, connection.escape(fieldValue), id],
-        (err, results) => {
-          if (err) {
-            // console.log('Error: ', err);
-            logger.error('Error: ', err);
-            next(err);
-          } else {
-            logger.info('Success: ', results);
-            res.status(200);
-          }
-          // console.log({ beforeTable, afterTable });
+      connection.query(updateQuery, [table.toUpperCase(), fieldProperty, fieldValue, id], (err, results) => {
+        if (err) {
+          // console.log('Error: ', err);
+          logger.error('Error: ', err);
+          next(err);
+        } else {
+          logger.info('Success: ', results);
+          res.status(200);
         }
-      );
+        // console.log({ beforeTable, afterTable });
+      });
     });
   }
 });
@@ -450,12 +442,12 @@ app.get(`/${appName}/api/`, (req, res, next) => {
     typeof req.query.ctable === 'string'
   ) {
     // console.log('Got into search parameters!');
-    let page = connection.escape(req.query.page) || '0'; // pagination page number
-    let limit = connection.escape(req.query.limit) || '0'; // pagination limit (how many rows per page)
-    let fieldProperty = connection.escape(req.query.fprop) || ''; // the property to filter by
-    let fieldValue = connection.escape(req.query.fval) || ''; // the value of the property to filter by
-    let destinationTable = connection.escape(req.query.dtable) || 'text'; // the table we're navigating to
-    let currentTable = connection.escape(req.query.ctable) || 'text'; // the table we're navigating from
+    let page = req.query.page || '0'; // pagination page number
+    let limit = req.query.limit || '0'; // pagination limit (how many rows per page)
+    let fieldProperty = req.query.fprop || ''; // the property to filter by
+    let fieldValue = req.query.fval || ''; // the value of the property to filter by
+    let destinationTable = req.query.dtable || 'text'; // the table we're navigating to
+    let currentTable = req.query.ctable || 'text'; // the table we're navigating from
     let startRow,
       endRow,
       between = ' ';
