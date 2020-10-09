@@ -16,9 +16,11 @@ const helmet = require('helmet');
 // @ts-ignore
 const { parse } = require('path');
 const log4js = require('log4js');
+const currentDate = new Date();
+const formattedDate = `-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${currentDate.getFullYear()}`;
 log4js.configure({
-  appenders: { node: { type: 'file', filename: 'node.log' } },
-  categories: { default: { appenders: ['node'], level: 'trace' } }
+  appenders: { node: { type: 'file', filename: `logs/node${formattedDate}.log` } },
+  categories: { default: { appenders: ['node'], level: 'info' } }
 });
 
 const logger = log4js.getLogger('node');
@@ -139,7 +141,6 @@ app.use(cors()).use(bodyParser.json());
 app.post(`/${appName}/register`, (req, res, next) => {
   // Creates a new account
   console.table(req.body);
-  logger.trace(req.body);
   const { firstName, lastName, email, password } = req.body;
   if (!email) {
     logger.error({
@@ -203,7 +204,6 @@ app.post(`/${appName}/register`, (req, res, next) => {
       // Encrypt password
       let hashedPassword = await bcrypt.hash(password, 10);
       // console.log(hashedPassword);
-      logger.trace(hashedPassword);
       connection.query(
         'INSERT INTO `USERS` SET ?',
         {
@@ -244,7 +244,6 @@ app.post(`/${appName}/register`, (req, res, next) => {
 app.post(`/${appName}/login`, (req, res) => {
   // Signs user in
   console.table(req.body);
-  logger.trace(req.body);
   const { email, password } = req.body;
   if (!email) {
     logger.error({
@@ -279,7 +278,6 @@ app.post(`/${appName}/login`, (req, res) => {
   // @ts-ignore
   connection.query('SELECT * FROM `USERS` WHERE `Email` = ?', [email], async (error, result) => {
     console.log(result);
-    logger.trace(result);
     if (!result || (result && result.length === 0)) {
       logger.error({
         message: 'Please check your email and try again.',
