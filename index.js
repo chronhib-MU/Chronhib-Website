@@ -624,6 +624,28 @@ app.get(`/${appName}/api/`, (req, res, next) => {
 });
 
 // handles all the basic get api table queries
+app.get(`/${appName}/api/:path/headers`, (req, res, next) => {
+  // console.log(req.params.path);
+  const path = req.params.path;
+  // console.log(tables[path]);
+  logger.trace(req.params.path);
+  const headerQuery = 'SELECT COLUMN_NAME  FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = N?';
+  connection.query(headerQuery, [DATABASE, path.split('/')[0]], (err, results) => {
+    if (err) {
+      logger.error(err);
+      next(err);
+    } else {
+      console.log(results);
+      logger.info(results);
+      res.setHeader('Content-Type', 'application/json');
+      res.status(200).end(
+        JSON.stringify({
+          data: results.map(result => result.COLUMN_NAME)
+        })
+      );
+    }
+  });
+});
 app.get(`/${appName}/api/:path`, (req, res, next) => {
   // console.log(req.params.path);
   const path = req.params.path;

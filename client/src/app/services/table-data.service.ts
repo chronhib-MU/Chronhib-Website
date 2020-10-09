@@ -28,9 +28,27 @@ export class TableDataService {
       data: []
     }
   };
+  allHeaders = { text: [], sentences: [], morphology: [], lemmata: [] };
   fetchedTable: Observable<{ data: { afterTable: []; beforeTable: [] } }>;
   currentApiQuery: any;
   constructor(private http: HttpClient, private authService: AuthService) {}
+  // Fetches the headers for each table
+  fetchHeaders = async () => {
+    try {
+      this.tables.names.forEach(async name => {
+        console.log(name);
+        const fetchedHeaders: Observable<any> = this.http.get<any>(
+          `${environment.apiUrl}${name}/headers`
+        ) as Observable<any>;
+        const { data } = await fetchedHeaders.toPromise();
+        console.log(data);
+        this.allHeaders[name] = data;
+      });
+    } catch (error) {
+      console.log('Invalid request made!');
+      return;
+    }
+  };
   // Fetches table data from the API
   fetchTable = async (apiQuery: ApiGetQuery | string) => {
     this.currentApiQuery = apiQuery;
@@ -70,6 +88,7 @@ export class TableDataService {
       return;
     }
   };
+
   updateTable = async (apiBody: ApiPostBody) => {
     if (apiBody.command !== 'loadData') {
       const filteredApiBody = {
