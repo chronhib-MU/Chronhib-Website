@@ -36,7 +36,7 @@ export class TableDataService {
   fetchHeaders = async () => {
     try {
       this.tables.names.forEach(async name => {
-        console.log(name);
+        // console.log(name);
         const fetchedHeaders: Observable<any> = this.http.get<any>(
           `${environment.apiUrl}${name}/headers`
         ) as Observable<any>;
@@ -126,7 +126,7 @@ export class TableDataService {
           { headers: { 'content-type': 'application/json' } }
         ) as Observable<ApiPostBody>;
         await postedTable.toPromise();
-        console.log('Table has finished updating!');
+        // console.log('Table has finished updating!');
       } else {
         console.log('The values were the same! No changes made.');
       }

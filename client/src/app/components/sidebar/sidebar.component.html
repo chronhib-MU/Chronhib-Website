@@ -35,7 +35,7 @@
               </button>
             </div>
             <div class="modal-body">
-              <form role="form" [formGroup]="searchForm" (ngSubmit)="this.searchTable(c())">
+              <form role="form" [formGroup]="searchForm" (ngSubmit)="this.searchTable(c)">
                 <div
                   formArrayName="columns"
                   *ngFor="let column of searchForm.get('columns')['controls']; let i = index"

@@ -187,7 +187,7 @@ export class TableComponent implements OnInit {
             values: [newValues],
             user: that.authService.user
           };
-          console.log('Result:', res);
+          // console.log('Result:', res);
           // Checks for which table we're making changes on
           if (this.rootElement.id === 'hotMini') {
             res.table = that.before;
@@ -265,7 +265,7 @@ export class TableComponent implements OnInit {
       this.dataTable[this.after].headers.splice(0, 0, this.dataTable[this.after].headers.pop());
       // console.table(this.dataTable);
     } catch (error) {
-      console.log('Invalid request made!');
+      console.error('Invalid request made!', error);
       return error;
     }
     this.columns = [];

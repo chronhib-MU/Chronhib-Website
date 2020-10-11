@@ -1,5 +1,4 @@
 const express = require('express');
-// const serveStatic = require("serve-static");
 const http = require('http');
 const path = require('path');
 const cors = require('cors');
@@ -16,6 +15,7 @@ const helmet = require('helmet');
 // @ts-ignore
 const { parse } = require('path');
 const log4js = require('log4js');
+const serveStatic = require('serve-static');
 const currentDate = new Date();
 const formattedDate = `-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${currentDate.getFullYear()}`;
 log4js.configure({
@@ -137,8 +137,8 @@ app.use(compression()); // Compress all routes
 app.use(helmet()); // Protect against well known vulnerabilities
 
 // Serve the static files from the Angular app
-app.use(`/${appName}/`, express.static(path.join(__dirname, folderLoc)));
-app.use(`/${appName}/assets/`, express.static(path.join(__dirname, folderLoc + 'assets/')));
+app.use(`/${appName}/`, serveStatic(path.join(__dirname, folderLoc)));
+app.use(`/${appName}/assets/`, serveStatic(path.join(__dirname, folderLoc + 'assets/')));
 app.use(cors()).use(bodyParser.json());
 
 app.post(`/${appName}/register`, (req, res, next) => {
@@ -437,8 +437,8 @@ app.get(`/${appName}/api/`, (req, res, next) => {
     } else {
       // if limit is 0 then there's no limit
       if (limit !== '0') {
-        limit = ' LIMIT ?';
         afterQueryValues.push((parseInt(limit, 10) - 1).toString());
+        limit = ' LIMIT ?';
       } else {
         limit = '';
       }
@@ -456,7 +456,7 @@ app.get(`/${appName}/api/`, (req, res, next) => {
       // afterQuery
       afterQuery = 'SELECT * FROM ?? WHERE ?? = ?' + between + 'ORDER BY ??, `Sort_ID` ASC' + limit;
       afterQueryValues.splice(1, 0, fieldProperty, fieldValue);
-      if (!limit) {
+      if (limit) {
         afterQueryValues.splice(-2, 0, fieldProperty);
       } else {
         afterQueryValues.push(fieldProperty);
@@ -566,7 +566,7 @@ app.get(`/${appName}/api/`, (req, res, next) => {
         // console.log('Error: ', err);
         next(err);
       } else {
-        return res.status(200).json({
+        res.status(200).json({
           data: results
         });
       }
@@ -628,14 +628,14 @@ app.get(`/${appName}/api/:path`, (req, res, next) => {
   } else {
     // Handles any requests that don't match the ones above
     // @ts-ignore
-    return redirect(`/${appName}/*`); // redirect back to the homepage
+    redirect(`/${appName}/*`); // redirect back to the homepage
   }
 });
 
 // redirect all the routes to the app and lets angular handle the routing
 // @ts-ignore
 app.get(`/${appName}/*`, (req, res) => {
-  return res.sendFile(path.resolve(__dirname, folderLoc + 'index.html'));
+  res.sendFile(path.resolve(__dirname, folderLoc + 'index.html'));
 });
 
 if (node_env.toLowerCase() === 'production') {

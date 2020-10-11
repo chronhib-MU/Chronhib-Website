@@ -48,12 +48,12 @@ export class AuthService {
   };
   async logOut() {
     console.log('Logged out');
+    this.showToaster('You have successfully logged out.', 'Logout successful!', 'success');
     localStorage.removeItem(`${window.location.origin}token`);
     await this.isLoggedIn(null);
     this.router.navigate(['/login']);
   }
   async login(loginForm) {
-    console.log('Authenticated Status: ', this.authenticated);
     if (this.authenticated) {
       this.logOut();
     }
@@ -77,7 +77,7 @@ export class AuthService {
       loginForm.reset();
       this.router.navigate(['/tables']);
     } catch (error) {
-      console.error(error.message);
+      // console.error(error.message);
       const res: any = error.error;
       // console.log(res);
       const { message, title, type } = res;
@@ -154,16 +154,19 @@ export class AuthService {
       // console.log(userData);
       this.user = { firstName: First_Name, lastName: Last_Name, email: Email };
       this.authenticated = true;
+      console.log('Authenticated Status: ', this.authenticated);
     } catch (error) {
       // console.error(error);
-      const { message, title, type } = error.error;
-      this.showToaster(message, title, type);
+      // const { message, title, type } = error.error;
+      // this.showToaster(message, title, type);
       this.user = {
         firstName: '',
         lastName: '',
         email: ''
       };
+      console.log('Authenticated Status: ', this.authenticated);
       this.authenticated = false;
+      console.log('Authenticated Status: ', this.authenticated);
     }
   }
 }

@@ -72,9 +72,6 @@ export class SidebarComponent implements OnInit {
       comparatorVal: ['']
     });
   }
-  test() {
-    console.log(this.searchForm.get('columns')['controls'][0].controls.table.value.toLowerCase);
-  }
 
   searchTable(close) {
     this.searchForm = this.fb.group({
