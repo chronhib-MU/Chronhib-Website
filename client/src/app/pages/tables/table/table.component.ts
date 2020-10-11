@@ -41,7 +41,7 @@ export class TableComponent implements OnInit {
       contextMenu: false,
       readOnly: true,
       // colWidths: 150,
-      columnSorting: false,
+      multiColumnSorting: false,
       wordWrap: true
     },
     {
@@ -60,7 +60,7 @@ export class TableComponent implements OnInit {
       contextMenu: true,
       readOnly: false,
       // colWidths: 150,
-      columnSorting: false,
+      multiColumnSorting: false,
       wordWrap: true
     }
   ];
@@ -238,12 +238,12 @@ export class TableComponent implements OnInit {
   async fetchedTable() {
     if (this.hotRegisterer.getInstance(this.instance + 'Mini')) {
       this.hotRegisterer.getInstance(this.instance + 'Mini').updateSettings({
-        columnSorting: this.sort
+        multiColumnSorting: this.sort
       });
     }
     if (this.hotRegisterer.getInstance(this.instance)) {
       this.hotRegisterer.getInstance(this.instance).updateSettings({
-        columnSorting: this.sort
+        multiColumnSorting: this.sort
       });
     }
     try {
@@ -301,7 +301,7 @@ export class TableComponent implements OnInit {
               return columnFilter.includes(headerArr[i]);
             })
         },
-        columnSorting: this.sort
+        multiColumnSorting: this.sort
       });
       this.getTableData(this.before);
     }
@@ -321,14 +321,12 @@ export class TableComponent implements OnInit {
               return columnFilter.includes(headerArr[i]);
             })
         },
-        columnSorting: this.sort
+        multiColumnSorting: this.sort
       });
       this.getTableData(this.after);
     }
   }
   columnRendererSettings(header: any, table, columnType) {
-    // TODO: Remove in build after next
-    header = header.replace('.', ''); // For smooth transition of columns
     switch (header) {
       case 'Rel':
         return this[columnType].push(

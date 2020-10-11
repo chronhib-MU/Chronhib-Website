@@ -136,7 +136,9 @@ export class AuthService {
         this.showToaster(message, title, type);
         registerForm.reset();
       } catch (error) {
-        console.error(error);
+        // console.error(error);
+        const { message, title, type } = error.error;
+        this.showToaster(message, title, type);
       }
     }
   }
@@ -153,7 +155,9 @@ export class AuthService {
       this.user = { firstName: First_Name, lastName: Last_Name, email: Email };
       this.authenticated = true;
     } catch (error) {
-      console.error(error);
+      // console.error(error);
+      const { message, title, type } = error.error;
+      this.showToaster(message, title, type);
       this.user = {
         firstName: '',
         lastName: '',
