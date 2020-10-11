@@ -41,7 +41,7 @@ export class TableDataService {
           `${environment.apiUrl}${name}/headers`
         ) as Observable<any>;
         const { data } = await fetchedHeaders.toPromise();
-        console.log(data);
+        // console.log(data);
         this.allHeaders[name] = data;
       });
     } catch (error) {
@@ -84,6 +84,7 @@ export class TableDataService {
         // console.log(this.tables[apiQuery.dtable].headers);
       }
     } catch (error) {
+      console.log(error);
       console.log('Invalid request made!');
       return;
     }
