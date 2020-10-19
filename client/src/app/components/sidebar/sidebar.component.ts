@@ -5,6 +5,7 @@ import { Location, LocationStrategy, PathLocationStrategy } from '@angular/commo
 import { Router } from '@angular/router';
 import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { NgbModal, ModalDismissReasons } from '@ng-bootstrap/ng-bootstrap';
+import * as qs from 'qs';
 
 declare interface RouteInfo {
   path: string;
@@ -39,6 +40,7 @@ export class SidebarComponent implements OnInit {
 
   public focus;
   public location: Location;
+  public finalQuery = '';
   constructor(
     public authService: AuthService,
     public tableData: TableDataService,
@@ -54,7 +56,8 @@ export class SidebarComponent implements OnInit {
   ngOnInit() {
     this.tableData.fetchHeaders();
     this.searchForm = this.fb.group({
-      columns: this.fb.array([this.createColumns()])
+      searchQuery: this.fb.array([this.createSearchQuery(0)]),
+      referenceColumn: false
     });
     this.menuItems = ROUTES.filter(menuItem => menuItem);
     // ROUTES[2].class = this.getTitle() === 'Register' ? 'd-none' : '';
@@ -63,25 +66,128 @@ export class SidebarComponent implements OnInit {
       this.isCollapsed = true;
     });
   }
-  createColumns() {
+  createSearchQuery(i) {
     return this.fb.group({
-      table: ['TEXT'],
-      column: ['*'],
-      operator: [''],
-      comparator: [''],
-      comparatorVal: ['']
+      table: ['TEXT', Validators.required],
+      column: [['Text_ID'], Validators.required],
+      operator: [i > 1 ? 'AND' : ''],
+      comparator: [i !== 0 ? 'contains' : ''],
+      comparatorVal: i !== 0 ? ['', Validators.required] : ['']
     });
   }
 
   searchTable(close) {
-    this.searchForm = this.fb.group({
-      columns: this.fb.array([this.createColumns()])
+    console.log(this.searchForm.value.searchQuery);
+    /* const { searchQuery, referenceColumn } = this.searchForm.value;
+    console.log(referenceColumn);
+    console.log(searchQuery);
+    const selectedTablesArr = [],
+      fromTablesArr = [],
+      fromTablesInnerJoins = {
+        TEXT: `(((TEXT
+            INNER JOIN SENTENCES ON TEXT.Text_ID = SENTENCES.Text_ID)
+            INNER JOIN MORPHOLOGY ON TEXT.Text_ID = MORPHOLOGY.Text_ID)
+            INNER JOIN LEMMATA ON TEXT.Text_ID = MORPHOLOGY.Text_ID AND MORPHOLOGY.Lemma = LEMMATA.Lemma)`,
+        SENTENCES: `(((SENTENCES
+            INNER JOIN TEXT ON SENTENCES.Text_ID = TEXT.Text_ID)
+            INNER JOIN MORPHOLOGY ON SENTENCES.Text_Unit_ID = MORPHOLOGY.Text_Unit_ID)
+            INNER JOIN LEMMATA ON SENTENCES.Text_Unit_ID = MORPHOLOGY.Text_Unit_ID AND MORPHOLOGY.Lemma = LEMMATA.Lemma)`,
+        MORPHOLOGY: `(((MORPHOLOGY
+            INNER JOIN TEXT ON MORPHOLOGY.Text_ID = TEXT.Text_ID)
+            INNER JOIN SENTENCES ON MORPHOLOGY.Text_Unit_ID = SENTENCES.Text_Unit_ID)
+            INNER JOIN LEMMATA ON MORPHOLOGY.Lemma = LEMMATA.Lemma)`,
+        LEMMATA: `(((LEMMATA
+            INNER JOIN TEXT ON LEMMATA.Lemma = MORPHOLOGY.Lemma AND TEXT.Text_ID = MORPHOLOGY.Text_ID)
+            INNER JOIN SENTENCES ON LEMMATA.Lemma = MORPHOLOGY.Lemma AND SENTENCES.Text_Unit_ID = MORPHOLOGY.Text_Unit_ID)
+            INNER JOIN MORPHOLOGY ON LEMMATA.Lemma = MORPHOLOGY.Lemma)`
+      },
+      whereConditionsArr = [];
+    searchQuery.forEach((val, i) => {
+      val.column.forEach(column => {
+        if (i === 0 || referenceColumn) {
+          // Creates the string that goes after the SELECT DISTINCT part
+          let selectedTable = '`' + val.table + '` . ';
+          selectedTable += '`' + column + '`';
+          if (!selectedTablesArr.includes(selectedTable)) {
+            selectedTablesArr.push(selectedTable);
+          }
+        }
+      });
+
+      // Adds all the tables for the FROM part
+      fromTablesArr.push(val.table);
+      let whereCondition = '';
+      if (val.comparator) {
+        if (val.operator) {
+          // Adds AND/ORs if they exist
+          whereCondition += val.operator + ' ';
+        }
+        // Adds the table.column reference
+        whereCondition += '`' + val.table + '` . `' + val.column[0] + '` ';
+        // Converts the comparator to sql where conditions
+        switch (val.comparator) {
+          case 'contains':
+            whereCondition += 'LIKE ' + '%' + val.comparatorVal + '%';
+            break;
+          case 'starts with':
+            whereCondition += 'LIKE ' + val.comparatorVal + '%';
+            break;
+          case 'ends with':
+            whereCondition += 'LIKE ' + '%' + val.comparatorVal;
+            break;
+          default:
+            whereCondition += val.comparator + ' ' + val.comparatorVal;
+            break;
+        }
+      }
+      whereConditionsArr.push(whereCondition);
     });
+    const selectedTables = selectedTablesArr.join(', '),
+      whereConditions = whereConditionsArr.join(' ');
+    let fromTables = '';
+    if (searchQuery.length === 1) {
+      // Removes duplicates from the array
+      fromTables = fromTablesArr.filter((val, index, self) => index === self.indexOf(val)).join(', ');
+    } else {
+      fromTables = fromTablesInnerJoins[searchQuery[0].table];
+    }
+    // Just checking to see if we've gotten everything right so far
+    console.log('selectedTables: ', selectedTables);
+    console.log('fromTables: ', fromTables);
+    console.log('whereConditions: ', whereConditions);
+    this.finalQuery =
+      'SELECT DISTINCT ' +
+      selectedTables +
+      ' FROM ' +
+      fromTables +
+      (whereConditions ? ' WHERE ' + whereConditions : '') +
+      ';';
+    console.log(this.finalQuery);
+    this.searchForm = this.fb.group({
+      searchQuery: this.fb.array([this.createSearchQuery(0)])
+    }); */
+    this.router.navigateByUrl('/', { skipLocationChange: true }).then(() =>
+      this.router.navigate(['/tables'], {
+        queryParams: {
+          page: 0,
+          limit: 0,
+          fprop: '',
+          fval: '',
+          dtable: 'search',
+          ctable: '',
+          search: true,
+          value: qs.stringify(this.searchForm.value)
+        }
+      })
+    );
     close();
-    this.searchForm.reset(this.searchForm.value);
+    // this.finalQuery = '';
+    // this.searchForm.reset(this.searchForm.value);
   }
   addNext() {
-    (this.searchForm.controls['columns'] as FormArray).push(this.createColumns());
+    (this.searchForm.controls['searchQuery'] as FormArray).push(
+      this.createSearchQuery((this.searchForm.controls['searchQuery'] as FormArray).length)
+    );
   }
 
   get sF() {
@@ -114,7 +220,8 @@ export class SidebarComponent implements OnInit {
         },
         reason => {
           this.searchForm = this.fb.group({
-            columns: this.fb.array([this.createColumns()])
+            searchQuery: this.fb.array([this.createSearchQuery(0)]),
+            referenceColumn: false
           });
           this.searchForm.reset(this.searchForm.value);
 

@@ -5,6 +5,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { ApiGetQuery } from '../interfaces/api-get-query';
 import { ApiPostBody } from '../interfaces/api-post-body';
+import * as qs from 'qs';
 @Injectable({
   providedIn: 'root'
 })
@@ -31,6 +32,7 @@ export class TableDataService {
   allHeaders = { text: [], sentences: [], morphology: [], lemmata: [] };
   fetchedTable: Observable<{ data: { afterTable: []; beforeTable: [] } }>;
   currentApiQuery: any;
+  searchTable = { headers: [], data: [] };
   constructor(private http: HttpClient, private authService: AuthService) {}
   // Fetches the headers for each table
   fetchHeaders = async () => {
@@ -52,9 +54,7 @@ export class TableDataService {
   // Fetches table data from the API
   fetchTable = async (apiQuery: ApiGetQuery | string) => {
     this.currentApiQuery = apiQuery;
-    const queryString = Object.keys(apiQuery)
-      .map(key => key + '=' + apiQuery[key])
-      .join('&');
+
     // console.log(window.location.origin);
     // console.log('apiQuery:', apiQuery);
     // console.log(environment.apiUrl);
@@ -69,19 +69,31 @@ export class TableDataService {
         this.tables[apiQuery].data = data.afterTable;
         this.tables[apiQuery].headers = Object.keys(this.tables[apiQuery].data[0]);
         // console.log(this.tables[apiQuery].headers);
-      } else if (typeof apiQuery !== 'string') {
+      }
+      if (typeof apiQuery !== 'string') {
+        const queryString = qs.stringify(apiQuery);
+        // Object.keys(apiQuery)
+        //   .map(key => key + '=' + apiQuery[key])
+        //   .join('&');
+        console.log(apiQuery);
         this.fetchedTable = this.http.get(`${environment.apiUrl}?${queryString}`) as Observable<{
           data: { afterTable: []; beforeTable: [] };
         }>;
         const { data } = await this.fetchedTable.toPromise();
-        // console.log(`${queryString}: `, data);
-        if (apiQuery.dtable !== apiQuery.ctable) {
-          this.tables[apiQuery.ctable].data = data.beforeTable;
-          this.tables[apiQuery.ctable].headers = Object.keys(this.tables[apiQuery.ctable].data[0]);
+        console.log(apiQuery.search);
+        if (apiQuery.search) {
+          this.searchTable.data = data.afterTable;
+          this.searchTable.headers = Object.keys(this.searchTable.data[0]);
+          console.log(`${queryString}: `, data);
+        } else {
+          if (apiQuery.dtable !== apiQuery.ctable) {
+            this.tables[apiQuery.ctable].data = data.beforeTable;
+            this.tables[apiQuery.ctable].headers = Object.keys(this.tables[apiQuery.ctable].data[0]);
+          }
+          this.tables[apiQuery.dtable].data = data.afterTable;
+          this.tables[apiQuery.dtable].headers = Object.keys(this.tables[apiQuery.dtable].data[0]);
+          // console.log(this.tables[apiQuery.dtable].headers);
         }
-        this.tables[apiQuery.dtable].data = data.afterTable;
-        this.tables[apiQuery.dtable].headers = Object.keys(this.tables[apiQuery.dtable].data[0]);
-        // console.log(this.tables[apiQuery.dtable].headers);
       }
     } catch (error) {
       console.log(error);

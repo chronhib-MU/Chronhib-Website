@@ -33,7 +33,7 @@ export class TablesComponent implements OnInit, OnDestroy {
 
       this.tableQuery = tableParams.params;
       // console.log({ ...paramMap.keys, ...paramMap });
-      // console.log('Table Query: ', this.tableQuery);
+      console.log('Table Query: ', this.tableQuery);
       // Checks
       if (this.table == null && Object.keys(this.tableQuery).length === 0 && this.tableQuery.constructor === Object) {
         this.router.navigate(['/tables'], {
@@ -43,7 +43,8 @@ export class TablesComponent implements OnInit, OnDestroy {
             fprop: '',
             fval: '',
             dtable: 'text',
-            ctable: 'text'
+            ctable: 'text',
+            search: false
           }
         });
       } else if (!(Object.keys(this.tableQuery).length === 0 && this.tableQuery.constructor === Object)) {
@@ -51,6 +52,7 @@ export class TablesComponent implements OnInit, OnDestroy {
         this.before = this.tableQuery.ctable;
         this.after = this.tableQuery.dtable;
         this.tableData.fetchTable(this.tableQuery);
+        console.log('Got HEREE!!', this.after);
       }
     });
   }

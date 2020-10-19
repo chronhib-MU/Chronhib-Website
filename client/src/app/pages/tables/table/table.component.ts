@@ -83,6 +83,8 @@ export class TableComponent implements OnInit {
       data: []
     }
   };
+  searchTable = { headers: [], data: [] };
+
   dataset: any[] = [];
 
   columns: Handsontable.ColumnSettings[] = [];
@@ -90,7 +92,6 @@ export class TableComponent implements OnInit {
   hotInstance = this.hotRegisterer.getInstance(this.instance);
   history = [];
   tableQuery: any;
-  table: string;
   routeParams: any;
   routeQueryParams: any;
 
@@ -108,6 +109,8 @@ export class TableComponent implements OnInit {
       morphology: this.tableData.tables.morphology,
       lemmata: this.tableData.tables.lemmata
     };
+    this.searchTable = this.tableData.searchTable;
+
     Handsontable.hooks.add('afterInit', () => {
       $('.htCore').addClass('table');
     });
@@ -119,6 +122,7 @@ export class TableComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    console.log(this.after);
     const that = this;
     this.sort = false;
 
@@ -132,110 +136,113 @@ export class TableComponent implements OnInit {
     // this.fetchedTable();
     const hooks = Handsontable.hooks.getRegistered();
     hooks.forEach(hook => {
-      // focuses on the results after changes cause they have before and after data
-      if (hook === 'afterChange') {
-        this.hotSettings[that.edit ? 1 : 0][hook] = function () {
-          if (arguments[1] !== 'loadData') {
-            // console.log(hook, arguments);
-            const tableData = this.getData();
-            // console.log(tableData);
-            const values = [];
-            arguments[0].forEach((value: any[]) => {
-              // console.log('value:', value);
-              if (value[2] !== value[3]) {
-                const fieldProperty = value[1];
-                values.push({
-                  id: tableData[value[0]][1],
-                  fieldProperty,
-                  fieldValue: value[3]
+      if (this.after !== 'search') {
+        // focuses on the results after changes cause they have before and after data
+        if (hook === 'afterChange') {
+          this.hotSettings[that.edit ? 1 : 0][hook] = function () {
+            if (arguments[1] !== 'loadData') {
+              // console.log(hook, arguments);
+              const tableData = this.getData();
+              // console.log(tableData);
+              const values = [];
+              arguments[0].forEach((value: any[]) => {
+                // console.log('value:', value);
+                if (value[2] !== value[3]) {
+                  const fieldProperty = value[1];
+                  values.push({
+                    id: tableData[value[0]][1],
+                    fieldProperty,
+                    fieldValue: value[3]
+                  });
+                }
+              });
+              const res = {
+                table: that.after,
+                command: arguments[1],
+                values,
+                user: that.authService.user
+              };
+              // Checks for which table we're making changes on
+              if (this.rootElement.id === 'hotMini') {
+                res.table = that.before;
+              }
+              // console.log('Result:', res);
+              if (that.edit && res.command !== 'loadData') {
+                that.tableData.updateTable(res).then(() => {
+                  that.history.push(res);
+                  // console.log('History: ', that.history);
+                  // that.refresh();
                 });
               }
+            }
+          };
+        } else if (hook === 'afterRowMove') {
+          // TODO: refactor this
+          this.hotSettings[that.edit ? 1 : 0][hook] = function () {
+            // console.log(this);
+            const tableData = this.getData();
+            const newValues = tableData.map((row: { [x: string]: any }, i: number) => {
+              const sortId = i + 1;
+              return { ID: row['1'], Sort_ID: sortId };
             });
-            const res = {
+
+            const res: ApiPostBody = {
               table: that.after,
-              command: arguments[1],
-              values,
+              command: 'moveRow',
+              values: [newValues],
               user: that.authService.user
             };
+            // console.log('Result:', res);
             // Checks for which table we're making changes on
             if (this.rootElement.id === 'hotMini') {
               res.table = that.before;
             }
             // console.log('Result:', res);
-            if (that.edit && res.command !== 'loadData') {
+            if (that.edit) {
               that.tableData.updateTable(res).then(() => {
                 that.history.push(res);
                 // console.log('History: ', that.history);
                 // that.refresh();
               });
             }
-          }
-        };
-      } else if (hook === 'afterRowMove') {
-        // TODO: refactor this
-        this.hotSettings[that.edit ? 1 : 0][hook] = function () {
-          // console.log(this);
-          const tableData = this.getData();
-          const newValues = tableData.map((row: { [x: string]: any }, i: number) => {
-            const sortId = i + 1;
-            return { ID: row['1'], Sort_ID: sortId };
-          });
-
-          const res: ApiPostBody = {
-            table: that.after,
-            command: 'moveRow',
-            values: [newValues],
-            user: that.authService.user
           };
-          // console.log('Result:', res);
-          // Checks for which table we're making changes on
-          if (this.rootElement.id === 'hotMini') {
-            res.table = that.before;
-          }
-          // console.log('Result:', res);
-          if (that.edit) {
-            that.tableData.updateTable(res).then(() => {
-              that.history.push(res);
-              // console.log('History: ', that.history);
-              // that.refresh();
+        } else if (hook === 'afterCreateRow') {
+          // TODO: And this
+          this.hotSettings[that.edit ? 1 : 0][hook] = function () {
+            // console.log(this);
+            const tableData = this.getData();
+            const newValues = tableData.map((row: { [x: string]: any }, i: number) => {
+              const sortId = i + 1;
+              return { ID: row['1'], Sort_ID: sortId };
             });
-          }
-        };
-      } else if (hook === 'afterCreateRow') {
-        // TODO: And this
-        this.hotSettings[that.edit ? 1 : 0][hook] = function () {
-          // console.log(this);
-          const tableData = this.getData();
-          const newValues = tableData.map((row: { [x: string]: any }, i: number) => {
-            const sortId = i + 1;
-            return { ID: row['1'], Sort_ID: sortId };
-          });
-          const res: ApiPostBody = {
-            table: that.after,
-            command: 'createRow',
-            values: [newValues],
-            user: that.authService.user
+            const res: ApiPostBody = {
+              table: that.after,
+              command: 'createRow',
+              values: [newValues],
+              user: that.authService.user
+            };
+            console.log('Result:', res);
+            // Checks for which table we're making changes on
+            if (this.rootElement.id === 'hotMini') {
+              res.table = that.before;
+            }
+            // console.log('Result:', res);
+            if (that.edit) {
+              that.tableData.updateTable(res).then(() => {
+                that.history.push(res);
+                console.log('History: ', that.history);
+                that.refresh();
+              });
+            }
           };
-          console.log('Result:', res);
-          // Checks for which table we're making changes on
-          if (this.rootElement.id === 'hotMini') {
-            res.table = that.before;
-          }
-          // console.log('Result:', res);
-          if (that.edit) {
-            that.tableData.updateTable(res).then(() => {
-              that.history.push(res);
-              console.log('History: ', that.history);
-              that.refresh();
-            });
-          }
-        };
+        }
       }
     });
 
     // $hooksList = $('#hooksList');
   }
   async fetchedTable() {
+    console.log(this.after);
     if (this.hotRegisterer.getInstance(this.instance + 'Mini')) {
       this.hotRegisterer.getInstance(this.instance + 'Mini').updateSettings({
         multiColumnSorting: this.sort
@@ -248,8 +255,8 @@ export class TableComponent implements OnInit {
     }
     try {
       const { data } = await this.tableData.fetchedTable.toPromise();
-      // console.table('After: ' + this.after);
-      // console.table('Before: ' + this.before);
+      console.table('After: ' + this.after);
+      console.table('Before: ' + this.before);
       // console.log(`Datatable[${this.after}]: `, data.afterTable);
 
       // If this is a scenario where there is a before table
@@ -259,11 +266,18 @@ export class TableComponent implements OnInit {
         // Moves Sort_ID to first while remove it from last in the before table
         this.dataTable[this.before].headers.splice(0, 0, this.dataTable[this.before].headers.pop());
       }
-      this.dataTable[this.after].data = data.afterTable;
-      this.dataTable[this.after].headers = Object.keys(this.dataTable[this.after].data[0]);
-      // Moves Sort_ID to first while remove it from last in the after table
-      this.dataTable[this.after].headers.splice(0, 0, this.dataTable[this.after].headers.pop());
-      // console.table(this.dataTable);
+      if (this.after === 'search') {
+        this.searchTable.data = data.afterTable;
+        this.searchTable.headers = Object.keys(this.searchTable.data[0]);
+        // Moves Sort_ID to first while remove it from last in the after table
+        // console.table(this.searchTable);
+      } else {
+        this.dataTable[this.after].data = data.afterTable;
+        this.dataTable[this.after].headers = Object.keys(this.dataTable[this.after].data[0]);
+        // Moves Sort_ID to first while remove it from last in the after table
+        this.dataTable[this.after].headers.splice(0, 0, this.dataTable[this.after].headers.pop());
+        // console.table(this.dataTable);
+      }
     } catch (error) {
       console.error('Invalid request made!', error);
       return error;
@@ -276,50 +290,59 @@ export class TableComponent implements OnInit {
         return this.columnRendererSettings(header, this.before, 'columnsMini');
       });
     }
-    await this.dataTable[this.after].headers.forEach((header: string) => {
-      return this.columnRendererSettings(header, this.after, 'columns');
-    });
+    this.after === 'search'
+      ? await this.searchTable.headers.forEach((header: string) => {
+          return this.columnRendererSettings(header, this.after, 'columns');
+        })
+      : await this.dataTable[this.after].headers.forEach((header: string) => {
+          return this.columnRendererSettings(header, this.after, 'columns');
+        });
 
     // this.dataset = [];
     // this.dataTable[this.after].data.forEach((row: any) => {
     //   this.dataset.push(row);
     // });
     // console.log(this.columns, this.dataset);
+    const columnFilter = ['Sort_ID'];
     if (this.hotRegisterer.getInstance(this.instance + 'Mini')) {
       const beforeColWidths = this.dataTable[this.before].headers.map((val: any, index: any) =>
         this.getColWidths(index, this.before)
       );
       const getBeforeColWidths = (index: string | number) => beforeColWidths[index];
-      const headerArr = [...this.dataTable[this.before].headers];
-      const columnFilter = ['Sort_ID', 'TextID'];
+      const headerArr =
+        this.after === 'search' ? [...this.searchTable.headers] : [...this.dataTable[this.before].headers];
+
       this.hotRegisterer.getInstance(this.instance + 'Mini').updateSettings({
         colWidths: getBeforeColWidths,
         hiddenColumns: {
           columns: headerArr
             .map((val, i) => i)
-            .filter((_val, i) => {
-              return columnFilter.includes(headerArr[i]);
-            })
+            .filter(
+              val =>
+                columnFilter.includes(headerArr[val]) || (headerArr[val] === 'Text_ID' && this.after === 'morphology')
+            )
         },
         multiColumnSorting: this.sort
       });
       this.getTableData(this.before);
     }
     if (this.hotRegisterer.getInstance(this.instance)) {
-      const afterColWidths = this.dataTable[this.after].headers.map((val: any, index: any) =>
-        this.getColWidths(index, this.after)
-      );
+      const afterColWidths =
+        this.after === 'search'
+          ? this.searchTable.headers.map((val: any, index: any) => this.getColWidths(index, this.after))
+          : this.dataTable[this.after].headers.map((val: any, index: any) => this.getColWidths(index, this.after));
       const getAfterColWidths = (index: string | number) => afterColWidths[index];
-      const headerArr = [...this.dataTable[this.after].headers];
-      const columnFilter = ['Sort_ID', 'TextID'];
+      const headerArr =
+        this.after === 'search' ? [...this.searchTable.headers] : [...this.dataTable[this.after].headers];
       this.hotRegisterer.getInstance(this.instance).updateSettings({
         colWidths: getAfterColWidths,
         hiddenColumns: {
           columns: headerArr
             .map((val, i) => i)
-            .filter((_val, i) => {
-              return columnFilter.includes(headerArr[i]);
-            })
+            .filter(
+              val =>
+                columnFilter.includes(headerArr[val]) || (headerArr[val] === 'Text_ID' && this.after === 'morphology')
+            )
         },
         multiColumnSorting: this.sort
       });
@@ -455,7 +478,8 @@ export class TableComponent implements OnInit {
                 fprop: '',
                 fval: '',
                 dtable: 'text',
-                ctable: 'text'
+                ctable: 'text',
+                search: false
               };
             } else if (table === that.after && table === 'text' && prop === 'Text_ID') {
               queryParams = {
@@ -464,7 +488,8 @@ export class TableComponent implements OnInit {
                 fprop: prop,
                 fval: value,
                 dtable: 'sentences',
-                ctable: 'text'
+                ctable: 'text',
+                search: false
               };
             } else if (
               (table === that.before && table === 'sentences' && prop === 'Text_Unit_ID') ||
@@ -476,7 +501,8 @@ export class TableComponent implements OnInit {
                 fprop: 'Text_ID',
                 fval: value.split('-')[0].substr(1),
                 dtable: 'sentences',
-                ctable: 'text'
+                ctable: 'text',
+                search: false
               };
             } else if (
               (table === 'sentences' && prop === 'Text_Unit_ID') ||
@@ -488,7 +514,8 @@ export class TableComponent implements OnInit {
                 fprop: prop,
                 fval: value,
                 dtable: 'morphology',
-                ctable: 'sentences'
+                ctable: 'sentences',
+                search: false
               };
             } else if ((table === 'morphology' && prop === 'Lemma') || (table === 'lemmata' && prop === 'Lemma')) {
               queryParams = {
@@ -497,7 +524,8 @@ export class TableComponent implements OnInit {
                 fprop: prop,
                 fval: value,
                 dtable: 'lemmata',
-                ctable: 'morphology'
+                ctable: 'morphology',
+                search: false
               };
             } else {
               Handsontable.renderers.TextRenderer.apply(this, arguments);
@@ -532,7 +560,7 @@ export class TableComponent implements OnInit {
   }
   getColWidths(index: number, table: string) {
     // console.log('Index: ', index + ' ' + that.dataTable[that.after].headers[index]);
-    const indexTitle = this.dataTable[table].headers[index];
+    const indexTitle = table === 'search' ? this.searchTable.headers[index] : this.dataTable[table].headers[index];
     switch (indexTitle) {
       case 'Augm':
         return 75;
@@ -610,10 +638,12 @@ export class TableComponent implements OnInit {
   }
 
   getTableData(table: string) {
-    return this.dataTable[table].data;
+    return table === 'search' ? this.searchTable.data : this.dataTable[table].data;
   }
   getRows(table: string | number) {
-    return this.dataTable[table].data.map((row: { Sort_ID: any }) => row.Sort_ID);
+    return table === 'search'
+      ? this.searchTable.data.map((row: { Sort_ID: any }) => row.Sort_ID)
+      : this.dataTable[table].data.map((row: { Sort_ID: any }) => row.Sort_ID);
   }
   undo() {
     this.hotInstance = this.hotRegisterer.getInstance(this.instance);

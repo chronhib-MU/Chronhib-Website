@@ -16,6 +16,7 @@ const helmet = require('helmet');
 const { parse } = require('path');
 const log4js = require('log4js');
 const serveStatic = require('serve-static');
+const qs = require('qs');
 const currentDate = new Date();
 const formattedDate = `-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${currentDate.getFullYear()}`;
 log4js.configure({
@@ -425,166 +426,225 @@ app.get(`/${appName}/api/`, (req, res, next) => {
     typeof req.query.fprop === 'string' &&
     typeof req.query.fval === 'string' &&
     typeof req.query.dtable === 'string' &&
-    typeof req.query.ctable === 'string'
+    typeof req.query.ctable === 'string' &&
+    typeof req.query.search === 'string'
   ) {
     // console.log('Got into search parameters!');
-    let page = req.query.page || '0'; // pagination page number
-    let limit = req.query.limit || '0'; // pagination limit (how many rows per page)
-    let fieldProperty = req.query.fprop || ''; // the property to filter by
-    let fieldValue = req.query.fval || ''; // the value of the property to filter by
-    let destinationTable = req.query.dtable || 'text'; // the table we're navigating to
-    let currentTable = req.query.ctable || 'text'; // the table we're navigating from
-    let startRow,
-      endRow,
-      between = ' ';
-    let beforeQueryValues = [currentTable.toUpperCase(), fieldProperty, fieldValue];
-    let afterQueryValues = [destinationTable.toUpperCase()];
-    if (parseInt(limit, 10) && parseInt(page, 10)) {
-      startRow = (parseInt(page, 10) - 1) * parseInt(limit, 10); // gets the starting row number of the query
-      // console.log('Start Row:', startRow);
-      endRow = startRow + parseInt(limit, 10); // gets the ending row number of the query
-      // console.log('End Row:', endRow);
-      between = ' AND `Sort_ID` BETWEEN ? AND ? ';
-      afterQueryValues.push(startRow.toString(), endRow.toString());
-      // console.log('Between:', between);
-      limit = '';
-    } else {
-      // if limit is 0 then there's no limit
-      if (limit !== '0') {
-        afterQueryValues.push((parseInt(limit, 10) - 1).toString());
-        limit = ' LIMIT ?';
-      } else {
+    let page = req.query.page || '0', // pagination page number
+      limit = req.query.limit || '0', // pagination limit (how many rows per page)
+      fieldProperty = req.query.fprop || '', // the property to filter by
+      fieldValue = req.query.fval || '', // the value of the property to filter by
+      destinationTable = req.query.dtable || 'text', // the table we're navigating to
+      currentTable = req.query.ctable || 'text', // the table we're navigating from
+      search = req.query.search === 'true' ? true : false || false;
+    if (!search) {
+      let startRow,
+        endRow,
+        between = ' ';
+      let beforeQueryValues = [currentTable.toUpperCase(), fieldProperty, fieldValue];
+      let afterQueryValues = [destinationTable.toUpperCase()];
+      if (parseInt(limit, 10) && parseInt(page, 10)) {
+        startRow = (parseInt(page, 10) - 1) * parseInt(limit, 10); // gets the starting row number of the query
+        // console.log('Start Row:', startRow);
+        endRow = startRow + parseInt(limit, 10); // gets the ending row number of the query
+        // console.log('End Row:', endRow);
+        between = ' AND `Sort_ID` BETWEEN ? AND ? ';
+        afterQueryValues.push(startRow.toString(), endRow.toString());
+        // console.log('Between:', between);
         limit = '';
+      } else {
+        // if limit is 0 then there's no limit
+        if (limit !== '0') {
+          afterQueryValues.push((parseInt(limit, 10) - 1).toString());
+          limit = ' LIMIT ?';
+        } else {
+          limit = '';
+        }
       }
-    }
-    let beforeQuery = '',
-      afterQuery = '';
+      let beforeQuery = '',
+        afterQuery = '';
 
-    // Check if fieldProperty and fValue
-    if (fieldProperty || fieldValue) {
-      // beforeQuery
-      if (currentTable !== destinationTable) {
-        // if not the same table
-        beforeQuery = 'SELECT * FROM ?? WHERE ?? = ?';
-      }
-      // afterQuery
-      afterQuery = 'SELECT * FROM ?? WHERE ?? = ?' + between + 'ORDER BY ??, `Sort_ID` ASC' + limit;
-      afterQueryValues.splice(1, 0, fieldProperty, fieldValue);
-      if (limit) {
-        afterQueryValues.splice(-2, 0, fieldProperty);
+      // Check if fieldProperty and fValue
+      if (fieldProperty || fieldValue) {
+        // beforeQuery
+        if (currentTable !== destinationTable) {
+          // if not the same table
+          beforeQuery = 'SELECT * FROM ?? WHERE ?? = ?';
+        }
+        // afterQuery
+        afterQuery = 'SELECT * FROM ?? WHERE ?? = ?' + between + 'ORDER BY ??, `Sort_ID` ASC' + limit;
+        afterQueryValues.splice(1, 0, fieldProperty, fieldValue);
+        if (limit) {
+          afterQueryValues.splice(-2, 0, fieldProperty);
+        } else {
+          afterQueryValues.push(fieldProperty);
+        }
       } else {
-        afterQueryValues.push(fieldProperty);
+        afterQuery = 'SELECT * FROM ??' + between + 'ORDER BY `Sort_ID` ASC' + limit;
       }
-    } else {
-      afterQuery = 'SELECT * FROM ??' + between + 'ORDER BY `Sort_ID` ASC' + limit;
-    }
-    console.log('beforeQuery:', beforeQuery);
-    console.log('afterQuery:', afterQuery);
-    logger.trace('beforeQuery:', beforeQuery);
-    logger.trace('afterQuery:', afterQuery);
-    let beforeTable = [],
-      afterTable = [];
-    connection.query(afterQuery, afterQueryValues, (err, results) => {
-      if (err) {
-        // console.log('Error: ', err);
-        logger.error('Error: ', err);
-        next(err);
-      } else {
-        afterTable = results;
-      }
-      if (beforeQuery !== '') {
-        connection.query(beforeQuery, beforeQueryValues, (err, results) => {
-          if (err) {
-            // console.log('Error: ', err);
-            logger.error('Error: ', err);
-            next(err);
-          } else {
-            beforeTable = results;
-          }
-          // console.log({ beforeTable, afterTable });
-          // logger.info(results);
-          res.status(200).json({
+      console.log('beforeQuery:', beforeQuery);
+      console.log('afterQuery:', afterQuery);
+      logger.trace('beforeQuery:', beforeQuery);
+      logger.trace('afterQuery:', afterQuery);
+      let beforeTable = [],
+        afterTable = [];
+      connection.query(afterQuery, afterQueryValues, (err, results) => {
+        if (err) {
+          // console.log('Error: ', err);
+          logger.error('Error: ', err);
+          next(err);
+        } else {
+          afterTable = results;
+        }
+        if (beforeQuery !== '') {
+          connection.query(beforeQuery, beforeQueryValues, (err, results) => {
+            if (err) {
+              // console.log('Error: ', err);
+              logger.error('Error: ', err);
+              next(err);
+            } else {
+              beforeTable = results;
+            }
+            // console.log({ beforeTable, afterTable });
+            // logger.info(results);
+            res.status(200).send({
+              data: { beforeTable, afterTable }
+            });
+          });
+        } else {
+          // logger.trace(results);
+          res.status(200).send({
             data: { beforeTable, afterTable }
           });
-        });
-      } else {
-        // logger.trace(results);
-        res.status(200).json({
-          data: { beforeTable, afterTable }
-        });
-      }
-    });
-  } else if (req.query.search && typeof req.query.search === 'string') {
-    console.log(req.query.search); // A JSON String Object formatted like the searchQuery object below
-    // const searchQuery = JSON.parse(req.query.search);
-    const searchQuery = [
-      { table: 'MORPHOLOGY', column: '*', operator: '', comparator: '', comparatorVal: '' },
-      { table: 'MORPHOLOGY', column: 'Morph', operator: '', comparator: 'ends with', comparatorVal: '.' },
-      { table: 'MORPHOLOGY', column: 'Analysis', operator: 'AND', comparator: '=', comparatorVal: 'gen.sg.' },
-      { table: 'LEMMATA', column: 'Class', operator: 'AND', comparator: '=', comparatorVal: 'i' }
-    ];
-    console.log(searchQuery);
-    let selectedTablesArr = [],
-      fromTablesArr = [],
-      whereConditionsArr = [];
-    searchQuery.forEach(val => {
-      // Creates the string that goes after the SELECT DISTINCT part
-      let selectedTable = '`' + val.table + '` . ';
-      selectedTable += val.column === '*' ? '*' : '`' + val.column + '`';
-      selectedTablesArr.push(selectedTable);
-      // Adds all the tables for the FROM part
-      fromTablesArr.push(val.table);
-      let whereCondition = '';
-      if (val.comparator) {
-        if (val.operator) {
-          // Adds AND/ORs if they exist
-          whereCondition += val.operator + ' ';
         }
-        // Adds the table.column reference
-        whereCondition += '`' + val.table + '` . `' + val.column + '` ';
-        // Converts the comparator to sql where conditions
-        switch (val.comparator) {
-          case 'contains':
-            whereCondition += 'LIKE ' + connection.escape('%' + val.comparatorVal + '%');
-            break;
-          case 'starts with':
-            whereCondition += 'LIKE ' + connection.escape(val.comparatorVal + '%');
-            break;
-          case 'ends with':
-            whereCondition += 'LIKE ' + connection.escape('%' + val.comparatorVal);
-            break;
-          default:
-            whereCondition += val.comparator + ' ' + connection.escape(val.comparatorVal);
-            break;
-        }
-      }
-      whereConditionsArr.push(whereCondition);
-    });
-    let selectedTables = selectedTablesArr.join(', '),
-      fromTables = fromTablesArr.filter((val, index, self) => index == self.indexOf(val)).join(', '), // Removes duplicates from the array
-      whereConditions = whereConditionsArr.join(' ');
-    // Just checking to see if we've gotten everything right so far
-    console.log(selectedTables);
-    console.log(fromTables);
-    console.log(whereConditions);
-    const finalQuery =
-      'SELECT DISTINCT ' +
-      selectedTables +
-      ' FROM ' +
-      fromTables +
-      (whereConditions ? ' WHERE ' + whereConditions : '') +
-      ';';
-    console.log(finalQuery);
-    connection.query(finalQuery, (err, results) => {
-      if (err) {
-        // console.log('Error: ', err);
-        next(err);
-      } else {
-        res.status(200).json({
-          data: results
+      });
+    } else if (typeof req.query.value === 'string') {
+      // console.log(req.query.search); // A JSON String Object formatted like the searchQuery object below
+      // const reqQueryValue = {
+      //   referenceColumn: true,
+      //   columns: [
+      //     {
+      //       table: 'TEXT',
+      //       column: [
+      //         'ID',
+      //         'Text_ID',
+      //         'Title',
+      //         'Date',
+      //         'Dating_Criteria',
+      //         'Edition',
+      //         'MSS',
+      //         'Digital_MSS',
+      //         'Thes',
+      //         'Contributor',
+      //         'Created_Date',
+      //         'MS_Checked',
+      //         'Reason_Of_MS_Choice_And_Editorial_Policy',
+      //         'Sort_ID'
+      //       ],
+      //       operator: '',
+      //       comparator: '',
+      //       comparatorVal: ''
+      //     },
+      //     { table: 'MORPHOLOGY', column: ['Morph'], operator: '', comparator: 'ends with', comparatorVal: '.' },
+      //     { table: 'MORPHOLOGY', column: ['Analysis'], operator: 'AND', comparator: '=', comparatorVal: 'gen.sg.' },
+      //     { table: 'LEMMATA', column: ['Class'], operator: 'AND', comparator: '=', comparatorVal: 'i' }
+      //   ]
+      // };
+      const { searchQuery, referenceColumn } = qs.parse(req.query.value);
+      // const searchQuery = reqQueryValue.columns;
+      // const { referenceColumn } = reqQueryValue.value;
+
+      // console.log(referenceColumn);
+      // console.log(searchQuery);
+      const selectedTablesArr = [],
+        fromTablesArr = [],
+        fromTablesInnerJoins = {
+          TEXT: `(((TEXT
+            INNER JOIN SENTENCES ON TEXT.Text_ID = SENTENCES.Text_ID)
+            INNER JOIN MORPHOLOGY ON TEXT.Text_ID = MORPHOLOGY.Text_ID)
+            INNER JOIN LEMMATA ON TEXT.Text_ID = MORPHOLOGY.Text_ID AND MORPHOLOGY.Lemma = LEMMATA.Lemma)`,
+          SENTENCES: `(((SENTENCES
+            INNER JOIN TEXT ON SENTENCES.Text_ID = TEXT.Text_ID)
+            INNER JOIN MORPHOLOGY ON SENTENCES.Text_Unit_ID = MORPHOLOGY.Text_Unit_ID)
+            INNER JOIN LEMMATA ON SENTENCES.Text_Unit_ID = MORPHOLOGY.Text_Unit_ID AND MORPHOLOGY.Lemma = LEMMATA.Lemma)`,
+          MORPHOLOGY: `(((MORPHOLOGY
+            INNER JOIN TEXT ON MORPHOLOGY.Text_ID = TEXT.Text_ID)
+            INNER JOIN SENTENCES ON MORPHOLOGY.Text_Unit_ID = SENTENCES.Text_Unit_ID)
+            INNER JOIN LEMMATA ON MORPHOLOGY.Lemma = LEMMATA.Lemma)`,
+          LEMMATA: `(((LEMMATA
+            INNER JOIN TEXT ON LEMMATA.Lemma = MORPHOLOGY.Lemma AND TEXT.Text_ID = MORPHOLOGY.Text_ID)
+            INNER JOIN SENTENCES ON LEMMATA.Lemma = MORPHOLOGY.Lemma AND SENTENCES.Text_Unit_ID = MORPHOLOGY.Text_Unit_ID)
+            INNER JOIN MORPHOLOGY ON LEMMATA.Lemma = MORPHOLOGY.Lemma)`
+        },
+        whereConditionsArr = [];
+      // @ts-ignore
+      searchQuery.forEach((val, i) => {
+        val.column.forEach(column => {
+          if (i === 0 || referenceColumn) {
+            // Creates the string that goes after the SELECT DISTINCT part
+            let selectedTable = '`' + val.table + '` . ';
+            selectedTable += '`' + column + '`';
+            if (!selectedTablesArr.includes(selectedTable)) {
+              selectedTablesArr.push(selectedTable);
+            }
+          }
         });
+
+        // Adds all the tables for the FROM part
+        fromTablesArr.push(val.table);
+        let whereCondition = '';
+        if (val.comparator) {
+          if (val.operator) {
+            // Adds AND/ORs if they exist
+            whereCondition += val.operator + ' ';
+          }
+          // Adds the table.column reference
+          whereCondition += '`' + val.table + '` . `' + val.column[0] + '` ';
+          // Converts the comparator to sql where conditions
+          switch (val.comparator) {
+            case 'contains':
+              whereCondition += 'LIKE ' + connection.escape('%' + val.comparatorVal + '%');
+              break;
+            case 'starts with':
+              whereCondition += 'LIKE ' + connection.escape(val.comparatorVal + '%');
+              break;
+            case 'ends with':
+              whereCondition += 'LIKE ' + connection.escape('%' + val.comparatorVal);
+              break;
+            default:
+              whereCondition += val.comparator + ' ' + connection.escape(val.comparatorVal);
+              break;
+          }
+        }
+        whereConditionsArr.push(whereCondition);
+      });
+      const selectedTables = selectedTablesArr.join(', '),
+        whereConditions = whereConditionsArr.join(' ');
+      let fromTables = '';
+      if (searchQuery.length === 1) {
+        // Removes duplicates from the array
+        fromTables = fromTablesArr.filter((val, index, self) => index === self.indexOf(val)).join(', ');
+      } else {
+        fromTables = fromTablesInnerJoins[searchQuery[0].table];
       }
-    });
+      // Just checking to see if we've gotten everything right so far
+      // console.log('selectedTables: ', selectedTables);
+      // console.log('fromTables: ', fromTables);
+      // console.log('whereConditions: ', whereConditions);
+      const finalQuery =
+        'SELECT ' + selectedTables + ' FROM ' + fromTables + (whereConditions ? ' WHERE ' + whereConditions : '') + ';';
+      console.log(finalQuery);
+      connection.query(finalQuery, (err, results) => {
+        if (err) {
+          // console.log('Error: ', err);
+          next(err);
+        } else {
+          res.status(200).send({
+            data: { beforeTable: [], afterTable: results }
+          });
+        }
+      });
+    }
   } else {
     /*console.log(
       'Go to:\n' +
@@ -615,7 +675,7 @@ app.get(`/${appName}/api/:path/headers`, (req, res, next) => {
     } else {
       // console.log(results);
       logger.trace(results);
-      res.status(200).json({
+      res.status(200).send({
         data: results.map(result => result.COLUMN_NAME)
       });
     }
@@ -634,7 +694,7 @@ app.get(`/${appName}/api/:path`, (req, res, next) => {
       } else {
         // console.log(results);
         // logger.info(results);
-        res.status(200).json({
+        res.status(200).send({
           data: { beforeTable: {}, afterTable: results }
         });
       }

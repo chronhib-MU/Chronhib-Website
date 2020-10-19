@@ -37,19 +37,30 @@
             <div class="modal-body">
               <form role="form" [formGroup]="searchForm" (ngSubmit)="this.searchTable(c)">
                 <div
-                  formArrayName="columns"
-                  *ngFor="let column of searchForm.get('columns')['controls']; let i = index"
+                  formArrayName="searchQuery"
+                  *ngFor="let column of searchForm.get('searchQuery')['controls']; let i = index"
                 >
-                  <b *ngIf="i > 0">
-                    {{ i + ':' }}
-                  </b>
-
-                  <div [formGroupName]="i" class="mb-2">
+                  <div [formGroupName]="i" class="my-2">
+                    <!-- Operator Row -->
+                    <div class="row" *ngIf="i > 1">
+                      <div class="col-4 align-content-center">
+                        <div class="form-group">
+                          <select class="form-control" formControlName="operator">
+                            <option [value]="'AND'">AND</option>
+                            <option [value]="'OR'">OR</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
                     <div class="row">
                       <div class="col-md-6">
+                        <b *ngIf="i > 0">
+                          {{ 'Condition ' + i + ':' }}
+                        </b>
+                        <b *ngIf="i === 0">Table: </b>
                         <div class="form-group">
                           <!-- <input class="form-control" formControlName="table" /> -->
-                          <select class="form-control" formControlName="table" required>
+                          <select class="form-control" formControlName="table">
                             <option [value]="table.toUpperCase()" *ngFor="let table of this.tableData.tables.names">
                               {{ table | uppercase }}
                             </option>
@@ -57,19 +68,20 @@
                         </div>
                       </div>
                       <div class="col-md-6">
+                        <b *ngIf="i === 0">Columns: </b>
+                        <br *ngIf="i > 0" />
                         <div class="form-group">
                           <!-- <input class="form-control" formControlName="column" /> -->
-                          <select multiple class="form-control" formControlName="column">
-                            <option value="*" [selected]="'*'">*</option>
+                          <select [multiple]="i === 0" class="form-control" formControlName="column">
                             <option
                               [value]="column"
                               *ngFor="
                                 let column of this.tableData.allHeaders[
-                                  searchForm.get('columns')['controls'][i].controls.table.value.toLowerCase()
+                                  searchForm.get('searchQuery')['controls'][i].controls.table.value.toLowerCase()
                                 ]
                               "
                             >
-                              {{ column }}
+                              {{ column.replaceAll('_', ' ') }}
                             </option>
                           </select>
                         </div>
@@ -79,12 +91,12 @@
                       <div class="col-md-6">
                         <div class="form-group">
                           <select class="form-control" formControlName="comparator">
-                            <option value="contains" [selected]="'contains'">contains</option>
-                            <option value="starts with">starts with</option>
-                            <option value="ends with">ends with</option>
-                            <option value="LIKE">like</option>
-                            <option value="=">equal to</option>
-                            <option value="!=">not equal to</option>
+                            <option [value]="'contains'">contains</option>
+                            <option [value]="'starts with'">starts with</option>
+                            <option [value]="'ends with'">ends with</option>
+                            <option [value]="'LIKE'">like</option>
+                            <option [value]="'='">equal to</option>
+                            <option [value]="'!='">not equal to</option>
                           </select>
                         </div>
                       </div>
@@ -107,12 +119,21 @@
             </div> -->
                 <div class="text-center">
                   <!-- <button type="button" class="btn btn-primary mt-4" value="Test" (click)="test()">Check</button> -->
-                  <button type="submit" class="btn btn-primary mt-4" value="Search" [disabled]="searchForm.invalid">
+                  <div class="form-group mt-4">
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" formControlName="referenceColumn" />
+                      <label class="form-check-label" for="gridCheck"> Show Reference Column </label>
+                    </div>
+                  </div>
+                  <button type="submit" class="btn btn-primary" value="Search" [disabled]="searchForm.invalid">
                     Search Table
                   </button>
                 </div>
               </form>
             </div>
+            <!-- <div class="modal-footer">
+              {{ 'Final Query: \n' + finalQuery }}
+            </div> -->
           </div>
         </ng-template>
         <div class="dropdown-menu-arrow dropdown-menu-right" ngbDropdownMenu>
