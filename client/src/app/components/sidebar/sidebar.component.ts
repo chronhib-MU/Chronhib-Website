@@ -3,7 +3,7 @@ import { AuthService } from './../../services/auth.service';
 import { Component, OnInit, ElementRef } from '@angular/core';
 import { Location, LocationStrategy, PathLocationStrategy } from '@angular/common';
 import { Router } from '@angular/router';
-import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AbstractControl, FormArray, FormBuilder, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { NgbModal, ModalDismissReasons } from '@ng-bootstrap/ng-bootstrap';
 
 declare interface RouteInfo {
@@ -32,7 +32,6 @@ export const ROUTES: RouteInfo[] = [
 })
 export class SidebarComponent implements OnInit {
   closeResult: string;
-  searchForm: FormGroup;
 
   public menuItems: any[];
   public isCollapsed = true;
@@ -53,39 +52,119 @@ export class SidebarComponent implements OnInit {
 
   ngOnInit() {
     this.tableData.fetchHeaders();
-    this.searchForm = this.fb.group({
-      columns: this.fb.array([this.createColumns()])
-    });
     this.menuItems = ROUTES.filter(menuItem => menuItem);
     // ROUTES[2].class = this.getTitle() === 'Register' ? 'd-none' : '';
-
+    this.tableData.searchForm = this.fb.group({
+      tableColumns: this.fb.array([this.createTableColumns(0)]),
+      conditions: this.fb.array([this.createConditions(0)]),
+      options: this.fb.group(this.createOptions(0))
+    });
     this.router.events.subscribe(event => {
       this.isCollapsed = true;
     });
   }
-  createColumns() {
+
+  validateNoConditions(evt, skip?) {
+    console.log(evt);
+    const checked: boolean = evt.target.checked || skip;
+
+    if (checked) {
+      (this.tableData.searchForm.get('conditions') as FormArray).controls.forEach((formGroup: FormGroup) => {
+        formGroup.controls['comparatorVal'].clearValidators();
+        formGroup.controls['comparatorVal'].updateValueAndValidity();
+        console.log(formGroup);
+      });
+      (this.tableData.searchForm.get('conditions') as FormArray).clearValidators();
+    } else {
+      (this.tableData.searchForm.get('conditions') as FormArray).controls.forEach((formGroup: FormGroup) => {
+        formGroup.controls['comparatorVal'].setValidators(Validators.required);
+        formGroup.controls['comparatorVal'].updateValueAndValidity();
+        console.log(formGroup);
+      });
+    }
+    // this.tableData.searchForm.get('conditions').updateValueAndValidity();
+    console.log('Conditions invalid:', this.tableData.searchForm.get('conditions').status);
+    console.log('noConditions value:', this.tableData.searchForm.get('options').get('noConditions').value);
+    return checked;
+  }
+  excludePreviousTableOptions(i) {
+    return this.tableData.tables.names.filter(table => {
+      if (this.tableData.searchForm) {
+        const searchFormTables = this.tableData.searchForm
+          .get('tableColumns')
+          ['controls'].map(val => val.controls.table.value)
+          .filter((val, index) => index !== i);
+        if (!searchFormTables.includes(table.toUpperCase())) {
+          return true;
+        }
+      } else {
+        // Form has not been created yet!
+        return true;
+      }
+    });
+  }
+  createTableColumns(i) {
     return this.fb.group({
-      table: ['TEXT'],
-      column: ['*'],
-      operator: [''],
-      comparator: [''],
-      comparatorVal: ['']
+      table: [this.excludePreviousTableOptions(i)[0].toUpperCase(), Validators.required],
+      column: [['ID'], Validators.required]
     });
   }
-
-  searchTable(close) {
-    this.searchForm = this.fb.group({
-      columns: this.fb.array([this.createColumns()])
+  createConditions(i) {
+    return this.fb.group({
+      table: ['TEXT', Validators.required],
+      column: ['ID', Validators.required],
+      operator: i > 0 ? ['AND', Validators.required] : [''],
+      comparator: ['contains', Validators.required],
+      comparatorVal: ['', Validators.required]
     });
-    close();
-    this.searchForm.reset(this.searchForm.value);
   }
-  addNext() {
-    (this.searchForm.controls['columns'] as FormArray).push(this.createColumns());
+  createOptions(i) {
+    return {
+      noConditions: [false, Validators.required],
+      duplicateRows: [true, Validators.required],
+      limit: [0, [Validators.required, Validators.min(0)]]
+    };
   }
 
+  addFormGroup(column) {
+    switch (column) {
+      case 'tableColumns':
+        (this.tableData.searchForm.controls[column] as FormArray).push(
+          this.createTableColumns((this.tableData.searchForm.controls[column] as FormArray).length)
+        );
+        break;
+      case 'conditions':
+        (this.tableData.searchForm.controls[column] as FormArray).push(
+          this.createConditions((this.tableData.searchForm.controls[column] as FormArray).length)
+        );
+        break;
+      default:
+        break;
+    }
+  }
+  removeFormGroup(column, index) {
+    switch (column) {
+      case 'tableColumns':
+        (this.tableData.searchForm.controls[column] as FormArray).removeAt(index);
+        break;
+      case 'conditions':
+        (this.tableData.searchForm.controls[column] as FormArray).removeAt(index);
+        break;
+      default:
+        break;
+    }
+  }
+
+  resetForm() {
+    this.tableData.searchForm = this.fb.group({
+      tableColumns: this.fb.array([this.createTableColumns(0)]),
+      conditions: this.fb.array([this.createConditions(0)]),
+      options: this.fb.group(this.createOptions(0))
+    });
+    this.tableData.searchForm.reset(this.tableData.searchForm.value);
+  }
   get sF() {
-    return this.searchForm.controls;
+    return this.tableData.searchForm.controls;
   }
 
   open(content, type, modalDimension) {
@@ -113,15 +192,32 @@ export class SidebarComponent implements OnInit {
           this.closeResult = 'Closed with: $result';
         },
         reason => {
-          this.searchForm = this.fb.group({
-            columns: this.fb.array([this.createColumns()])
-          });
-          this.searchForm.reset(this.searchForm.value);
-
           this.closeResult = 'Dismissed $this.getDismissReason(reason)';
         }
       );
     }
+  }
+
+  searchTable(close) {
+    console.log(this.tableData.searchForm.value);
+    const id = performance.now().toString().split('.').join('');
+    console.log(id);
+    localStorage.setItem(id, JSON.stringify(this.tableData.searchForm.value));
+    this.router.navigateByUrl('/', { skipLocationChange: true }).then(() =>
+      this.router.navigate(['/tables'], {
+        queryParams: {
+          page: 0,
+          limit: 0,
+          fprop: '',
+          fval: '',
+          dtable: 'search',
+          ctable: '',
+          search: true,
+          id
+        }
+      })
+    );
+    close();
   }
 
   private getDismissReason(reason: any): string {

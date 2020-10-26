@@ -43,7 +43,8 @@ export class TablesComponent implements OnInit, OnDestroy {
             fprop: '',
             fval: '',
             dtable: 'text',
-            ctable: 'text'
+            ctable: 'text',
+            search: false
           }
         });
       } else if (!(Object.keys(this.tableQuery).length === 0 && this.tableQuery.constructor === Object)) {

@@ -23,6 +23,9 @@
 select {
   text-rendering: auto !important; // Potential fix for dropdown to safari 14 changes
 }
+.close.danger > span:not(.sr-only) {
+  color: #ff0000;
+}
 .table {
   color: #222;
 }

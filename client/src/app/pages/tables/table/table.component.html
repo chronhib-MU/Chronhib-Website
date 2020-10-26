@@ -9,6 +9,7 @@
             </h5>
             <h2 class="mb-0 font-weight-bolder text-dark">
               {{ after | titlecase }}
+              <span *ngIf="after === 'search'"> {{ ' Results - ' + this.searchTable.data.length + ' matches' }}</span>
               <span *ngIf="after !== 'text' && tableData.currentApiQuery.fval">
                 {{ ' - ' + tableData.currentApiQuery.fval }}
               </span>
@@ -48,7 +49,7 @@
           <label
             class="btn btn-secondary px-3 py-2"
             (click)="changeID('previous')"
-            [hidden]="after === 'text' || after === 'lemmata'"
+            [hidden]="after === 'search' || after === 'text' || after === 'lemmata'"
           >
             <i class="fas fa-angle-double-left"></i>
           </label>
@@ -79,59 +80,79 @@
           <label
             class="btn btn-secondary px-3 py-2"
             (click)="changeID('next')"
-            [hidden]="after.toLowerCase() === 'text' || after.toLowerCase() === 'lemmata'"
+            [hidden]="after === 'search' || after.toLowerCase() === 'text' || after.toLowerCase() === 'lemmata'"
           >
             <i class="fas fa-angle-double-right"></i>
           </label>
           <label class="btn btn-secondary px-3 py-2" (click)="goForward()"><i class="fas fa-arrow-right"></i></label>
         </div>
       </div>
-      <!-- Shows when we're not on the letter tables and not on the Text, Morphology, Lemmata -->
-      <hot-table
-        *ngIf="before && after !== 'text' && after !== 'lemmata' && ref"
-        #hotMini
-        [hotId]="instance + 'Mini'"
-        [columns]="columnsMini"
-        [rowHeaders]="null"
-        [colHeaders]="true"
-        [data]="getTableData(before)"
-        [settings]="hotSettings[edit ? 1 : 0]"
-        [height]="110"
-        className="htCenter"
-        licenseKey="non-commercial-and-evaluation"
-        [id]="instance + 'Mini'"
-      >
-      </hot-table>
-
-      <hot-table
-        #hot
-        [hotId]="instance"
-        [columns]="columns"
-        [rowHeaders]="getRows(after)"
-        [colHeaders]="true"
-        [data]="getTableData(after)"
-        [settings]="hotSettings[edit ? 1 : 0]"
-        [height]="before && after !== before && after === 'lemmata' ? 100 : '70vh'"
-        className="htCenter"
-        licenseKey="non-commercial-and-evaluation"
-        [id]="instance"
-      >
-      </hot-table>
-      <hot-table
-        *ngIf="before && after !== before && after === 'lemmata'"
-        #hotMini
-        [hotId]="instance + 'Mini'"
-        [columns]="columnsMini"
-        [rowHeaders]="getRows(before)"
-        [colHeaders]="true"
-        [data]="getTableData(before)"
-        [settings]="hotSettings[edit ? 1 : 0]"
-        [height]="'70vh'"
-        className="htCenter"
-        licenseKey="non-commercial-and-evaluation"
-        [id]="instance + 'Mini'"
-      >
-      </hot-table>
+      <ng-container *ngIf="this.after !== 'search'">
+        <!-- Shows when we're not on the letter tables and not on the Lemmata Table -->
+        <hot-table
+          *ngIf="before && after !== 'text' && after !== 'lemmata' && ref"
+          #hotMini
+          [hotId]="instance + 'Mini'"
+          [columns]="columnsMini"
+          [rowHeaders]="null"
+          [colHeaders]="true"
+          [data]="getTableData(before)"
+          [settings]="hotSettings[edit ? 1 : 0]"
+          [height]="110"
+          className="htCenter"
+          licenseKey="non-commercial-and-evaluation"
+          [id]="instance + 'Mini'"
+        >
+        </hot-table>
+        <!-- Shows on all Tables and becomes a mini table as/on Lemmata -->
+        <hot-table
+          #hot
+          [hotId]="instance"
+          [columns]="columns"
+          [rowHeaders]="getRows(after)"
+          [colHeaders]="true"
+          [data]="getTableData(after)"
+          [settings]="hotSettings[edit ? 1 : 0]"
+          [height]="before && after !== before && after === 'lemmata' ? 100 : '70vh'"
+          className="htCenter"
+          licenseKey="non-commercial-and-evaluation"
+          [id]="instance"
+        >
+        </hot-table>
+        <!-- Shows on the Lemmata Table as the big Morphology reference table-->
+        <hot-table
+          *ngIf="before && after !== before && after === 'lemmata'"
+          #hotMini
+          [hotId]="instance + 'Mini'"
+          [columns]="columnsMini"
+          [rowHeaders]="getRows(before)"
+          [colHeaders]="true"
+          [data]="getTableData(before)"
+          [settings]="hotSettings[edit ? 1 : 0]"
+          [height]="'70vh'"
+          className="htCenter"
+          licenseKey="non-commercial-and-evaluation"
+          [id]="instance + 'Mini'"
+        >
+        </hot-table>
+      </ng-container>
+      <!-- Search Table-->
+      <ng-container *ngIf="after === 'search'">
+        <hot-table
+          #hot
+          [hotId]="instance"
+          [columns]="columns"
+          [rowHeaders]="getRows(after)"
+          [colHeaders]="true"
+          [data]="getTableData(after)"
+          [settings]="hotSettings[edit ? 1 : 0]"
+          [height]="'70vh'"
+          className="htCenter"
+          licenseKey="non-commercial-and-evaluation"
+          [id]="instance"
+        >
+        </hot-table>
+      </ng-container>
     </div>
   </div>
 </div>

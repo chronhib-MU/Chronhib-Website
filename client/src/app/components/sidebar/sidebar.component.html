@@ -34,85 +34,303 @@
                 <span aria-hidden="true">×</span>
               </button>
             </div>
-            <div class="modal-body">
-              <form role="form" [formGroup]="searchForm" (ngSubmit)="this.searchTable(c)">
-                <div
-                  formArrayName="columns"
-                  *ngFor="let column of searchForm.get('columns')['controls']; let i = index"
-                >
-                  <b *ngIf="i > 0">
-                    {{ i + ':' }}
-                  </b>
-
-                  <div [formGroupName]="i" class="mb-2">
-                    <div class="row">
-                      <div class="col-md-6">
-                        <div class="form-group">
-                          <!-- <input class="form-control" formControlName="table" /> -->
-                          <select class="form-control" formControlName="table" required>
-                            <option [value]="table.toUpperCase()" *ngFor="let table of this.tableData.tables.names">
-                              {{ table | uppercase }}
-                            </option>
-                          </select>
+            <ngb-tabset
+              [justify]="'center'"
+              class="custom-tab-content flex-column flex-md-row"
+              type="pills"
+              #searchTabset
+            >
+              <!-- Tables & Columns Tab -->
+              <ngb-tab id="tableColumns">
+                <ng-template ngbTabTitle><b>Tables & Columns</b></ng-template>
+                <ng-template ngbTabContent>
+                  <div class="modal-body">
+                    <form role="form" [formGroup]="tableData.searchForm" (ngSubmit)="searchTabset.select('conditions')">
+                      <div
+                        formArrayName="tableColumns"
+                        *ngFor="let column of tableData.searchForm.get('tableColumns')['controls']; let i = index"
+                      >
+                        <div [formGroupName]="i" class="my-2">
+                          <div class="row">
+                            <div class="col-md-6">
+                              <h3>Table:</h3>
+                              <div class="form-group">
+                                <select class="form-control" formControlName="table">
+                                  <option
+                                    [value]="table | uppercase"
+                                    *ngFor="let table of excludePreviousTableOptions(i)"
+                                  >
+                                    {{ table | uppercase }}
+                                  </option>
+                                </select>
+                              </div>
+                            </div>
+                            <div class="col-md-6">
+                              <h3>
+                                Columns:
+                                <button
+                                  *ngIf="i > 0 || tableData.searchForm.get('tableColumns')['controls'].length > 1"
+                                  type="button"
+                                  class="close danger"
+                                  aria-label="Close"
+                                  (click)="removeFormGroup('tableColumns', i)"
+                                >
+                                  <span aria-hidden="true">×</span>
+                                </button>
+                              </h3>
+                              <div class="form-group">
+                                <select class="form-control" formControlName="column" multiple>
+                                  <option
+                                    [value]="column"
+                                    *ngFor="
+                                      let column of tableData.allHeaders[
+                                        tableData.searchForm.get('tableColumns')['controls'][i].controls.table.value.toLowerCase()
+                                      ]
+                                    "
+                                  >
+                                    {{ column.replaceAll('_', ' ') }}
+                                  </option>
+                                </select>
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                      <div class="col-md-6">
-                        <div class="form-group">
-                          <!-- <input class="form-control" formControlName="column" /> -->
-                          <select multiple class="form-control" formControlName="column">
-                            <option value="*" [selected]="'*'">*</option>
-                            <option
-                              [value]="column"
-                              *ngFor="
-                                let column of this.tableData.allHeaders[
-                                  searchForm.get('columns')['controls'][i].controls.table.value.toLowerCase()
-                                ]
-                              "
-                            >
-                              {{ column }}
-                            </option>
-                          </select>
-                        </div>
+                      <button
+                        *ngIf="tableData.searchForm.get('tableColumns')['controls'].length < 4"
+                        type="button"
+                        class="btn btn-secondary"
+                        value="Add More Tables & Columns"
+                        (click)="addFormGroup('tableColumns')"
+                      >
+                        Add More Tables & Columns
+                      </button>
+                      <div class="text-right">
+                        <button
+                          type="submit"
+                          class="btn btn-primary mt-4"
+                          value="Next Step"
+                          [disabled]="tableData.searchForm.get('tableColumns').invalid"
+                        >
+                          Next Step: Conditions
+                        </button>
                       </div>
-                    </div>
-                    <div class="row" *ngIf="i !== 0">
-                      <div class="col-md-6">
-                        <div class="form-group">
-                          <select class="form-control" formControlName="comparator">
-                            <option value="contains" [selected]="'contains'">contains</option>
-                            <option value="starts with">starts with</option>
-                            <option value="ends with">ends with</option>
-                            <option value="LIKE">like</option>
-                            <option value="=">equal to</option>
-                            <option value="!=">not equal to</option>
-                          </select>
-                        </div>
-                      </div>
-                      <div class="col-md-6">
-                        <div class="form-group">
-                          <input class="form-control" formControlName="comparatorVal" />
-                        </div>
-                      </div>
-                    </div>
+                    </form>
                   </div>
-                </div>
-                <button type="button" class="btn btn-secondary mt-4" value="Add Next" (click)="addNext()">
-                  Add Next
-                </button>
-                <!-- <div class="custom-control custom-control-alternative custom-checkbox">
-              <input class="custom-control-input" id=" customCheckLogin" type="checkbox" />
-              <label class="custom-control-label" for=" customCheckLogin">
-                <span class="text-muted">Remember me</span>
-              </label>
+                  <!-- <div class="modal-footer">
+              {{ 'Final Query: \n' + finalQuery }}
             </div> -->
-                <div class="text-center">
-                  <!-- <button type="button" class="btn btn-primary mt-4" value="Test" (click)="test()">Check</button> -->
-                  <button type="submit" class="btn btn-primary mt-4" value="Search" [disabled]="searchForm.invalid">
-                    Search Table
-                  </button>
-                </div>
-              </form>
-            </div>
+                </ng-template>
+              </ngb-tab>
+              <!-- Conditions Tab -->
+              <ngb-tab id="conditions">
+                <ng-template ngbTabTitle><b>Conditions</b></ng-template>
+                <ng-template ngbTabContent>
+                  <div class="modal-body">
+                    <form role="form" [formGroup]="tableData.searchForm" (ngSubmit)="searchTabset.select('options')">
+                      <div
+                        formArrayName="conditions"
+                        *ngFor="let column of tableData.searchForm.get('conditions')['controls']; let i = index"
+                      >
+                        <div [formGroupName]="i" class="my-2">
+                          <!-- Operator Row -->
+                          <div class="row justify-content-center" *ngIf="i > 0">
+                            <div class="col-4">
+                              <div class="form-group">
+                                <select class="form-control" formControlName="operator">
+                                  <option [value]="'AND'">AND</option>
+                                  <option [value]="'OR'">OR</option>
+                                  <option [value]="'NOT'">NOT</option>
+                                </select>
+                              </div>
+                            </div>
+                          </div>
+                          <h3>
+                            {{ 'Condition ' + (i + 1) }}
+                          </h3>
+                          <div class="row">
+                            <div class="col-md-6">
+                              <h4>Table:</h4>
+                              <div class="form-group">
+                                <!-- <input class="form-control" formControlName="table" /> -->
+                                <select class="form-control" formControlName="table">
+                                  <option [value]="table.toUpperCase()" *ngFor="let table of tableData.tables.names">
+                                    {{ table | uppercase }}
+                                  </option>
+                                </select>
+                              </div>
+                            </div>
+                            <div class="col-md-6">
+                              <h4>
+                                Column:
+                                <button
+                                  *ngIf="i > 0 || tableData.searchForm.get('conditions')['controls'].length > 1"
+                                  type="button"
+                                  class="close danger"
+                                  aria-label="Close"
+                                  (click)="removeFormGroup('conditions', i)"
+                                >
+                                  <span aria-hidden="true">×</span>
+                                </button>
+                              </h4>
+                              <div class="form-group">
+                                <!-- <input class="form-control" formControlName="column" /> -->
+                                <select class="form-control" formControlName="column">
+                                  <option
+                                    [value]="column"
+                                    *ngFor="
+                                      let column of tableData.allHeaders[
+                                        tableData.searchForm.get('conditions')['controls'][i].controls.table.value.toLowerCase()
+                                      ]
+                                    "
+                                  >
+                                    {{ column.replaceAll('_', ' ') }}
+                                  </option>
+                                </select>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="row">
+                            <div class="col-md-6">
+                              <div class="form-group">
+                                <select class="form-control" formControlName="comparator">
+                                  <option [value]="'contains'">contains</option>
+                                  <option [value]="'starts with'">starts with</option>
+                                  <option [value]="'ends with'">ends with</option>
+                                  <option [value]="'LIKE'">like</option>
+                                  <option [value]="'='">equal to</option>
+                                  <option [value]="'!='">not equal to</option>
+                                </select>
+                              </div>
+                            </div>
+                            <div class="col-md-6">
+                              <div class="form-group">
+                                <input class="form-control" formControlName="comparatorVal" type="text" />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        class="btn btn-secondary"
+                        value="Add More Conditions"
+                        (click)="addFormGroup('conditions')"
+                      >
+                        Add More Conditions
+                      </button>
+                      <div class="text-right">
+                        <button
+                          type="submit"
+                          class="btn btn-primary mt-4"
+                          value="Next Step"
+                          [disabled]="tableData.searchForm.get('conditions').invalid"
+                        >
+                          Next Step: Options
+                        </button>
+                        <button
+                          type="submit"
+                          class="btn btn-primary mt-4"
+                          value="Skip"
+                          (click)="
+                            tableData.searchForm.get('options')['controls']['noConditions'].value = true;
+                            validateNoConditions($event, true)
+                          "
+                        >
+                          Skip
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </ng-template>
+              </ngb-tab>
+              <!-- Options Tab -->
+              <ngb-tab id="options">
+                <ng-template ngbTabTitle><b>Options</b></ng-template>
+                <ng-template ngbTabContent>
+                  <div class="modal-body">
+                    <form role="form" [formGroup]="tableData.searchForm" (ngSubmit)="searchTable(c)">
+                      <div formGroupName="options" class="my-2">
+                        <div class="row">
+                          <div class="col-6 align-content-left">
+                            <div class="form-group">
+                              <div class="custom-control custom-checkbox mb-3">
+                                <input
+                                  class="custom-control-input"
+                                  type="checkbox"
+                                  id="conditionsCheck"
+                                  (change)="validateNoConditions($event)"
+                                  formControlName="noConditions"
+                                  #noConditionsInput
+                                />
+                                <label class="custom-control-label" for="conditionsCheck"> No Conditions? </label>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="row">
+                          <div class="col-6 align-content-left">
+                            <div class="form-group">
+                              <div class="custom-control custom-checkbox mb-3">
+                                <input
+                                  class="custom-control-input"
+                                  type="checkbox"
+                                  id="duplicateCheck"
+                                  (change)="(true)"
+                                  formControlName="duplicateRows"
+                                />
+                                <label class="custom-control-label" for="duplicateCheck"> See duplicate rows? </label>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="row">
+                          <div class="col-6 align-content-left">
+                            <div class="form-group">
+                              <div class="custom-control custom-checkbox mb-3">
+                                <input
+                                  class="custom-control-input"
+                                  (change)="(false)"
+                                  (click)="tableData.searchForm.get('options')['controls']['limit'].value = 0"
+                                  id="limitCheck"
+                                  type="checkbox"
+                                  #limitChecker
+                                />
+                                <label class="custom-control-label" for="limitCheck"> Limit number of results? </label>
+                                <input
+                                  class="form-control"
+                                  *ngIf="limitChecker.checked"
+                                  type="number"
+                                  min="0"
+                                  formControlName="limit"
+                                  #limitInput
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="text-center">
+                        <button type="button" class="btn btn-danger mt-4" value="Search" (click)="resetForm()">
+                          Clear
+                        </button>
+                        <button
+                          type="submit"
+                          class="btn btn-primary mt-4"
+                          value="Search"
+                          [disabled]="tableData.searchForm.invalid"
+                        >
+                          Search Table
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                  <!-- <div class="modal-footer">
+              {{ 'Final Query: \n' + finalQuery }}
+            </div> -->
+                </ng-template>
+              </ngb-tab>
+            </ngb-tabset>
           </div>
         </ng-template>
         <div class="dropdown-menu-arrow dropdown-menu-right" ngbDropdownMenu>

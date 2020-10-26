@@ -1,3 +1,4 @@
+// @ts-nocheck
 const express = require('express');
 const http = require('http');
 const path = require('path');
@@ -7,15 +8,14 @@ const mysql = require('mysql');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const cookieParser = require('cookie-parser');
-// @ts-ignore
 const { promisify } = require('util');
 const dotenv = require('dotenv');
 const compression = require('compression');
 const helmet = require('helmet');
-// @ts-ignore
 const { parse } = require('path');
 const log4js = require('log4js');
 const serveStatic = require('serve-static');
+const qs = require('qs');
 const currentDate = new Date();
 const formattedDate = `-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${currentDate.getFullYear()}`;
 log4js.configure({
@@ -68,7 +68,6 @@ const user = process.env.USER || USER;
 const jwt_secret = process.env.JWT_SECRET || JWT_SECRET;
 const jwt_expires_in = process.env.JWT_EXPIRES_IN || JWT_EXPIRES_IN;
 const envtest = process.env.ENVTEST || ENVTEST;
-// @ts-ignore
 const jwt_cookie_expires = parseInt(process.env.JWT_COOKIE_EXPIRES || JWT_COOKIE_EXPIRES);
 // console.table({ port, host, password, database, node_env, user, jwt_secret, jwt_expires_in, jwt_cookie_expires });
 
@@ -217,7 +216,6 @@ app.post(`/${appName}/register`, (req, res, next) => {
             Email: email,
             Password: hashedPassword
           },
-          // @ts-ignore
           (error, result) => {
             if (error) {
               // console.log(error);
@@ -273,7 +271,6 @@ app.post(`/${appName}/login`, (req, res) => {
       type: 'error'
     });
   } else {
-    // @ts-ignore
     connection.query('SELECT * FROM `USERS` WHERE `Email` = ?', [email], async (error, result) => {
       // console.log(result);
       // logger.trace(result);
@@ -332,19 +329,13 @@ app.post(`/${appName}/isLoggedIn`, (req, res) => {
   } else {
     const decoded = jwt.verify(req.body.token, jwt_secret);
     // console.log(decoded);
-    // @ts-ignore
     if (decoded.exp > 0) {
-      connection.query(
-        'SELECT * FROM `USERS` WHERE `User_ID` = ?',
-        // @ts-ignore
-        [decoded.id],
-        async (error, result) => {
-          // console.log(result[0]);
-          const { First_Name, Last_Name, Email } = result[0];
-          logger.info({ First_Name, Last_Name, Email });
-          res.status(200).send({ First_Name, Last_Name, Email });
-        }
-      );
+      connection.query('SELECT * FROM `USERS` WHERE `User_ID` = ?', [decoded.id], async (error, result) => {
+        // console.log(result[0]);
+        const { First_Name, Last_Name, Email } = result[0];
+        logger.info({ First_Name, Last_Name, Email });
+        res.status(200).send({ First_Name, Last_Name, Email });
+      });
     } else {
       logger.warn('401`- Unauthorized!');
       res.status(401).send({
@@ -360,58 +351,219 @@ app.post(`/${appName}/api/`, (req, res, next) => {
   //To access POST variable use req.body() methods.
   console.log('Post Variable: ', req.body);
   logger.trace('Post Variable: ', req.body);
-  const { table, command, values } = req.body;
-  // const values = JSON.parse(valuesString);
-  if (command === 'moveRow') {
-    // if the row is moved
-    const updateQueries = [];
-    values[0].forEach(rowData => {
-      let query = 'UPDATE ?? SET `Sort_ID` = ? WHERE `ID` = ?;';
-      updateQueries.push({ query, values: [table.toUpperCase(), rowData.Sort_ID, rowData.ID] });
-    });
-    updateQueries.forEach(updateQuery => {
-      // console.log('Post Query: ', updateQuery);
-      logger.trace('Post Query: ', updateQuery);
-      // @ts-ignore
-      connection.query(updateQuery.query, updateQuery.values, (err, results) => {
-        if (err) {
-          // console.log('Error: ', err);
-          logger.error('Error: ', err);
-          next(err);
-        } else {
-          // console.log('Success: ', results);
-          logger.trace('Success: ', results);
-          res.status(200).end();
-        }
-        // console.log({ beforeTable, afterTable });
+  if (req.body.command) {
+    const { table, command, values } = req.body;
+    // const values = JSON.parse(valuesString);
+    if (command === 'moveRow') {
+      // if the row is moved
+      const updateQueries = [];
+      values[0].forEach(rowData => {
+        let query = 'UPDATE ?? SET `Sort_ID` = ? WHERE `ID` = ?;';
+        updateQueries.push({ query, values: [table.toUpperCase(), rowData.Sort_ID, rowData.ID] });
       });
-    });
-  } else if (command === 'createRow') {
-    // TODO: Create Rows
-    // if a row is created
-    console.log(values);
-    // logger.trace(values);
+      updateQueries.forEach(updateQuery => {
+        // console.log('Post Query: ', updateQuery);
+        logger.trace('Post Query: ', updateQuery);
+        connection.query(updateQuery.query, updateQuery.values, (err, results) => {
+          if (err) {
+            // console.log('Error: ', err);
+            logger.error('Error: ', err);
+            next(err);
+          } else {
+            // console.log('Success: ', results);
+            logger.trace('Success: ', results);
+            res.status(200).end();
+          }
+          // console.log({ beforeTable, afterTable });
+        });
+      });
+    } else if (command === 'createRow') {
+      // TODO: Create Rows
+      // if a row is created
+      console.log(values);
+      // logger.trace(values);
+    } else {
+      // if the row needs to be updated
+      values.forEach(value => {
+        // console.log(value);
+        let { id, fieldProperty, fieldValue } = value;
+        console.table({ id, fieldProperty, fieldValue });
+        let updateQuery = 'UPDATE ?? SET ?? = ? WHERE `ID` = ?;';
+        // console.log('Post Query: ', updateQuery);
+        // logger.trace('Post Query: ', updateQuery);
+        connection.query(updateQuery, [table.toUpperCase(), fieldProperty, fieldValue, id], (err, results) => {
+          if (err) {
+            // console.log('Error: ', err);
+            logger.error('Error: ', err);
+            next(err);
+          } else {
+            logger.trace('Success: ', results);
+            res.status(200).end();
+          }
+          // console.log({ beforeTable, afterTable });
+        });
+      });
+    }
   } else {
-    // if the row needs to be updated
-    values.forEach(value => {
-      // console.log(value);
-      let { id, fieldProperty, fieldValue } = value;
-      console.table({ id, fieldProperty, fieldValue });
-      let updateQuery = 'UPDATE ?? SET ?? = ? WHERE `ID` = ?;';
-      // console.log('Post Query: ', updateQuery);
-      // logger.trace('Post Query: ', updateQuery);
-      // @ts-ignore
-      connection.query(updateQuery, [table.toUpperCase(), fieldProperty, fieldValue, id], (err, results) => {
-        if (err) {
-          // console.log('Error: ', err);
-          logger.error('Error: ', err);
-          next(err);
-        } else {
-          logger.trace('Success: ', results);
-          res.status(200).end();
+    /**
+     * Search Feature - Backend
+     */
+
+    // console.log('tableColumn', req.body);
+    const { conditions, options, tableColumns } = req.body;
+
+    // Select
+    const selectedTableColumns = []; // ['`TEXT`.`Text_ID`', '`SENTENCES`.`Textual_Unit`']
+    const selectStart = options.duplicateRows ? 'SELECT ' : 'SELECT DISTINCT ';
+    tableColumns.forEach(obj => {
+      Object.values(obj.column).forEach(column => selectedTableColumns.push(obj.table + '.' + column));
+    });
+    let selectedTables = tableColumns.map(tableColumn => tableColumn.table);
+
+    // From
+    if (!options.noConditions) selectedTables = selectedTables.concat(conditions.map(condition => condition.table));
+    // Removes Duplicate Tables
+    selectedTables = selectedTables.filter((table, index) => selectedTables.indexOf(table) === index);
+    /** Now we know what tables need to be joined
+     *  We need to add MORPHOLOGY to the list of tables to be joined -
+     *  if there are more than 2 tables and 1 of them is LEMMATA,
+     *  since it's the link to the other tables
+     */
+    const fromInnerJoins = [' FROM'];
+    if (selectedTables.length > 1 && !options.noConditions) {
+      fromInnerJoins.push(selectedTables[0]);
+      if (selectedTables.includes('LEMMATA') && !selectedTables.includes('MORPHOLOGY')) {
+        selectedTables.push('MORPHOLOGY');
+      }
+      const innerJoinConnections = {
+        TEXT: {
+          SENTENCES: `INNER JOIN SENTENCES ON TEXT.Text_ID = SENTENCES.Text_ID`,
+          MORPHOLOGY: `INNER JOIN MORPHOLOGY ON TEXT.Text_ID = MORPHOLOGY.Text_ID`
+        },
+        SENTENCES: {
+          TEXT: `INNER JOIN TEXT ON SENTENCES.Text_ID = TEXT.Text_ID`,
+          MORPHOLOGY: `INNER JOIN MORPHOLOGY ON SENTENCES.Text_Unit_ID = MORPHOLOGY.Text_Unit_ID`
+        },
+        MORPHOLOGY: {
+          TEXT: `INNER JOIN TEXT ON MORPHOLOGY.Text_ID = TEXT.Text_ID`,
+          SENTENCES: `INNER JOIN SENTENCES ON MORPHOLOGY.Text_Unit_ID = SENTENCES.Text_Unit_ID`,
+          LEMMATA: `INNER JOIN LEMMATA ON MORPHOLOGY.Lemma = LEMMATA.Lemma`
+        },
+        LEMMATA: {
+          MORPHOLOGY: `INNER JOIN MORPHOLOGY ON LEMMATA.Lemma = MORPHOLOGY.Lemma`
         }
-        // console.log({ beforeTable, afterTable });
+      };
+      // This is to stop sql from complaining about non-unique tables/aliases
+      let unique = {
+        TEXT: true,
+        SENTENCES: true,
+        MORPHOLOGY: true,
+        LEMMATA: true
+      };
+      if (selectedTables.length > 1) {
+        for (let i = 0; i < selectedTables.length; i++) {
+          const tableI = selectedTables[i];
+          for (let j = 1; j < selectedTables.length; j++) {
+            const tableJ = selectedTables[j];
+            if (innerJoinConnections[tableI][tableJ]) {
+              // If the inner join is not unique, use an alias
+              if (!unique[tableJ]) {
+                const innerJoinConnection = innerJoinConnections[tableI][tableJ].split(' ');
+                // Alias is the first two letters of two tables being joined
+                const alias = tableJ[0] + tableI[0];
+                innerJoinConnection.splice(3, 0, alias); // Add the alias to the first table
+                // Replace the table name to the alias,
+                // by slicing the last element
+                const aliasedCondition = innerJoinConnection.slice(-1).pop().split('.');
+                // and set the first part to the alias
+                aliasedCondition[0] = alias;
+                // Replace the
+                innerJoinConnection.splice(-1, 1, aliasedCondition.join('.'));
+                fromInnerJoins.push(innerJoinConnection.join(' '));
+              } else {
+                fromInnerJoins.push(innerJoinConnections[tableI][tableJ]);
+                unique[tableJ] = false;
+              }
+            }
+          }
+        }
+      }
+      // console.log('selectedTablesArr: ', selectedTablesArr);
+      // console.log('fromInnerJoins: ', fromInnerJoins.join(' '));
+    } else if (selectedTables.length > 1) {
+      fromInnerJoins.push(selectedTables.join(', '));
+    } else {
+      fromInnerJoins.push(selectedTables[0]);
+    }
+
+    // Where
+    const whereConditions = [' WHERE'];
+    if (!options.noConditions) {
+      conditions.forEach(condition => {
+        if (condition.operator) {
+          whereConditions.push(condition.operator);
+        }
+        const whereCondition = [];
+        let comparator, comparatorVal;
+        comparator = comparatorVal = '';
+        switch (condition.comparator) {
+          case 'contains':
+            comparator = 'LIKE';
+            comparatorVal = connection.escape('%' + condition.comparatorVal + '%');
+            break;
+          case 'starts with':
+            comparator = 'LIKE';
+            comparatorVal = connection.escape(condition.comparatorVal + '%');
+            break;
+          case 'ends with':
+            comparator = 'LIKE';
+            comparatorVal = connection.escape('%' + condition.comparatorVal);
+            break;
+          default:
+            comparator = condition.comparator;
+            comparatorVal = connection.escape(condition.comparatorVal);
+            break;
+        }
+
+        whereCondition.push(condition.table + '.' + condition.column);
+        whereCondition.push(comparator);
+        whereCondition.push(comparatorVal);
+        whereConditions.push(whereCondition.join(' '));
       });
+      let openBracket = false;
+      for (let index = 2; index < whereConditions.length; index += 2) {
+        if (whereConditions[index] === 'AND' && openBracket === true) {
+          whereConditions.splice(index, 0, ')'); // Add a closing bracket to the previous index in between the last condition and this and operator
+          index++; // To compensate for the added element in the array
+          openBracket = false;
+        } else if (whereConditions[index] === 'OR' && openBracket === false) {
+          whereConditions.splice(index - 1, 0, '('); // Add opening bracket before previous condition
+          index++; // To compensate for the added element in the array
+          openBracket = true;
+        }
+      }
+      // We've finished going through the where conditions
+      if (openBracket === true) {
+        whereConditions.push(')'); // If there's still an openBracket then we add a closing bracket at the very last index
+      }
+    }
+    const finalQuery =
+      selectStart +
+      selectedTableColumns.join(', ') +
+      fromInnerJoins.join(' ') +
+      (options.noConditions ? '' : whereConditions.join(' ')) +
+      (parseInt(options.limit) ? ' LIMIT ' + options.limit : ' LIMIT 500000') +
+      ';';
+    console.log('Final Query: ', finalQuery);
+    connection.query(finalQuery, (err, results) => {
+      if (err) {
+        // console.log('Error: ', err);
+        next(err);
+      } else {
+        res.status(200).send({
+          data: { beforeTable: [], afterTable: results }
+        });
+      }
     });
   }
 });
@@ -427,13 +579,12 @@ app.get(`/${appName}/api/`, (req, res, next) => {
     typeof req.query.dtable === 'string' &&
     typeof req.query.ctable === 'string'
   ) {
-    // console.log('Got into search parameters!');
-    let page = req.query.page || '0'; // pagination page number
-    let limit = req.query.limit || '0'; // pagination limit (how many rows per page)
-    let fieldProperty = req.query.fprop || ''; // the property to filter by
-    let fieldValue = req.query.fval || ''; // the value of the property to filter by
-    let destinationTable = req.query.dtable || 'text'; // the table we're navigating to
-    let currentTable = req.query.ctable || 'text'; // the table we're navigating from
+    let page = req.query.page || '0', // pagination page number
+      limit = req.query.limit || '0', // pagination limit (how many rows per page)
+      fieldProperty = req.query.fprop || '', // the property to filter by
+      fieldValue = req.query.fval || '', // the value of the property to filter by
+      destinationTable = req.query.dtable || 'text', // the table we're navigating to
+      currentTable = req.query.ctable || 'text'; // the table we're navigating from
     let startRow,
       endRow,
       between = ' ';
@@ -447,14 +598,14 @@ app.get(`/${appName}/api/`, (req, res, next) => {
       between = ' AND `Sort_ID` BETWEEN ? AND ? ';
       afterQueryValues.push(startRow.toString(), endRow.toString());
       // console.log('Between:', between);
-      limit = '';
+      limit = ' LIMIT 500000';
     } else {
       // if limit is 0 then there's no limit
       if (limit !== '0') {
         afterQueryValues.push((parseInt(limit, 10) - 1).toString());
         limit = ' LIMIT ?';
       } else {
-        limit = '';
+        limit = ' LIMIT 500000';
       }
     }
     let beforeQuery = '',
@@ -470,7 +621,7 @@ app.get(`/${appName}/api/`, (req, res, next) => {
       // afterQuery
       afterQuery = 'SELECT * FROM ?? WHERE ?? = ?' + between + 'ORDER BY ??, `Sort_ID` ASC' + limit;
       afterQueryValues.splice(1, 0, fieldProperty, fieldValue);
-      if (limit) {
+      if (limit !== ' LIMIT 500000') {
         afterQueryValues.splice(-2, 0, fieldProperty);
       } else {
         afterQueryValues.push(fieldProperty);
@@ -480,8 +631,10 @@ app.get(`/${appName}/api/`, (req, res, next) => {
     }
     console.log('beforeQuery:', beforeQuery);
     console.log('afterQuery:', afterQuery);
+    console.log('afterQueryValues:', afterQueryValues);
     logger.trace('beforeQuery:', beforeQuery);
-    logger.trace('afterQuery:', afterQuery);
+    logger.info('afterQuery:', afterQuery);
+    logger.info('afterQueryValues:', afterQueryValues);
     let beforeTable = [],
       afterTable = [];
     connection.query(afterQuery, afterQueryValues, (err, results) => {
@@ -503,85 +656,14 @@ app.get(`/${appName}/api/`, (req, res, next) => {
           }
           // console.log({ beforeTable, afterTable });
           // logger.info(results);
-          res.status(200).json({
+          res.status(200).send({
             data: { beforeTable, afterTable }
           });
         });
       } else {
         // logger.trace(results);
-        res.status(200).json({
+        res.status(200).send({
           data: { beforeTable, afterTable }
-        });
-      }
-    });
-  } else if (req.query.search && typeof req.query.search === 'string') {
-    console.log(req.query.search); // A JSON String Object formatted like the searchQuery object below
-    // const searchQuery = JSON.parse(req.query.search);
-    const searchQuery = [
-      { table: 'MORPHOLOGY', column: '*', operator: '', comparator: '', comparatorVal: '' },
-      { table: 'MORPHOLOGY', column: 'Morph', operator: '', comparator: 'ends with', comparatorVal: '.' },
-      { table: 'MORPHOLOGY', column: 'Analysis', operator: 'AND', comparator: '=', comparatorVal: 'gen.sg.' },
-      { table: 'LEMMATA', column: 'Class', operator: 'AND', comparator: '=', comparatorVal: 'i' }
-    ];
-    console.log(searchQuery);
-    let selectedTablesArr = [],
-      fromTablesArr = [],
-      whereConditionsArr = [];
-    searchQuery.forEach(val => {
-      // Creates the string that goes after the SELECT DISTINCT part
-      let selectedTable = '`' + val.table + '` . ';
-      selectedTable += val.column === '*' ? '*' : '`' + val.column + '`';
-      selectedTablesArr.push(selectedTable);
-      // Adds all the tables for the FROM part
-      fromTablesArr.push(val.table);
-      let whereCondition = '';
-      if (val.comparator) {
-        if (val.operator) {
-          // Adds AND/ORs if they exist
-          whereCondition += val.operator + ' ';
-        }
-        // Adds the table.column reference
-        whereCondition += '`' + val.table + '` . `' + val.column + '` ';
-        // Converts the comparator to sql where conditions
-        switch (val.comparator) {
-          case 'contains':
-            whereCondition += 'LIKE ' + connection.escape('%' + val.comparatorVal + '%');
-            break;
-          case 'starts with':
-            whereCondition += 'LIKE ' + connection.escape(val.comparatorVal + '%');
-            break;
-          case 'ends with':
-            whereCondition += 'LIKE ' + connection.escape('%' + val.comparatorVal);
-            break;
-          default:
-            whereCondition += val.comparator + ' ' + connection.escape(val.comparatorVal);
-            break;
-        }
-      }
-      whereConditionsArr.push(whereCondition);
-    });
-    let selectedTables = selectedTablesArr.join(', '),
-      fromTables = fromTablesArr.filter((val, index, self) => index == self.indexOf(val)).join(', '), // Removes duplicates from the array
-      whereConditions = whereConditionsArr.join(' ');
-    // Just checking to see if we've gotten everything right so far
-    console.log(selectedTables);
-    console.log(fromTables);
-    console.log(whereConditions);
-    const finalQuery =
-      'SELECT DISTINCT ' +
-      selectedTables +
-      ' FROM ' +
-      fromTables +
-      (whereConditions ? ' WHERE ' + whereConditions : '') +
-      ';';
-    console.log(finalQuery);
-    connection.query(finalQuery, (err, results) => {
-      if (err) {
-        // console.log('Error: ', err);
-        next(err);
-      } else {
-        res.status(200).json({
-          data: results
         });
       }
     });
@@ -592,6 +674,7 @@ app.get(`/${appName}/api/`, (req, res, next) => {
           .map(path => `/${appName}/api/${path} to see the ${path} table,`)
           .join('\n')
     );*/
+    console.log(req.query);
     res.send(
       'Go to:<br/>' +
         Object.keys(tables)
@@ -615,7 +698,7 @@ app.get(`/${appName}/api/:path/headers`, (req, res, next) => {
     } else {
       // console.log(results);
       logger.trace(results);
-      res.status(200).json({
+      res.status(200).send({
         data: results.map(result => result.COLUMN_NAME)
       });
     }
@@ -634,20 +717,18 @@ app.get(`/${appName}/api/:path`, (req, res, next) => {
       } else {
         // console.log(results);
         // logger.info(results);
-        res.status(200).json({
+        res.status(200).send({
           data: { beforeTable: {}, afterTable: results }
         });
       }
     });
   } else {
     // Handles any requests that don't match the ones above
-    // @ts-ignore
     redirect(`/${appName}/*`); // redirect back to the homepage
   }
 });
 
 // redirect all the routes to the app and lets angular handle the routing
-// @ts-ignore
 app.get(`/${appName}/*`, (req, res) => {
   res.sendFile(path.resolve(__dirname, folderLoc + 'index.html'));
 });
