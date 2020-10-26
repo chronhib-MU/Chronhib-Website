@@ -1,10 +1,12 @@
 import { AuthService } from './auth.service';
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { ApiGetQuery } from '../interfaces/api-get-query';
 import { ApiPostBody } from '../interfaces/api-post-body';
+import { FormGroup } from '@angular/forms';
+import { Router } from '@angular/router';
 import * as qs from 'qs';
 @Injectable({
   providedIn: 'root'
@@ -33,11 +35,13 @@ export class TableDataService {
   fetchedTable: Observable<{ data: { afterTable: []; beforeTable: [] } }>;
   currentApiQuery: any;
   searchTable = { headers: [], data: [] };
-  constructor(private http: HttpClient, private authService: AuthService) {}
+  searchForm: FormGroup;
+  constructor(private router: Router, private http: HttpClient, private authService: AuthService) {}
+
   // Fetches the headers for each table
   fetchHeaders = async () => {
     try {
-      this.tables.names.forEach(async name => {
+      await this.tables.names.forEach(async name => {
         // console.log(name);
         const fetchedHeaders: Observable<any> = this.http.get<any>(
           `${environment.apiUrl}${name}/headers`
@@ -46,11 +50,13 @@ export class TableDataService {
         // console.log(data);
         this.allHeaders[name] = data;
       });
+      // console.log(this.allHeaders);
     } catch (error) {
       console.log('Invalid request made!');
       return;
     }
   };
+
   // Fetches table data from the API
   fetchTable = async (apiQuery: ApiGetQuery | string) => {
     this.currentApiQuery = apiQuery;
@@ -71,20 +77,48 @@ export class TableDataService {
         // console.log(this.tables[apiQuery].headers);
       }
       if (typeof apiQuery !== 'string') {
-        const queryString = qs.stringify(apiQuery);
         // Object.keys(apiQuery)
         //   .map(key => key + '=' + apiQuery[key])
         //   .join('&');
         console.log(apiQuery);
-        this.fetchedTable = this.http.get(`${environment.apiUrl}?${queryString}`) as Observable<{
-          data: { afterTable: []; beforeTable: [] };
-        }>;
-        const { data } = await this.fetchedTable.toPromise();
+        const search = apiQuery.search === 'true' ? true : false;
+        if (search) {
+          const searchFormValue = JSON.parse(localStorage.getItem(apiQuery.id));
+          if (searchFormValue) {
+            console.log(searchFormValue);
+            this.fetchedTable = this.http.post(`${environment.apiUrl}?`, searchFormValue, {
+              headers: { 'content-type': 'application/json' }
+            }) as Observable<{
+              data: { afterTable: []; beforeTable: [] };
+            }>;
+          } else {
+            this.router.navigate(['/tables'], {
+              queryParams: {
+                page: 0,
+                limit: 0,
+                fprop: '',
+                fval: '',
+                dtable: 'text',
+                ctable: 'text',
+                search: false
+              }
+            });
+          }
+        } else {
+          const queryString = qs.stringify(apiQuery);
+          this.fetchedTable = this.http.get(`${environment.apiUrl}?${queryString}`) as Observable<{
+            data: { afterTable: []; beforeTable: [] };
+          }>;
+        }
+        const fetchedData = await this.fetchedTable.toPromise();
+        const data = fetchedData.data;
         console.log(apiQuery.search);
-        if (apiQuery.search) {
+        if (search) {
           this.searchTable.data = data.afterTable;
-          this.searchTable.headers = Object.keys(this.searchTable.data[0]);
-          console.log(`${queryString}: `, data);
+          if (this.searchTable.data[0]) {
+            this.searchTable.headers = Object.keys(this.searchTable.data[0]);
+          }
+          // console.log(`${qs.stringify(apiQuery)}: `, data);
         } else {
           if (apiQuery.dtable !== apiQuery.ctable) {
             this.tables[apiQuery.ctable].data = data.beforeTable;
@@ -95,6 +129,7 @@ export class TableDataService {
           // console.log(this.tables[apiQuery.dtable].headers);
         }
       }
+      return;
     } catch (error) {
       console.log(error);
       console.log('Invalid request made!');

@@ -122,7 +122,6 @@ export class TableComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    console.log(this.after);
     const that = this;
     this.sort = false;
 
@@ -242,7 +241,6 @@ export class TableComponent implements OnInit {
     // $hooksList = $('#hooksList');
   }
   async fetchedTable() {
-    console.log(this.after);
     if (this.hotRegisterer.getInstance(this.instance + 'Mini')) {
       this.hotRegisterer.getInstance(this.instance + 'Mini').updateSettings({
         multiColumnSorting: this.sort
@@ -268,9 +266,11 @@ export class TableComponent implements OnInit {
       }
       if (this.after === 'search') {
         this.searchTable.data = data.afterTable;
-        this.searchTable.headers = Object.keys(this.searchTable.data[0]);
-        // Moves Sort_ID to first while remove it from last in the after table
-        // console.table(this.searchTable);
+        if (this.searchTable.data[0]) {
+          this.searchTable.headers = Object.keys(this.searchTable.data[0]);
+          // Moves Sort_ID to first while remove it from last in the after table
+          // console.table(this.searchTable);
+        }
       } else {
         this.dataTable[this.after].data = data.afterTable;
         this.dataTable[this.after].headers = Object.keys(this.dataTable[this.after].data[0]);
@@ -319,7 +319,7 @@ export class TableComponent implements OnInit {
             .map((val, i) => i)
             .filter(
               val =>
-                columnFilter.includes(headerArr[val]) || (headerArr[val] === 'Text_ID' && this.after === 'morphology')
+                columnFilter.includes(headerArr[val]) || (headerArr[val] === 'Text_ID' && this.before === 'morphology')
             )
         },
         multiColumnSorting: this.sort
@@ -482,6 +482,7 @@ export class TableComponent implements OnInit {
                 search: false
               };
             } else if (table === that.after && table === 'text' && prop === 'Text_ID') {
+              // If this is the after or search table
               queryParams = {
                 page: 0,
                 limit: 0,
@@ -492,8 +493,8 @@ export class TableComponent implements OnInit {
                 search: false
               };
             } else if (
-              (table === that.before && table === 'sentences' && prop === 'Text_Unit_ID') ||
-              (table === that.after && table === 'morphology' && prop === 'Text_Unit_ID')
+              ((table === that.before && table === 'sentences') || (table === that.after && table === 'morphology')) &&
+              prop === 'Text_Unit_ID'
             ) {
               queryParams = {
                 page: 0,
@@ -505,8 +506,8 @@ export class TableComponent implements OnInit {
                 search: false
               };
             } else if (
-              (table === 'sentences' && prop === 'Text_Unit_ID') ||
-              (table === 'morphology' && prop === 'Text_Unit_ID')
+              (table === 'morphology' || table === 'search' || table === 'sentences') &&
+              prop === 'Text_Unit_ID'
             ) {
               queryParams = {
                 page: 0,
@@ -517,7 +518,7 @@ export class TableComponent implements OnInit {
                 ctable: 'sentences',
                 search: false
               };
-            } else if ((table === 'morphology' && prop === 'Lemma') || (table === 'lemmata' && prop === 'Lemma')) {
+            } else if ((table === 'morphology' || table === 'search' || table === 'lemmata') && prop === 'Lemma') {
               queryParams = {
                 page: 0,
                 limit: 0,
@@ -642,7 +643,7 @@ export class TableComponent implements OnInit {
   }
   getRows(table: string | number) {
     return table === 'search'
-      ? this.searchTable.data.map((row: { Sort_ID: any }) => row.Sort_ID)
+      ? this.searchTable.data.map((row, index) => index + 1)
       : this.dataTable[table].data.map((row: { Sort_ID: any }) => row.Sort_ID);
   }
   undo() {

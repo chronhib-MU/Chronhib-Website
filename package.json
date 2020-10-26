@@ -9,7 +9,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Success! Test worked.\" && exit 0",
-    "start": "nodemon index.js"
+    "start": "nodemon --max-old-space-size=16384 index.js"
   },
   "keywords": [],
   "author": "",

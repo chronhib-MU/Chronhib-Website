@@ -5,6 +5,6 @@ export interface ApiGetQuery {
   fval: string;
   dtable: string;
   ctable: string;
-  search: boolean;
-  value?: any[];
+  search: string | boolean;
+  id?: string;
 }
