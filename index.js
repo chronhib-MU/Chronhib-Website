@@ -555,16 +555,22 @@ app.post(`/${appName}/api/`, (req, res, next) => {
       (parseInt(options.limit) ? ' LIMIT ' + options.limit : ' LIMIT 500000') +
       ';';
     console.log('Final Query: ', finalQuery);
-    connection.query(finalQuery, (err, results) => {
-      if (err) {
-        // console.log('Error: ', err);
-        next(err);
-      } else {
-        res.status(200).send({
-          data: { beforeTable: [], afterTable: results }
-        });
-      }
-    });
+    logger.info('Search Query: ', finalQuery);
+    try {
+      connection.query(finalQuery, (err, results) => {
+        if (err) {
+          // console.log('Error: ', err);
+          logger.error(err);
+          next(err);
+        } else {
+          res.status(200).send({
+            data: { beforeTable: [], afterTable: results }
+          });
+        }
+      });
+    } catch (error) {
+      logger.error(error);
+    }
   }
 });
 // Handles all the advanced get api table queries
