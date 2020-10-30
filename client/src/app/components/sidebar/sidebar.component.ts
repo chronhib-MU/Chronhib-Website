@@ -64,29 +64,6 @@ export class SidebarComponent implements OnInit {
     });
   }
 
-  validateNoConditions(evt, skip?) {
-    console.log(evt);
-    const checked: boolean = evt.target.checked || skip;
-
-    if (checked) {
-      (this.tableData.searchForm.get('conditions') as FormArray).controls.forEach((formGroup: FormGroup) => {
-        formGroup.controls['comparatorVal'].clearValidators();
-        formGroup.controls['comparatorVal'].updateValueAndValidity();
-        console.log(formGroup);
-      });
-      (this.tableData.searchForm.get('conditions') as FormArray).clearValidators();
-    } else {
-      (this.tableData.searchForm.get('conditions') as FormArray).controls.forEach((formGroup: FormGroup) => {
-        formGroup.controls['comparatorVal'].setValidators(Validators.required);
-        formGroup.controls['comparatorVal'].updateValueAndValidity();
-        console.log(formGroup);
-      });
-    }
-    // this.tableData.searchForm.get('conditions').updateValueAndValidity();
-    console.log('Conditions invalid:', this.tableData.searchForm.get('conditions').status);
-    console.log('noConditions value:', this.tableData.searchForm.get('options').get('noConditions').value);
-    return checked;
-  }
   excludePreviousTableOptions(i) {
     return this.tableData.tables.names.filter(table => {
       if (this.tableData.searchForm) {
@@ -115,7 +92,7 @@ export class SidebarComponent implements OnInit {
       column: ['ID', Validators.required],
       operator: i > 0 ? ['AND', Validators.required] : [''],
       comparator: ['contains', Validators.required],
-      comparatorVal: ['', Validators.required]
+      comparatorVal: ['']
     });
   }
   createOptions(i) {

@@ -84,7 +84,9 @@
                                     [value]="column"
                                     *ngFor="
                                       let column of tableData.allHeaders[
-                                        tableData.searchForm.get('tableColumns')['controls'][i].controls.table.value.toLowerCase()
+                                        tableData.searchForm
+                                          .get('tableColumns')
+                                          ['controls'][i].controls.table.value.toLowerCase()
                                       ]
                                     "
                                   >
@@ -180,7 +182,9 @@
                                     [value]="column"
                                     *ngFor="
                                       let column of tableData.allHeaders[
-                                        tableData.searchForm.get('conditions')['controls'][i].controls.table.value.toLowerCase()
+                                        tableData.searchForm
+                                          .get('conditions')
+                                          ['controls'][i].controls.table.value.toLowerCase()
                                       ]
                                     "
                                   >
@@ -224,6 +228,9 @@
                           type="submit"
                           class="btn btn-primary mt-4"
                           value="Next Step"
+                          (click)="
+                            tableData.searchForm.get('options')['controls']['noConditions'].value = false; (true)
+                          "
                           [disabled]="tableData.searchForm.get('conditions').invalid"
                         >
                           Next Step: Options
@@ -232,10 +239,7 @@
                           type="submit"
                           class="btn btn-primary mt-4"
                           value="Skip"
-                          (click)="
-                            tableData.searchForm.get('options')['controls']['noConditions'].value = true;
-                            validateNoConditions($event, true)
-                          "
+                          (click)="tableData.searchForm.get('options')['controls']['noConditions'].value = true"
                         >
                           Skip
                         </button>
@@ -259,7 +263,6 @@
                                   class="custom-control-input"
                                   type="checkbox"
                                   id="conditionsCheck"
-                                  (change)="validateNoConditions($event)"
                                   formControlName="noConditions"
                                   #noConditionsInput
                                 />
