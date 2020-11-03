@@ -209,7 +209,51 @@
                             </div>
                             <div class="col-md-6">
                               <div class="form-group">
-                                <input class="form-control" formControlName="comparatorVal" type="text" />
+                                <ng-container
+                                  *ngIf="
+                                    columnSearchArray.includes(
+                                      tableData.searchForm.get('conditions')['controls'][i].controls.column.value
+                                    );
+                                    else comparatorElse
+                                  "
+                                >
+                                  <div class="" ngbDropdown>
+                                    <input
+                                      id="navbarDropdownMenuLink"
+                                      class="form-control dropdown-toggle"
+                                      formControlName="comparatorVal"
+                                      autocomplete="off"
+                                      type="text"
+                                      [(ngModel)]="
+                                        tableData.searchForm.get('conditions')['controls'][i].controls.comparatorVal
+                                          .value
+                                      "
+                                      ngbDropdownToggle
+                                    />
+                                    <ul
+                                      [hidden]="!comparatorSearch(i).length"
+                                      aria-labelledby="navbarDropdownMenuLink"
+                                      ngbDropdownMenu
+                                    >
+                                      <li *ngFor="let item of comparatorSearch(i)">
+                                        <a
+                                          class="dropdown-item"
+                                          href="javascript:void(0)"
+                                          (click)="
+                                            tableData.searchForm.get('conditions')['controls'][
+                                              i
+                                            ].controls.comparatorVal.value = item
+                                          "
+                                        >
+                                          {{ item }}
+                                        </a>
+                                      </li>
+                                    </ul>
+                                  </div>
+                                </ng-container>
+                                <ng-template #comparatorElse>
+                                  <input class="form-control" formControlName="comparatorVal" type="text" />
+                                </ng-template>
                               </div>
                             </div>
                           </div>
@@ -238,10 +282,10 @@
                         <button
                           type="submit"
                           class="btn btn-primary mt-4"
-                          value="Skip"
+                          value="No Conditions"
                           (click)="tableData.searchForm.get('options')['controls']['noConditions'].value = true"
                         >
-                          Skip
+                          No Conditions
                         </button>
                       </div>
                     </form>

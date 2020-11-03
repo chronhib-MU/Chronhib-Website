@@ -1,3 +1,17 @@
+import {
+  Analysis,
+  Augm,
+  CausingMut,
+  Contr,
+  Depend,
+  Depon,
+  Hiat,
+  MSChecked,
+  Mut,
+  PartOfSpeech,
+  Rel,
+  Trans
+} from './../../model/columnOpts.model';
 import { TableDataService } from './../../services/table-data.service';
 import { AuthService } from './../../services/auth.service';
 import { Component, OnInit, ElementRef } from '@angular/core';
@@ -5,6 +19,7 @@ import { Location, LocationStrategy, PathLocationStrategy } from '@angular/commo
 import { Router } from '@angular/router';
 import { AbstractControl, FormArray, FormBuilder, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { NgbModal, ModalDismissReasons } from '@ng-bootstrap/ng-bootstrap';
+import Fuse from 'fuse.js';
 
 declare interface RouteInfo {
   path: string;
@@ -38,6 +53,20 @@ export class SidebarComponent implements OnInit {
 
   public focus;
   public location: Location;
+  public columnSearchArray = [
+    'Analysis',
+    'Augm',
+    'Causing_Mut',
+    'Contr',
+    'Depend',
+    'Depon',
+    'Hiat',
+    'MS_Checked',
+    'Mut',
+    'Part_Of_Speech',
+    'Rel',
+    'Trans'
+  ];
   constructor(
     public authService: AuthService,
     public tableData: TableDataService,
@@ -195,6 +224,54 @@ export class SidebarComponent implements OnInit {
       })
     );
     close();
+  }
+
+  comparatorSearch(index) {
+    const name = this.tableData.searchForm.get('conditions')['controls'][index].controls.column.value;
+    const input = this.tableData.searchForm.get('conditions')['controls'][index].controls.comparatorVal.value;
+    console.log(name);
+
+    let columnVals = [];
+    switch (name) {
+      case 'Analysis':
+        columnVals = Analysis;
+        break;
+      case 'Augm':
+        return Augm;
+      case 'Causing_Mut':
+        return CausingMut;
+      case 'Contr':
+        return Contr;
+      case 'Depend':
+        return Depend;
+      case 'Depon':
+        return Depon;
+      case 'Hiat':
+        return Hiat;
+      case 'MS_Checked':
+        return MSChecked;
+      case 'Mut':
+        return Mut;
+      case 'Part_Of_Speech':
+        columnVals = PartOfSpeech;
+        break;
+      case 'Rel':
+        return Rel;
+      case 'Trans':
+        return Trans;
+      default:
+        break;
+    }
+    const options = {
+      includeScore: true,
+      isCaseSensitive: true
+    };
+
+    const fuse = new Fuse(columnVals, options);
+
+    const result = fuse.search(input);
+    console.log(result);
+    return result.map(res => res.item);
   }
 
   private getDismissReason(reason: any): string {
