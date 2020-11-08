@@ -92,6 +92,15 @@ export class SidebarComponent implements OnInit {
       this.isCollapsed = true;
     });
   }
+  mapSearchData(data) {
+    let res = [];
+    res = data.map(value => ({ name: value.replaceAll('_', ' '), value }));
+    return res;
+  }
+  onItemSelect(item: any, index: number) {
+    console.log(item);
+    this.tableData.searchForm.get('tableColumns')['controls'][index].controls.column.patchValue(['ID']);
+  }
 
   excludePreviousTableOptions(i) {
     return this.tableData.tables.names.filter(table => {
@@ -229,7 +238,6 @@ export class SidebarComponent implements OnInit {
   comparatorSearch(index) {
     const name = this.tableData.searchForm.get('conditions')['controls'][index].controls.column.value;
     const input = this.tableData.searchForm.get('conditions')['controls'][index].controls.comparatorVal.value;
-    console.log(name);
 
     let columnVals = [];
     switch (name) {
@@ -270,7 +278,6 @@ export class SidebarComponent implements OnInit {
     const fuse = new Fuse(columnVals, options);
 
     const result = fuse.search(input);
-    console.log(result);
     return result.map(res => res.item);
   }
 

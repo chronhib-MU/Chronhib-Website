@@ -30,7 +30,13 @@
           <div class="modal-content">
             <div class="modal-header">
               <h3 class="modal-title" id="modal-title-default">Search</h3>
-              <button type="button" class="close" data-dismiss="modal" aria-label="Close" (click)="d('Cross click')">
+              <button
+                type="button"
+                class="close hover-danger"
+                data-dismiss="modal"
+                aria-label="Close"
+                (click)="d('Cross click')"
+              >
                 <span aria-hidden="true">×</span>
               </button>
             </div>
@@ -52,10 +58,10 @@
                       >
                         <div [formGroupName]="i" class="my-2">
                           <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                               <h3>Table:</h3>
                               <div class="form-group">
-                                <select class="form-control" formControlName="table">
+                                <select class="form-control" formControlName="table" (change)="onItemSelect($event, i)">
                                   <option
                                     [value]="table | uppercase"
                                     *ngFor="let table of excludePreviousTableOptions(i)"
@@ -65,7 +71,7 @@
                                 </select>
                               </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-8">
                               <h3>
                                 Columns:
                                 <button
@@ -79,8 +85,39 @@
                                 </button>
                               </h3>
                               <div class="form-group">
-                                <select class="form-control" formControlName="column" multiple>
-                                  <option
+                                <!-- <ng-select
+                                  [items]="
+                                    mapSearchData(
+                                      tableData?.allHeaders[
+                                        tableData.searchForm
+                                          .get('tableColumns')
+                                          ['controls'][i].controls.table.value.toLowerCase()
+                                      ]
+                                    )
+                                  "
+                                  bindLabel="name"
+                                  bindValue="value"
+                                  [multiple]="true"
+                                  placeholder="Select columns"
+                                  clearAllText="Clear"
+                                  [searchable]="true"
+                                  [closeOnSelect]="false"
+                                  formControlName="column"
+                                >
+                                  <ng-template ng-option-tmp let-item="item" let-item$="item$" let-index="index">
+                                    <input id="item-{{ index }}" type="checkbox" [ngModel]="item$.selected" />
+                                    {{ item.name }}
+                                  </ng-template>
+                                </ng-select> -->
+                                <ng-select
+                                  [multiple]="true"
+                                  placeholder="Select columns"
+                                  clearAllText="Clear"
+                                  [searchable]="true"
+                                  [closeOnSelect]="false"
+                                  formControlName="column"
+                                >
+                                  <ng-option
                                     [value]="column"
                                     *ngFor="
                                       let column of tableData.allHeaders[
@@ -90,9 +127,10 @@
                                       ]
                                     "
                                   >
+                                    <!-- <input id="item-{{ index }}" type="checkbox" /> -->
                                     {{ column.replaceAll('_', ' ') }}
-                                  </option>
-                                </select>
+                                  </ng-option>
+                                </ng-select>
                               </div>
                             </div>
                           </div>

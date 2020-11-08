@@ -23,8 +23,9 @@
 select {
   text-rendering: auto !important; // Potential fix for dropdown to safari 14 changes
 }
-.close.danger > span:not(.sr-only) {
-  color: #ff0000;
+.close.danger > span:not(.sr-only),
+.close.hover-danger:hover > span:not(.sr-only) {
+  color: #d0021b;
 }
 .table {
   color: #222;
@@ -111,6 +112,11 @@ select {
 @media screen and (min-width: 768px) {
   html:not(.auth-layout) .main-content {
     margin-left: 0;
+  }
+}
+@media (min-width: 576px) {
+  .modal-dialog {
+    max-width: 600px;
   }
 }
 // @media (min-width: 768px) {
