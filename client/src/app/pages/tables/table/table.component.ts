@@ -120,7 +120,6 @@ export class TableComponent implements OnInit {
     //   });
     // });
   }
-
   ngOnInit(): void {
     const that = this;
     this.sort = false;
@@ -128,35 +127,58 @@ export class TableComponent implements OnInit {
     this.routeQueryParams = this.route.queryParamMap.subscribe(async _paramMap => {
       this.sort = false;
       this.refresh();
-
       // console.log('updated');
     });
     // need this to push the dataset
-    // this.fetchedTable();
     const hooks = Handsontable.hooks.getRegistered();
     hooks.forEach(hook => {
-      if (this.after !== 'search') {
-        // focuses on the results after changes cause they have before and after data
-        if (hook === 'afterChange') {
-          this.hotSettings[that.edit ? 1 : 0][hook] = function () {
-            if (arguments[1] !== 'loadData') {
+      // focuses on the results after changes cause they have before and after data
+      if (hook === 'afterChange') {
+        this.hotSettings[that.edit ? 1 : 0][hook] = function () {
+          let table = that.after;
+          console.log('tableColumn length:', that.tableData.searchForm.get('tableColumns')['controls'].length);
+          if (arguments[1] !== 'loadData') {
+            if (
+              that.after !== 'search' ||
+              (that.tableData.searchForm.get('tableColumns')['controls'].length === 1 &&
+                that.searchTable.headers.includes('ID'))
+            ) {
               // console.log(hook, arguments);
               const tableData = this.getData();
-              // console.log(tableData);
+              const colHeaders: Array<string> = this.getColHeader();
+              console.log('TableData', tableData);
+              console.log('ColHeader', this.getColHeader());
+              console.log(that.searchTable);
               const values = [];
               arguments[0].forEach((value: any[]) => {
-                // console.log('value:', value);
-                if (value[2] !== value[3]) {
+                console.log('value:', value);
+                // Need to find the index of the id
+                const ids = colHeaders.map((val, index) => ({ val, index })).filter(obj => obj.val === 'Id');
+                // console.log('ids', ids);
+                // Makes sure the edit is not an irrelevant one
+                if (value[2] !== value[3] && ids.length) {
                   const fieldProperty = value[1];
-                  values.push({
-                    id: tableData[value[0]][1],
+                  const id = tableData[value[0]][ids.slice(-1)[0].index];
+                  // console.log('id', id);
+                  const result = {
+                    id,
                     fieldProperty,
                     fieldValue: value[3]
-                  });
+                  };
+                  if (table === 'search') {
+                    that.tableData.tables.names.forEach(name => {
+                      if (that.tableData.allHeaders[name].includes(value[1])) {
+                        table = name;
+                        return;
+                      }
+                    });
+                  }
+
+                  values.push(result);
                 }
               });
               const res = {
-                table: that.after,
+                table,
                 command: arguments[1],
                 values,
                 user: that.authService.user
@@ -173,72 +195,87 @@ export class TableComponent implements OnInit {
                   // that.refresh();
                 });
               }
+            } else if (that.searchTable.headers.includes('ID')) {
+              that.authService.showToaster(
+                'Edits on cross-table search results are not allowed.',
+                'Invalid Edit!',
+                'error'
+              );
+            } else {
+              that.authService.showToaster('No ID column found on search table.', 'Invalid Edit!', 'error');
             }
-          };
-        } else if (hook === 'afterRowMove') {
-          // TODO: refactor this
-          this.hotSettings[that.edit ? 1 : 0][hook] = function () {
-            // console.log(this);
-            const tableData = this.getData();
-            const newValues = tableData.map((row: { [x: string]: any }, i: number) => {
-              const sortId = i + 1;
-              return { ID: row['1'], Sort_ID: sortId };
-            });
+          }
+        };
+      } else if (hook === 'afterRowMove' && this.after !== 'search') {
+        // TODO: refactor this
+        this.hotSettings[that.edit ? 1 : 0][hook] = function () {
+          // console.log(this);
+          const tableData = this.getData();
+          const newValues = tableData.map((row: { [x: string]: any }, i: number) => {
+            const sortId = i + 1;
+            return { ID: row['1'], Sort_ID: sortId };
+          });
 
-            const res: ApiPostBody = {
-              table: that.after,
-              command: 'moveRow',
-              values: [newValues],
-              user: that.authService.user
-            };
-            // console.log('Result:', res);
-            // Checks for which table we're making changes on
-            if (this.rootElement.id === 'hotMini') {
-              res.table = that.before;
-            }
-            // console.log('Result:', res);
-            if (that.edit) {
-              that.tableData.updateTable(res).then(() => {
-                that.history.push(res);
-                // console.log('History: ', that.history);
-                // that.refresh();
-              });
-            }
+          const res: ApiPostBody = {
+            table: that.after,
+            command: 'moveRow',
+            values: [newValues],
+            user: that.authService.user
           };
-        } else if (hook === 'afterCreateRow') {
-          // TODO: And this
-          this.hotSettings[that.edit ? 1 : 0][hook] = function () {
-            // console.log(this);
-            const tableData = this.getData();
-            const newValues = tableData.map((row: { [x: string]: any }, i: number) => {
-              const sortId = i + 1;
-              return { ID: row['1'], Sort_ID: sortId };
+          // console.log('Result:', res);
+          // Checks for which table we're making changes on
+          if (this.rootElement.id === 'hotMini') {
+            res.table = that.before;
+          }
+          // console.log('Result:', res);
+          if (that.edit) {
+            that.tableData.updateTable(res).then(() => {
+              that.history.push(res);
+              // console.log('History: ', that.history);
+              // that.refresh();
             });
-            const res: ApiPostBody = {
-              table: that.after,
-              command: 'createRow',
-              values: [newValues],
-              user: that.authService.user
-            };
-            console.log('Result:', res);
-            // Checks for which table we're making changes on
-            if (this.rootElement.id === 'hotMini') {
-              res.table = that.before;
-            }
-            // console.log('Result:', res);
-            if (that.edit) {
-              that.tableData.updateTable(res).then(() => {
-                that.history.push(res);
-                console.log('History: ', that.history);
-                that.refresh();
-              });
-            }
+          }
+        };
+      } else if (hook === 'afterCreateRow' && this.after !== 'search') {
+        // TODO: And this
+        this.hotSettings[that.edit ? 1 : 0][hook] = function () {
+          // console.log(this);
+          const tableData = this.getData();
+          const newValues = tableData.map((row: { [x: string]: any }, i: number) => {
+            const sortId = i + 1;
+            return { ID: row['1'], Sort_ID: sortId };
+          });
+          const res: ApiPostBody = {
+            table: that.after,
+            command: 'createRow',
+            values: [newValues],
+            user: that.authService.user
           };
-        }
+          console.log('Result:', res);
+          // Checks for which table we're making changes on
+          if (this.rootElement.id === 'hotMini') {
+            res.table = that.before;
+          }
+          // console.log('Result:', res);
+          if (that.edit) {
+            that.tableData.updateTable(res).then(() => {
+              that.history.push(res);
+              // console.log('History: ', that.history);
+              // that.refresh();
+            });
+          }
+        };
       }
     });
 
     // $hooksList = $('#hooksList');
+  }
+  copyToClipboard() {
+    $('body').append('<input id="copyURL" type="text" value="" />');
+    $('#copyURL').val(window.location.href).select();
+    document.execCommand('copy');
+    $('#copyURL').remove();
+    this.authService.showToaster('', 'Search Link Copied to Clipboard!', 'info');
   }
   async fetchedTable() {
     if (this.hotRegisterer.getInstance(this.instance + 'Mini')) {
@@ -252,9 +289,10 @@ export class TableComponent implements OnInit {
       });
     }
     try {
-      const { data } = await this.tableData.fetchedTable.toPromise();
-      console.table('After: ' + this.after);
-      console.table('Before: ' + this.before);
+      const fetchedData = await this.tableData.fetchedTable.toPromise();
+      const data = fetchedData.data;
+      // console.table('After: ' + this.after);
+      // console.table('Before: ' + this.before);
       // console.log(`Datatable[${this.after}]: `, data.afterTable);
 
       // If this is a scenario where there is a before table
@@ -280,6 +318,7 @@ export class TableComponent implements OnInit {
       }
     } catch (error) {
       console.error('Invalid request made!', error);
+      // TODO: Should redirect Search Query not found page
       return error;
     }
     this.columns = [];

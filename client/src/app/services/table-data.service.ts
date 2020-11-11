@@ -1,7 +1,7 @@
 import { AuthService } from './auth.service';
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
+import { Observable, Subject, throwError } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { ApiGetQuery } from '../interfaces/api-get-query';
 import { ApiPostBody } from '../interfaces/api-post-body';
@@ -36,6 +36,8 @@ export class TableDataService {
   currentApiQuery: any;
   searchTable = { headers: [], data: [] };
   searchForm: FormGroup;
+  searchQuerySub: Subject<any> = new Subject<FormGroup>();
+  data: any;
   constructor(private router: Router, private http: HttpClient, private authService: AuthService) {}
 
   // Fetches the headers for each table
@@ -82,38 +84,17 @@ export class TableDataService {
         //   .join('&');
         console.log(apiQuery);
         const search = apiQuery.search === 'true' ? true : false;
-        if (search) {
-          const searchFormValue = JSON.parse(localStorage.getItem(apiQuery.id));
-          if (searchFormValue) {
-            console.log(searchFormValue);
-            this.fetchedTable = this.http.post(`${environment.apiUrl}?`, searchFormValue, {
-              headers: { 'content-type': 'application/json' }
-            }) as Observable<{
-              data: { afterTable: []; beforeTable: [] };
-            }>;
-          } else {
-            this.router.navigate(['/tables'], {
-              queryParams: {
-                page: 0,
-                limit: 0,
-                fprop: '',
-                fval: '',
-                dtable: 'text',
-                ctable: 'text',
-                search: false
-              }
-            });
-          }
-        } else {
-          const queryString = qs.stringify(apiQuery);
-          this.fetchedTable = this.http.get(`${environment.apiUrl}?${queryString}`) as Observable<{
-            data: { afterTable: []; beforeTable: [] };
-          }>;
-        }
+        const queryString = qs.stringify(apiQuery);
+        this.fetchedTable = this.http.get(`${environment.apiUrl}?${queryString}`) as Observable<{
+          data: { afterTable: []; beforeTable: [] };
+        }>;
         const fetchedData = await this.fetchedTable.toPromise();
         const data = fetchedData.data;
-        console.log(apiQuery.search);
         if (search) {
+          // beforeTable contains the Search Query
+          // console.log(data.beforeTable);
+          this.searchQuerySub.next(data.beforeTable);
+          // afterTable contains the Search Result Data
           this.searchTable.data = data.afterTable;
           if (this.searchTable.data[0]) {
             this.searchTable.headers = Object.keys(this.searchTable.data[0]);

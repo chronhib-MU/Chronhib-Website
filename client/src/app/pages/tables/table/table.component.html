@@ -9,7 +9,13 @@
             </h5>
             <h2 class="mb-0 font-weight-bolder text-dark">
               {{ after | titlecase }}
-              <span *ngIf="after === 'search'"> {{ ' Results - ' + this.searchTable.data.length + ' matches' }}</span>
+              <span *ngIf="after === 'search'">
+                {{ ' Results '
+                }}<a class="text-primary pointer" placement="top" ngbTooltip="Click to copy Search URL" (click)="copyToClipboard()">
+                  {{ '#' + tableData.currentApiQuery.id }}
+                </a>
+                {{ ' - ' + this.searchTable.data.length + ' matches' }}
+              </span>
               <span *ngIf="after !== 'text' && tableData.currentApiQuery.fval">
                 {{ ' - ' + tableData.currentApiQuery.fval }}
               </span>
@@ -17,7 +23,11 @@
           </div>
 
           <div class="btn-group col-auto pr-0">
-            <label class="btn btn-secondary px-3 py-2" (click)="toggleMode('edit')">
+            <label
+              class="btn btn-secondary px-3 py-2"
+              (click)="toggleMode('edit')"
+              *ngIf="after !== 'search' || tableData.searchForm.get('tableColumns')['controls'].length === 1"
+            >
               Edit <i class="fa fa-toggle-on" *ngIf="edit"></i><i class="fa fa-toggle-off" *ngIf="!edit"></i>
             </label>
             <label

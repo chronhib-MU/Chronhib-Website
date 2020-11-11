@@ -40,18 +40,20 @@
                 <span aria-hidden="true">×</span>
               </button>
             </div>
-            <ngb-tabset
-              [justify]="'center'"
-              class="custom-tab-content flex-column flex-md-row"
-              type="pills"
-              #searchTabset
+            <ul
+              ngbNav
+              #nav="ngbNav"
+              [(activeId)]="active"
+              class="nav nav-pills nav-fill flex-column flex-md-row px-3"
+              id="tabs-icons-text"
+              role="tablist"
             >
               <!-- Tables & Columns Tab -->
-              <ngb-tab id="tableColumns">
-                <ng-template ngbTabTitle><b>Tables & Columns</b></ng-template>
-                <ng-template ngbTabContent>
+              <li [ngbNavItem]="'tableColumns'">
+                <a ngbNavLink><b>Tables & Columns</b></a>
+                <ng-template ngbNavContent>
                   <div class="modal-body">
-                    <form role="form" [formGroup]="tableData.searchForm" (ngSubmit)="searchTabset.select('conditions')">
+                    <form role="form" [formGroup]="tableData.searchForm" (ngSubmit)="nav.select('conditions')">
                       <div
                         formArrayName="tableColumns"
                         *ngFor="let column of tableData.searchForm.get('tableColumns')['controls']; let i = index"
@@ -85,31 +87,14 @@
                                 </button>
                               </h3>
                               <div class="form-group">
-                                <!-- <ng-select
-                                  [items]="
-                                    mapSearchData(
-                                      tableData?.allHeaders[
-                                        tableData.searchForm
-                                          .get('tableColumns')
-                                          ['controls'][i].controls.table.value.toLowerCase()
-                                      ]
-                                    )
-                                  "
-                                  bindLabel="name"
-                                  bindValue="value"
-                                  [multiple]="true"
-                                  placeholder="Select columns"
-                                  clearAllText="Clear"
-                                  [searchable]="true"
-                                  [closeOnSelect]="false"
-                                  formControlName="column"
-                                >
-                                  <ng-template ng-option-tmp let-item="item" let-item$="item$" let-index="index">
-                                    <input id="item-{{ index }}" type="checkbox" [ngModel]="item$.selected" />
-                                    {{ item.name }}
-                                  </ng-template>
-                                </ng-select> -->
                                 <ng-select
+                                  [items]="
+                                    tableData.allHeaders[
+                                      tableData.searchForm
+                                        .get('tableColumns')
+                                        ['controls'][i].controls.table.value.toLowerCase()
+                                    ]
+                                  "
                                   [multiple]="true"
                                   placeholder="Select columns"
                                   clearAllText="Clear"
@@ -117,19 +102,35 @@
                                   [closeOnSelect]="false"
                                   formControlName="column"
                                 >
-                                  <ng-option
-                                    [value]="column"
-                                    *ngFor="
-                                      let column of tableData.allHeaders[
-                                        tableData.searchForm
-                                          .get('tableColumns')
-                                          ['controls'][i].controls.table.value.toLowerCase()
-                                      ]
-                                    "
-                                  >
-                                    <!-- <input id="item-{{ index }}" type="checkbox" /> -->
-                                    {{ column.replaceAll('_', ' ') }}
-                                  </ng-option>
+                                  <ng-template ng-header-tmp>
+                                    <button type="button" (click)="selectAll(i)" class="btn btn-sm btn-default">
+                                      Select all
+                                    </button>
+                                    <button type="button" (click)="unselectAll(i)" class="btn btn-sm btn-default">
+                                      Unselect all
+                                    </button>
+                                  </ng-template>
+                                  <ng-template ng-footer-tmp>
+                                    Columns Selected:
+                                    {{
+                                      tableData.searchForm.get('tableColumns')['controls'][i].controls.column.value
+                                        .length
+                                    }}
+                                  </ng-template>
+                                  <ng-template ng-multi-label-tmp let-items="items" let-clear="clear">
+                                    <div class="ng-value" *ngFor="let item of items | slice: 0:2">
+                                      <span class="ng-value-label">{{ item.replaceAll('_', ' ') }}</span>
+                                      <span class="ng-value-icon right" (click)="clear(item)" aria-hidden="true"
+                                        >×</span
+                                      >
+                                    </div>
+                                    <div class="ng-value" *ngIf="items.length > 2">
+                                      <span class="ng-value-label">{{ items.length - 2 }} more...</span>
+                                    </div>
+                                  </ng-template>
+                                  <ng-template ng-option-tmp let-item="item">
+                                    {{ item.replaceAll('_', ' ') }}
+                                  </ng-template>
                                 </ng-select>
                               </div>
                             </div>
@@ -157,151 +158,200 @@
                       </div>
                     </form>
                   </div>
-                  <!-- <div class="modal-footer">
-              {{ 'Final Query: \n' + finalQuery }}
-            </div> -->
                 </ng-template>
-              </ngb-tab>
+              </li>
               <!-- Conditions Tab -->
-              <ngb-tab id="conditions">
-                <ng-template ngbTabTitle><b>Conditions</b></ng-template>
-                <ng-template ngbTabContent>
+              <li [ngbNavItem]="'conditions'">
+                <a ngbNavLink><b>Conditions</b></a>
+                <ng-template ngbNavContent>
                   <div class="modal-body">
-                    <form role="form" [formGroup]="tableData.searchForm" (ngSubmit)="searchTabset.select('options')">
-                      <div
-                        formArrayName="conditions"
-                        *ngFor="let column of tableData.searchForm.get('conditions')['controls']; let i = index"
-                      >
-                        <div [formGroupName]="i" class="my-2">
-                          <!-- Operator Row -->
-                          <div class="row justify-content-center" *ngIf="i > 0">
-                            <div class="col-4">
-                              <div class="form-group">
-                                <select class="form-control" formControlName="operator">
-                                  <option [value]="'AND'">AND</option>
-                                  <option [value]="'OR'">OR</option>
-                                  <option [value]="'NOT'">NOT</option>
-                                </select>
-                              </div>
-                            </div>
-                          </div>
-                          <h3>
-                            {{ 'Condition ' + (i + 1) }}
-                          </h3>
-                          <div class="row">
-                            <div class="col-md-6">
-                              <h4>Table:</h4>
-                              <div class="form-group">
-                                <!-- <input class="form-control" formControlName="table" /> -->
-                                <select class="form-control" formControlName="table">
-                                  <option [value]="table.toUpperCase()" *ngFor="let table of tableData.tables.names">
-                                    {{ table | uppercase }}
-                                  </option>
-                                </select>
-                              </div>
-                            </div>
-                            <div class="col-md-6">
-                              <h4>
-                                Column:
-                                <button
-                                  *ngIf="i > 0 || tableData.searchForm.get('conditions')['controls'].length > 1"
-                                  type="button"
-                                  class="close danger"
-                                  aria-label="Close"
-                                  (click)="removeFormGroup('conditions', i)"
-                                >
-                                  <span aria-hidden="true">×</span>
-                                </button>
-                              </h4>
-                              <div class="form-group">
-                                <!-- <input class="form-control" formControlName="column" /> -->
-                                <select class="form-control" formControlName="column">
-                                  <option
-                                    [value]="column"
-                                    *ngFor="
-                                      let column of tableData.allHeaders[
-                                        tableData.searchForm
-                                          .get('conditions')
-                                          ['controls'][i].controls.table.value.toLowerCase()
-                                      ]
-                                    "
-                                  >
-                                    {{ column.replaceAll('_', ' ') }}
-                                  </option>
-                                </select>
-                              </div>
-                            </div>
-                          </div>
-                          <div class="row">
-                            <div class="col-md-6">
-                              <div class="form-group">
-                                <select class="form-control" formControlName="comparator">
-                                  <option [value]="'contains'">contains</option>
-                                  <option [value]="'starts with'">starts with</option>
-                                  <option [value]="'ends with'">ends with</option>
-                                  <option [value]="'LIKE'">like</option>
-                                  <option [value]="'='">equal to</option>
-                                  <option [value]="'!='">not equal to</option>
-                                </select>
-                              </div>
-                            </div>
-                            <div class="col-md-6">
-                              <div class="form-group">
-                                <ng-container
-                                  *ngIf="
-                                    columnSearchArray.includes(
-                                      tableData.searchForm.get('conditions')['controls'][i].controls.column.value
-                                    );
-                                    else comparatorElse
-                                  "
-                                >
-                                  <div class="" ngbDropdown>
-                                    <input
-                                      id="navbarDropdownMenuLink"
-                                      class="form-control dropdown-toggle"
-                                      formControlName="comparatorVal"
-                                      autocomplete="off"
-                                      type="text"
-                                      [(ngModel)]="
-                                        tableData.searchForm.get('conditions')['controls'][i].controls.comparatorVal
-                                          .value
-                                      "
-                                      ngbDropdownToggle
-                                    />
-                                    <ul
-                                      [hidden]="!comparatorSearch(i).length"
-                                      aria-labelledby="navbarDropdownMenuLink"
-                                      ngbDropdownMenu
-                                    >
-                                      <li *ngFor="let item of comparatorSearch(i)">
-                                        <a
-                                          class="dropdown-item"
-                                          href="javascript:void(0)"
-                                          (click)="
-                                            tableData.searchForm.get('conditions')['controls'][
-                                              i
-                                            ].controls.comparatorVal.value = item
-                                          "
-                                        >
-                                          {{ item }}
-                                        </a>
-                                      </li>
-                                    </ul>
+                    <form role="form" [formGroup]="tableData.searchForm" (ngSubmit)="nav.select('options')">
+                      <ngb-accordion [closeOthers]="true" #conditionsAcc="ngbAccordion" activeIds="condition-0">
+                        <ngb-panel
+                          [id]="'condition-' + i"
+                          formArrayName="conditions"
+                          *ngFor="let column of tableData.searchForm.get('conditions')['controls']; let i = index"
+                        >
+                          <ng-template ngbPanelHeader let-opened="opened">
+                            <button class="btn text-default btn-link m-0 p-0" ngbPanelToggle>
+                              <b>{{ 'Condition #' + (i + 1) }}</b>
+                            </button>
+                            <button
+                              *ngIf="i > 0 || tableData.searchForm.get('conditions')['controls'].length > 1"
+                              type="button"
+                              class="close danger ml-2"
+                              aria-label="Close"
+                              (click)="removeFormGroup('conditions', i, conditionsAcc)"
+                            >
+                              <i class="ni ni-fat-delete" aria-hidden="true"></i>
+                            </button>
+                            <button type="button" class="close" ngbPanelToggle>
+                              <i *ngIf="opened" class="ni ni-bold-down" aria-hidden="true"></i>
+                              <i *ngIf="!opened" class="ni ni-bold-left" aria-hidden="true"></i>
+                            </button>
+                          </ng-template>
+                          <ng-template ngbPanelContent>
+                            <div [formGroupName]="i" class="my-2">
+                              <div class="row">
+                                <!-- Operator Row -->
+                                <div class="col-md-3" *ngIf="i > 0">
+                                  <div class="form-group">
+                                    <select class="form-control" formControlName="operator">
+                                      <option [value]="'AND'">AND</option>
+                                      <option [value]="'OR'">OR</option>
+                                    </select>
                                   </div>
-                                </ng-container>
-                                <ng-template #comparatorElse>
-                                  <input class="form-control" formControlName="comparatorVal" type="text" />
-                                </ng-template>
+                                </div>
+                                <div class="col-md-3">
+                                  <div class="form-group">
+                                    <select class="form-control" formControlName="negated">
+                                      <option [value]="''"></option>
+                                      <option [value]="'NOT'">NOT</option>
+                                    </select>
+                                  </div>
+                                </div>
+                                <div class="col">
+                                  <div class="form-group">
+                                    <div class="custom-control custom-checkbox my-2">
+                                      <input
+                                        class="custom-control-input"
+                                        type="checkbox"
+                                        [id]="'caseSensitive' + i"
+                                        formControlName="caseSensitive"
+                                      />
+                                      <label class="custom-control-label" [for]="'caseSensitive' + i">
+                                        Case Sensitive Search?
+                                      </label>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                              <div class="row">
+                                <div class="col-md-6">
+                                  <h4>Table:</h4>
+                                  <div class="form-group">
+                                    <!-- <input class="form-control" formControlName="table" /> -->
+                                    <select class="form-control" formControlName="table">
+                                      <option
+                                        [value]="table.toUpperCase()"
+                                        *ngFor="let table of tableData.tables.names"
+                                      >
+                                        {{ table | uppercase }}
+                                      </option>
+                                    </select>
+                                  </div>
+                                </div>
+                                <div class="col-md-6">
+                                  <h4>Column:</h4>
+                                  <div class="form-group">
+                                    <!-- <input class="form-control" formControlName="column" /> -->
+                                    <select class="form-control" formControlName="column">
+                                      <option
+                                        [value]="column"
+                                        *ngFor="
+                                          let column of tableData.allHeaders[
+                                            tableData.searchForm
+                                              .get('conditions')
+                                              ['controls'][i].controls.table.value.toLowerCase()
+                                          ]
+                                        "
+                                      >
+                                        {{ column.replaceAll('_', ' ') }}
+                                      </option>
+                                    </select>
+                                  </div>
+                                </div>
+                              </div>
+                              <div class="row">
+                                <div class="col-md-6">
+                                  <div class="form-group">
+                                    <select class="form-control" formControlName="comparator">
+                                      <option [value]="'contains'">contains</option>
+                                      <option [value]="'starts with'">starts with</option>
+                                      <option [value]="'ends with'">ends with</option>
+                                      <option [value]="'LIKE'">like</option>
+                                      <option [value]="'='">equal to</option>
+                                      <option [value]="'!='">not equal to</option>
+                                    </select>
+                                  </div>
+                                </div>
+                                <div class="col-md-6">
+                                  <div class="form-group">
+                                    <ng-container
+                                      *ngIf="
+                                        columnSearchArray.includes(
+                                          tableData.searchForm.get('conditions')['controls'][i].controls.column.value
+                                        );
+                                        else comparatorElse
+                                      "
+                                    >
+                                      <div ngbDropdown>
+                                        <input
+                                          [id]="'navbarDropdownMenuLink' + i"
+                                          class="form-control dropdown-toggle"
+                                          formControlName="comparatorVal"
+                                          autocomplete="off"
+                                          type="text"
+                                          [value]="
+                                            tableData.searchForm.get('conditions')['controls'][i].controls.comparatorVal
+                                              .value
+                                          "
+                                          placement="right"
+                                          [ngbTooltip]="
+                                            tableData.searchForm.get('conditions')['controls'][i].controls.comparator
+                                              .value === 'LIKE'
+                                              ? 'Remember to use \'%\' instead of \'*\' for wildcards e.g. gen.%.fem.'
+                                              : ''
+                                          "
+                                          ngbDropdownToggle
+                                        />
+                                        <ul
+                                          [hidden]="!comparatorSearch(i).length"
+                                          attr.aria-labelledby="{{ 'navbarDropdownMenuLink' + i }}"
+                                          ngbDropdownMenu
+                                        >
+                                          <li *ngFor="let item of comparatorSearch(i)">
+                                            <a
+                                              class="dropdown-item"
+                                              href="javascript:void(0)"
+                                              (click)="
+                                                tableData.searchForm.get('conditions')['controls'][
+                                                  i
+                                                ].controls.comparatorVal.value = item
+                                              "
+                                            >
+                                              {{ item }}
+                                            </a>
+                                          </li>
+                                        </ul>
+                                      </div>
+                                    </ng-container>
+                                    <ng-template #comparatorElse>
+                                      <input
+                                        class="form-control"
+                                        formControlName="comparatorVal"
+                                        type="text"
+                                        placement="right"
+                                        [ngbTooltip]="
+                                          tableData.searchForm.get('conditions')['controls'][i].controls.comparator
+                                            .value === 'LIKE'
+                                            ? 'Remember to use \'%\' instead of \'*\' for wildcards e.g. gen.%.fem.'
+                                            : ''
+                                        "
+                                      />
+                                    </ng-template>
+                                  </div>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        </div>
-                      </div>
+                          </ng-template>
+                        </ngb-panel>
+                      </ngb-accordion>
                       <button
                         type="button"
-                        class="btn btn-secondary"
+                        class="btn btn-secondary mt-4"
                         value="Add More Conditions"
-                        (click)="addFormGroup('conditions')"
+                        (click)="addFormGroup('conditions', conditionsAcc)"
                       >
                         Add More Conditions
                       </button>
@@ -329,11 +379,11 @@
                     </form>
                   </div>
                 </ng-template>
-              </ngb-tab>
+              </li>
               <!-- Options Tab -->
-              <ngb-tab id="options">
-                <ng-template ngbTabTitle><b>Options</b></ng-template>
-                <ng-template ngbTabContent>
+              <li [ngbNavItem]="'options'">
+                <a ngbNavLink><b>Options</b></a>
+                <ng-template ngbNavContent>
                   <div class="modal-body">
                     <form role="form" [formGroup]="tableData.searchForm" (ngSubmit)="searchTable(c)">
                       <div formGroupName="options" class="my-2">
@@ -410,12 +460,10 @@
                       </div>
                     </form>
                   </div>
-                  <!-- <div class="modal-footer">
-              {{ 'Final Query: \n' + finalQuery }}
-            </div> -->
                 </ng-template>
-              </ngb-tab>
-            </ngb-tabset>
+              </li>
+            </ul>
+            <div [ngbNavOutlet]="nav" class="mt-2"></div>
           </div>
         </ng-template>
         <div class="dropdown-menu-arrow dropdown-menu-right" ngbDropdownMenu>

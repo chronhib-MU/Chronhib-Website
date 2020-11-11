@@ -14,12 +14,14 @@ import {
 } from './../../model/columnOpts.model';
 import { TableDataService } from './../../services/table-data.service';
 import { AuthService } from './../../services/auth.service';
-import { Component, OnInit, ElementRef } from '@angular/core';
+import { Component, OnInit, ElementRef, OnDestroy } from '@angular/core';
 import { Location, LocationStrategy, PathLocationStrategy } from '@angular/common';
 import { Router } from '@angular/router';
 import { AbstractControl, FormArray, FormBuilder, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { NgbModal, ModalDismissReasons } from '@ng-bootstrap/ng-bootstrap';
 import Fuse from 'fuse.js';
+import { HttpClient } from '@angular/common/http';
+import { environment } from 'src/environments/environment';
 
 declare interface RouteInfo {
   path: string;
@@ -45,7 +47,7 @@ export const ROUTES: RouteInfo[] = [
   templateUrl: './sidebar.component.html',
   styleUrls: ['./sidebar.component.scss']
 })
-export class SidebarComponent implements OnInit {
+export class SidebarComponent implements OnInit, OnDestroy {
   closeResult: string;
 
   public menuItems: any[];
@@ -67,16 +69,34 @@ export class SidebarComponent implements OnInit {
     'Rel',
     'Trans'
   ];
+  active = 'tableColumns';
+  searchQuerySub$: any;
   constructor(
     public authService: AuthService,
     public tableData: TableDataService,
     location: Location,
     private element: ElementRef,
+    private http: HttpClient,
     private router: Router,
     private fb: FormBuilder,
     private modalService: NgbModal
   ) {
     this.location = location;
+    this.searchQuerySub$ = this.tableData.searchQuerySub.subscribe(searchQueryVal => {
+      const { tableColumns, conditions, options } = searchQueryVal;
+      tableColumns.forEach((tableColumn, index) => {
+        if (index > 0) {
+          this.addFormGroup('tableColumns');
+        }
+      });
+      conditions.forEach((condition, index) => {
+        if (index > 0) {
+          this.addFormGroup('conditions');
+        }
+      });
+      this.tableData.searchForm.patchValue(searchQueryVal);
+      this.tableData.searchForm.updateValueAndValidity();
+    });
   }
 
   ngOnInit() {
@@ -92,14 +112,32 @@ export class SidebarComponent implements OnInit {
       this.isCollapsed = true;
     });
   }
+  ngOnDestroy(): void {
+    // Called once, before the instance is destroyed.
+    // Add 'implements OnDestroy' to the class.
+    this.searchQuerySub$.unsubscribe();
+  }
   mapSearchData(data) {
     let res = [];
     res = data.map(value => ({ name: value.replaceAll('_', ' '), value }));
     return res;
   }
   onItemSelect(item: any, index: number) {
-    console.log(item);
+    // console.log(item);
     this.tableData.searchForm.get('tableColumns')['controls'][index].controls.column.patchValue(['ID']);
+  }
+  selectAll(i) {
+    return this.tableData.searchForm
+      .get('tableColumns')
+      ['controls'][i].controls.column.patchValue(
+        this.tableData.allHeaders[
+          this.tableData.searchForm.get('tableColumns')['controls'][i].controls.table.value.toLowerCase()
+        ]
+      );
+  }
+
+  unselectAll(i) {
+    return this.tableData.searchForm.get('tableColumns')['controls'][i].controls.column.patchValue([]);
   }
 
   excludePreviousTableOptions(i) {
@@ -128,6 +166,8 @@ export class SidebarComponent implements OnInit {
     return this.fb.group({
       table: ['TEXT', Validators.required],
       column: ['ID', Validators.required],
+      negated: [''],
+      caseSensitive: [true, Validators.required],
       operator: i > 0 ? ['AND', Validators.required] : [''],
       comparator: ['contains', Validators.required],
       comparatorVal: ['']
@@ -141,7 +181,7 @@ export class SidebarComponent implements OnInit {
     };
   }
 
-  addFormGroup(column) {
+  addFormGroup(column, conditionsAcc?) {
     switch (column) {
       case 'tableColumns':
         (this.tableData.searchForm.controls[column] as FormArray).push(
@@ -152,24 +192,38 @@ export class SidebarComponent implements OnInit {
         (this.tableData.searchForm.controls[column] as FormArray).push(
           this.createConditions((this.tableData.searchForm.controls[column] as FormArray).length)
         );
+        if (conditionsAcc) {
+          setTimeout(() => {
+            conditionsAcc.toggle('condition-' + (this.tableData.searchForm.get('conditions')['controls'].length - 1));
+          }, 1);
+        }
         break;
       default:
         break;
     }
   }
-  removeFormGroup(column, index) {
+  removeFormGroup(column, index, conditionsAcc?) {
     switch (column) {
       case 'tableColumns':
         (this.tableData.searchForm.controls[column] as FormArray).removeAt(index);
         break;
       case 'conditions':
         (this.tableData.searchForm.controls[column] as FormArray).removeAt(index);
+        if (
+          conditionsAcc.activeIds[0] ===
+          'condition-' + this.tableData.searchForm.get('conditions')['controls'].length
+        ) {
+          setTimeout(() => {
+            console.log(conditionsAcc);
+
+            conditionsAcc.toggle('condition-' + (this.tableData.searchForm.get('conditions')['controls'].length - 1));
+          }, 1);
+        }
         break;
       default:
         break;
     }
   }
-
   resetForm() {
     this.tableData.searchForm = this.fb.group({
       tableColumns: this.fb.array([this.createTableColumns(0)]),
@@ -213,11 +267,20 @@ export class SidebarComponent implements OnInit {
     }
   }
 
-  searchTable(close) {
+  async searchTable(close) {
     console.log(this.tableData.searchForm.value);
-    const id = performance.now().toString().split('.').join('');
+    console.log('Users Email:', this.authService.user.email);
+
+    const id = await this.http
+      .post(
+        `${environment.apiUrl}?`,
+        { query: JSON.stringify(this.tableData.searchForm.value), creator: this.authService.user.email || null },
+        {
+          headers: { 'content-type': 'application/json' }
+        }
+      )
+      .toPromise();
     console.log(id);
-    localStorage.setItem(id, JSON.stringify(this.tableData.searchForm.value));
     this.router.navigateByUrl('/', { skipLocationChange: true }).then(() =>
       this.router.navigate(['/tables'], {
         queryParams: {

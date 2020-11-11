@@ -405,179 +405,216 @@ app.post(`/${appName}/api/`, (req, res, next) => {
       });
     }
   } else {
-    /**
-     * Search Feature - Backend
-     */
-
-    // console.log('tableColumn', req.body);
-    const { conditions, options, tableColumns } = req.body;
-
-    // Select
-    const selectedTableColumns = []; // ['`TEXT`.`Text_ID`', '`SENTENCES`.`Textual_Unit`']
-    const selectStart = options.duplicateRows ? 'SELECT ' : 'SELECT DISTINCT ';
-    tableColumns.forEach(obj => {
-      Object.values(obj.column).forEach(column => selectedTableColumns.push(obj.table + '.' + column));
-    });
-    let selectedTables = tableColumns.map(tableColumn => tableColumn.table);
-
-    // From
-    if (!options.noConditions) selectedTables = selectedTables.concat(conditions.map(condition => condition.table));
-    // Removes Duplicate Tables
-    selectedTables = selectedTables.filter((table, index) => selectedTables.indexOf(table) === index);
-    /** Now we know what tables need to be joined
-     *  We need to add MORPHOLOGY to the list of tables to be joined -
-     *  if there are more than 2 tables and 1 of them is LEMMATA,
-     *  since it's the link to the other tables
-     */
-    const fromInnerJoins = [' FROM'];
-    if (selectedTables.length > 1 && !options.noConditions) {
-      fromInnerJoins.push(selectedTables[0]);
-      if (selectedTables.includes('LEMMATA') && !selectedTables.includes('MORPHOLOGY')) {
-        selectedTables.push('MORPHOLOGY');
-      }
-      const innerJoinConnections = {
-        TEXT: {
-          SENTENCES: `INNER JOIN SENTENCES ON TEXT.Text_ID = SENTENCES.Text_ID`,
-          MORPHOLOGY: `INNER JOIN MORPHOLOGY ON TEXT.Text_ID = MORPHOLOGY.Text_ID`
-        },
-        SENTENCES: {
-          TEXT: `INNER JOIN TEXT ON SENTENCES.Text_ID = TEXT.Text_ID`,
-          MORPHOLOGY: `INNER JOIN MORPHOLOGY ON SENTENCES.Text_Unit_ID = MORPHOLOGY.Text_Unit_ID`
-        },
-        MORPHOLOGY: {
-          TEXT: `INNER JOIN TEXT ON MORPHOLOGY.Text_ID = TEXT.Text_ID`,
-          SENTENCES: `INNER JOIN SENTENCES ON MORPHOLOGY.Text_Unit_ID = SENTENCES.Text_Unit_ID`,
-          LEMMATA: `INNER JOIN LEMMATA ON MORPHOLOGY.Lemma = LEMMATA.Lemma`
-        },
-        LEMMATA: {
-          MORPHOLOGY: `INNER JOIN MORPHOLOGY ON LEMMATA.Lemma = MORPHOLOGY.Lemma`
-        }
-      };
-      // This is to stop sql from complaining about non-unique tables/aliases
-      let unique = {
-        TEXT: true,
-        SENTENCES: true,
-        MORPHOLOGY: true,
-        LEMMATA: true
-      };
-      if (selectedTables.length > 1) {
-        for (let i = 0; i < selectedTables.length; i++) {
-          const tableI = selectedTables[i];
-          for (let j = 1; j < selectedTables.length; j++) {
-            const tableJ = selectedTables[j];
-            if (innerJoinConnections[tableI][tableJ]) {
-              // If the inner join is not unique, use an alias
-              if (!unique[tableJ]) {
-                const innerJoinConnection = innerJoinConnections[tableI][tableJ].split(' ');
-                // Alias is the first two letters of two tables being joined
-                const alias = tableJ[0] + tableI[0];
-                innerJoinConnection.splice(3, 0, alias); // Add the alias to the first table
-                // Replace the table name to the alias,
-                // by slicing the last element
-                const aliasedCondition = innerJoinConnection.slice(-1).pop().split('.');
-                // and set the first part to the alias
-                aliasedCondition[0] = alias;
-                // Replace the
-                innerJoinConnection.splice(-1, 1, aliasedCondition.join('.'));
-                fromInnerJoins.push(innerJoinConnection.join(' '));
-              } else {
-                fromInnerJoins.push(innerJoinConnections[tableI][tableJ]);
-                unique[tableJ] = false;
-              }
-            }
-          }
-        }
-      }
-      // console.log('selectedTablesArr: ', selectedTablesArr);
-      // console.log('fromInnerJoins: ', fromInnerJoins.join(' '));
-    } else if (selectedTables.length > 1) {
-      fromInnerJoins.push(selectedTables.join(', '));
-    } else {
-      fromInnerJoins.push(selectedTables[0]);
-    }
-
-    // Where
-    const whereConditions = [' WHERE'];
-    if (!options.noConditions) {
-      conditions.forEach(condition => {
-        if (condition.operator) {
-          whereConditions.push(condition.operator);
-        }
-        const whereCondition = [];
-        let comparator, comparatorVal;
-        comparator = comparatorVal = '';
-        switch (condition.comparator) {
-          case 'contains':
-            comparator = 'LIKE';
-            comparatorVal = connection.escape('%' + condition.comparatorVal + '%');
-            break;
-          case 'starts with':
-            comparator = 'LIKE';
-            comparatorVal = connection.escape(condition.comparatorVal + '%');
-            break;
-          case 'ends with':
-            comparator = 'LIKE';
-            comparatorVal = connection.escape('%' + condition.comparatorVal);
-            break;
-          default:
-            comparator = condition.comparator;
-            comparatorVal = connection.escape(condition.comparatorVal);
-            break;
-        }
-
-        whereCondition.push(condition.table + '.' + condition.column);
-        whereCondition.push(comparator);
-        whereCondition.push(comparatorVal);
-        whereConditions.push(whereCondition.join(' '));
-      });
-      let openBracket = false;
-      for (let index = 2; index < whereConditions.length; index += 2) {
-        if (whereConditions[index] === 'AND' && openBracket === true) {
-          whereConditions.splice(index, 0, ')'); // Add a closing bracket to the previous index in between the last condition and this and operator
-          index++; // To compensate for the added element in the array
-          openBracket = false;
-        } else if (whereConditions[index] === 'OR' && openBracket === false) {
-          whereConditions.splice(index - 1, 0, '('); // Add opening bracket before previous condition
-          index++; // To compensate for the added element in the array
-          openBracket = true;
-        }
-      }
-      // We've finished going through the where conditions
-      if (openBracket === true) {
-        whereConditions.push(')'); // If there's still an openBracket then we add a closing bracket at the very last index
-      }
-    }
-    const finalQuery =
-      selectStart +
-      selectedTableColumns.join(', ') +
-      fromInnerJoins.join(' ') +
-      (options.noConditions ? '' : whereConditions.join(' ')) +
-      (parseInt(options.limit) ? ' LIMIT ' + options.limit : ' LIMIT 500000') +
-      ';';
-    console.log('Final Query: ', finalQuery);
-    logger.info('Search Query: ', finalQuery);
-    try {
-      connection.query(finalQuery, (err, results) => {
-        if (err) {
-          // console.log('Error: ', err);
-          logger.error(err);
-          next(err);
+    connection.query(
+      'INSERT INTO `SEARCH` SET ?',
+      { Query: req.body.query, Creator: req.body.creator },
+      (error, result) => {
+        if (error) {
+          // console.log(error);
+          logger.error(error);
+          next(error);
         } else {
-          res.status(200).send({
-            data: { beforeTable: [], afterTable: results }
-          });
+          res.status(200).end(result.insertId.toString());
         }
-      });
-    } catch (error) {
-      logger.error(error);
-    }
+      }
+    );
   }
 });
 // Handles all the advanced get api table queries
 app.get(`/${appName}/api/`, (req, res, next) => {
   console.table(req.query);
   logger.trace(req.query);
-  if (
+  const search = req.query.search === 'true' ? true : false;
+  if (search) {
+    /**
+     * Search Feature - Backend
+     */
+    // First we get the searchQuery from the DB using the ID
+    let searchQuery = {};
+    connection.query('SELECT `Query` FROM `SEARCH` WHERE `ID`= ?', req.query.id, (error, results) => {
+      if (error) {
+        // console.log(error);
+        logger.error(error);
+        next(error);
+      } else {
+        searchQuery = JSON.parse(results[0].Query);
+      }
+      console.log(searchQuery);
+      // console.log('tableColumn', req.body);
+      const { conditions, options, tableColumns } = searchQuery;
+
+      // Select
+      const selectedTableColumns = []; // ['`TEXT`.`Text_ID`', '`SENTENCES`.`Textual_Unit`']
+      const selectStart = options.duplicateRows ? 'SELECT ' : 'SELECT DISTINCT ';
+      tableColumns.forEach(obj => {
+        Object.values(obj.column).forEach(column => selectedTableColumns.push(obj.table + '.' + column));
+      });
+      let selectedTables = tableColumns.map(tableColumn => tableColumn.table);
+
+      // From
+      if (!options.noConditions) selectedTables = selectedTables.concat(conditions.map(condition => condition.table));
+      // Removes Duplicate Tables
+      selectedTables = selectedTables.filter((table, index) => selectedTables.indexOf(table) === index);
+      /** Now we know what tables need to be joined
+       *  We need to add MORPHOLOGY to the list of tables to be joined -
+       *  if there are more than 2 tables and 1 of them is LEMMATA,
+       *  since it's the link to the other tables
+       */
+      const fromInnerJoins = [' FROM'];
+      if (selectedTables.length > 1) {
+        fromInnerJoins.push(selectedTables[0]);
+        if (selectedTables.includes('LEMMATA') && !selectedTables.includes('MORPHOLOGY')) {
+          selectedTables.push('MORPHOLOGY');
+        }
+        const innerJoinConnections = {
+          TEXT: {
+            SENTENCES: `INNER JOIN SENTENCES ON TEXT.Text_ID = SENTENCES.Text_ID`,
+            MORPHOLOGY: `INNER JOIN MORPHOLOGY ON TEXT.Text_ID = MORPHOLOGY.Text_ID`
+          },
+          SENTENCES: {
+            TEXT: `INNER JOIN TEXT ON SENTENCES.Text_ID = TEXT.Text_ID`,
+            MORPHOLOGY: `INNER JOIN MORPHOLOGY ON SENTENCES.Text_Unit_ID = MORPHOLOGY.Text_Unit_ID`
+          },
+          MORPHOLOGY: {
+            TEXT: `INNER JOIN TEXT ON MORPHOLOGY.Text_ID = TEXT.Text_ID`,
+            SENTENCES: `INNER JOIN SENTENCES ON MORPHOLOGY.Text_Unit_ID = SENTENCES.Text_Unit_ID`,
+            LEMMATA: `INNER JOIN LEMMATA ON MORPHOLOGY.Lemma = LEMMATA.Lemma`
+          },
+          LEMMATA: {
+            MORPHOLOGY: `INNER JOIN MORPHOLOGY ON LEMMATA.Lemma = MORPHOLOGY.Lemma`
+          }
+        };
+        // This is to stop sql from complaining about non-unique tables/aliases
+        let unique = {
+          TEXT: true,
+          SENTENCES: true,
+          MORPHOLOGY: true,
+          LEMMATA: true
+        };
+        if (selectedTables.length > 1) {
+          for (let i = 0; i < selectedTables.length; i++) {
+            const tableI = selectedTables[i];
+            for (let j = 1; j < selectedTables.length; j++) {
+              const tableJ = selectedTables[j];
+              if (innerJoinConnections[tableI][tableJ]) {
+                // If the inner join is not unique, use an alias
+                if (!unique[tableJ]) {
+                  const innerJoinConnection = innerJoinConnections[tableI][tableJ].split(' ');
+                  // Alias is the first two letters of two tables being joined
+                  const alias = tableJ[0] + tableI[0];
+                  innerJoinConnection.splice(3, 0, alias); // Add the alias to the first table
+                  // Replace the table name to the alias,
+                  // by slicing the last element
+                  const aliasedCondition = innerJoinConnection.slice(-1).pop().split('.');
+                  // and set the first part to the alias
+                  aliasedCondition[0] = alias;
+                  // Replace the
+                  innerJoinConnection.splice(-1, 1, aliasedCondition.join('.'));
+                  fromInnerJoins.push(innerJoinConnection.join(' '));
+                } else {
+                  fromInnerJoins.push(innerJoinConnections[tableI][tableJ]);
+                  unique[tableJ] = false;
+                }
+              }
+            }
+          }
+        }
+        // console.log('selectedTablesArr: ', selectedTablesArr);
+        // console.log('fromInnerJoins: ', fromInnerJoins.join(' '));
+      } else {
+        /* else if (selectedTables.length > 1) {
+        fromInnerJoins.push(selectedTables.join(', '));
+      } */
+        fromInnerJoins.push(selectedTables[0]);
+      }
+
+      // Where
+      const whereConditions = [' WHERE'];
+      if (!options.noConditions) {
+        conditions.forEach(condition => {
+          if (condition.operator) {
+            whereConditions.push(condition.operator);
+          }
+          if (condition.negated) {
+            whereConditions.push('NOT');
+          }
+          const whereCondition = [];
+          let comparator, comparatorVal;
+          comparator = comparatorVal = '';
+          switch (condition.comparator) {
+            case 'contains':
+              comparator = 'LIKE';
+              comparatorVal = connection.escape('%' + condition.comparatorVal + '%');
+              break;
+            case 'starts with':
+              comparator = 'LIKE';
+              comparatorVal = connection.escape(condition.comparatorVal + '%');
+              break;
+            case 'ends with':
+              comparator = 'LIKE';
+              comparatorVal = connection.escape('%' + condition.comparatorVal);
+              break;
+            default:
+              comparator = condition.comparator;
+              comparatorVal = connection.escape(condition.comparatorVal);
+              break;
+          }
+          if (condition.caseSensitive || condition.caseSensitive === undefined) {
+            whereCondition.push(condition.table + '.' + condition.column);
+            whereCondition.push(comparator);
+            whereCondition.push(comparatorVal);
+          } else {
+            whereCondition.push('LOWER(' + condition.table + '.' + condition.column + ')');
+            whereCondition.push(comparator);
+            whereCondition.push('LOWER(' + comparatorVal + ')');
+          }
+          whereConditions.push(whereCondition.join(' '));
+        });
+        let openBracket = false;
+        for (let index = 2; index < whereConditions.length; index += 2) {
+          if (whereConditions[index] === 'AND' && openBracket === true) {
+            whereConditions.splice(index, 0, ')'); // Add a closing bracket to the previous index in between the last condition and this and operator
+            index++; // To compensate for the added element in the array
+            openBracket = false;
+          } else if (whereConditions[index] === 'OR' && openBracket === false) {
+            whereConditions.splice(index - 1, 0, '('); // Add opening bracket before previous condition
+            index++; // To compensate for the added element in the array
+            openBracket = true;
+          }
+        }
+        // We've finished going through the where conditions
+        if (openBracket === true) {
+          whereConditions.push(')'); // If there's still an openBracket then we add a closing bracket at the very last index
+        }
+      }
+      const finalQuery =
+        selectStart +
+        selectedTableColumns.join(', ') +
+        fromInnerJoins.join(' ') +
+        (options.noConditions ? '' : whereConditions.join(' ')) +
+        (parseInt(options.limit) ? ' LIMIT ' + options.limit : ' LIMIT 500000') +
+        ';';
+      console.log('Final Query: ', finalQuery);
+      logger.info('Search Query: ', finalQuery);
+      try {
+        connection.query(finalQuery, (err, results) => {
+          if (err) {
+            console.log('Error: ', err);
+            logger.info({ id: req.query.id, searchQuery });
+            logger.error(err);
+          } else {
+            res.status(200).send({
+              data: { beforeTable: searchQuery, afterTable: results }
+            });
+          }
+        });
+      } catch (error) {
+        console.log('Error: ', err);
+        logger.info({ id: req.query.id, searchQuery });
+        logger.error(error);
+      }
+    });
+  } else if (
     typeof req.query.page === 'string' &&
     typeof req.query.limit === 'string' &&
     typeof req.query.fprop === 'string' &&
