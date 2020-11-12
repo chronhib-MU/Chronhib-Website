@@ -83,6 +83,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
   ) {
     this.location = location;
     this.searchQuerySub$ = this.tableData.searchQuerySub.subscribe(searchQueryVal => {
+      this.resetForm();
       const { tableColumns, conditions, options } = searchQueryVal;
       tableColumns.forEach((tableColumn, index) => {
         if (index > 0) {
