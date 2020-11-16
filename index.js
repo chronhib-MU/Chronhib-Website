@@ -554,20 +554,39 @@ app.get(`/${appName}/api/`, (req, res, next) => {
               comparator = 'LIKE';
               comparatorVal = connection.escape('%' + condition.comparatorVal);
               break;
+            case 'within':
+              comparator = 'IN';
+              comparatorVal =
+                '(' +
+                condition.comparatorVal
+                  .split(',')
+                  .map(values => connection.escape(values))
+                  .toString() +
+                ')';
+              break;
             default:
               comparator = condition.comparator;
               comparatorVal = connection.escape(condition.comparatorVal);
               break;
           }
-          if (condition.caseSensitive || condition.caseSensitive === undefined) {
-            whereCondition.push(condition.table + '.' + condition.column);
-            whereCondition.push(comparator);
-            whereCondition.push(comparatorVal);
-          } else {
-            whereCondition.push('LOWER(' + condition.table + '.' + condition.column + ')');
-            whereCondition.push(comparator);
-            whereCondition.push('LOWER(' + comparatorVal + ')');
+          let conditionTableColumn = condition.table + '.' + condition.column;
+          let conditionComparator = comparator;
+          let conditionComparatorVal = comparatorVal;
+          const excludeCollation = ['ID', 'Sort_ID', 'Timestamp'];
+          // Accent and Case Sensitivity should nto affect the above columns
+          // Also, there's no way to make accent sensitive queries also case sensitive
+          if (!excludeCollation.includes(condition.column)) {
+            if (!condition.accentSensitive) {
+              conditionTableColumn = conditionTableColumn + ' COLLATE utf8mb4_unicode_ci';
+              conditionComparatorVal = conditionComparatorVal + ' COLLATE utf8_unicode_ci';
+            } else if (!condition.caseSensitive) {
+              conditionTableColumn = 'LOWER(' + conditionTableColumn + ')';
+              conditionComparatorVal = 'LOWER(' + conditionComparatorVal + ')';
+            }
           }
+          whereCondition.push(conditionTableColumn);
+          whereCondition.push(conditionComparator);
+          whereCondition.push(conditionComparatorVal);
           whereConditions.push(whereCondition.join(' '));
         });
         let openBracket = false;

@@ -1,3 +1,4 @@
+import { PaginationService } from './../../../services/pagination.service';
 import { AuthService } from './../../../services/auth.service';
 import { Component, OnInit, Input, ElementRef, ViewChild, NgZone } from '@angular/core';
 import { Location } from '@angular/common';
@@ -6,6 +7,7 @@ import { TableDataService } from '../../../services/table-data.service';
 import Handsontable from 'handsontable';
 import { HotTableRegisterer } from '@handsontable/angular';
 import { ApiPostBody } from '../../../interfaces/api-post-body';
+import * as jsonexport from 'jsonexport/dist';
 import * as _ from 'lodash';
 declare const $: any;
 @Component({
@@ -97,6 +99,7 @@ export class TableComponent implements OnInit {
 
   constructor(
     public tableData: TableDataService,
+    public pagination: PaginationService,
     private authService: AuthService,
     private router: Router,
     private route: ActivatedRoute,
@@ -276,6 +279,34 @@ export class TableComponent implements OnInit {
     document.execCommand('copy');
     $('#copyURL').remove();
     this.authService.showToaster('', 'Search Link Copied to Clipboard!', 'info');
+  }
+  exportToCSV() {
+    let filename =
+      this.after === 'search'
+        ? 'ChronHib_Search-' + this.tableData.currentApiQuery.id
+        : 'ChronHib_Table_' + _.startCase(this.after);
+    if (this.after !== 'text' && this.tableData.currentApiQuery.fval) {
+      filename += '-' + this.tableData.currentApiQuery.fval;
+    }
+    filename += '.csv';
+    jsonexport(this.getTableData(this.after), (err, csv) => {
+      if (err) {
+        return console.error(err);
+      }
+      // console.log(csv);
+      // Creates the download link button
+      const dLink = document.createElement('a');
+      dLink.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv));
+      dLink.setAttribute('download', filename);
+
+      if (document.createEvent) {
+        const event = document.createEvent('MouseEvents');
+        event.initEvent('click', true, true);
+        dLink.dispatchEvent(event);
+      } else {
+        dLink.click();
+      }
+    });
   }
   async fetchedTable() {
     if (this.hotRegisterer.getInstance(this.instance + 'Mini')) {

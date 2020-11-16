@@ -82,21 +82,6 @@ export class SidebarComponent implements OnInit, OnDestroy {
     private modalService: NgbModal
   ) {
     this.location = location;
-    this.searchQuerySub$ = this.tableData.searchQuerySub.subscribe(searchQueryVal => {
-      const { tableColumns, conditions, options } = searchQueryVal;
-      tableColumns.forEach((tableColumn, index) => {
-        if (index > 0) {
-          this.addFormGroup('tableColumns');
-        }
-      });
-      conditions.forEach((condition, index) => {
-        if (index > 0) {
-          this.addFormGroup('conditions');
-        }
-      });
-      this.tableData.searchForm.patchValue(searchQueryVal);
-      this.tableData.searchForm.updateValueAndValidity();
-    });
   }
 
   ngOnInit() {
@@ -107,6 +92,25 @@ export class SidebarComponent implements OnInit, OnDestroy {
       tableColumns: this.fb.array([this.createTableColumns(0)]),
       conditions: this.fb.array([this.createConditions(0)]),
       options: this.fb.group(this.createOptions(0))
+    });
+    this.searchQuerySub$ = this.tableData.searchQuerySub.subscribe(searchQueryVal => {
+      const { tableColumns, conditions, options } = searchQueryVal;
+      const accentTrueIndex = [];
+      tableColumns.forEach((tableColumn, index) => {
+        if (index > 0) {
+          this.addFormGroup('tableColumns');
+        }
+      });
+      conditions.forEach((condition, index) => {
+        if (index > 0) {
+          this.addFormGroup('conditions');
+        }
+        if (condition.accentSensitive) {
+          this.tableData.searchForm.get('conditions')['controls'][index].controls.caseSensitive.enable();
+        }
+      });
+      this.tableData.searchForm.patchValue(searchQueryVal);
+      this.tableData.searchForm.updateValueAndValidity();
     });
     this.router.events.subscribe(event => {
       this.isCollapsed = true;
@@ -167,7 +171,8 @@ export class SidebarComponent implements OnInit, OnDestroy {
       table: ['TEXT', Validators.required],
       column: ['ID', Validators.required],
       negated: [''],
-      caseSensitive: [true, Validators.required],
+      caseSensitive: [{ value: false, disabled: true }, Validators.required],
+      accentSensitive: [false, Validators.required],
       operator: i > 0 ? ['AND', Validators.required] : [''],
       comparator: ['contains', Validators.required],
       comparatorVal: ['']
@@ -265,6 +270,16 @@ export class SidebarComponent implements OnInit, OnDestroy {
         }
       );
     }
+  }
+  updateCaseSensitive(i) {
+    console.log(this.tableData.searchForm.get('conditions')['controls'][i].controls.accentSensitive.value, i);
+    if (this.tableData.searchForm.get('conditions')['controls'][i].controls.accentSensitive.value === false) {
+      this.tableData.searchForm.get('conditions')['controls'][i].controls.caseSensitive.patchValue(false);
+      this.tableData.searchForm.get('conditions')['controls'][i].controls.caseSensitive.disable();
+    } else {
+      this.tableData.searchForm.get('conditions')['controls'][i].controls.caseSensitive.enable();
+    }
+    console.log(this.tableData.searchForm.get('conditions')['controls'][i].controls.caseSensitive);
   }
 
   async searchTable(close) {

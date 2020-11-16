@@ -43,6 +43,18 @@ select {
     color: #d0021b;
   }
 }
+
+.tooltip-inner {
+  max-width: 300px;
+}
+@for $i from 1 through 300 {
+  .width-#{$i} {
+    > .tooltip-inner {
+      width: #{$i}px;
+    }
+  }
+}
+
 .table {
   color: #222;
 }

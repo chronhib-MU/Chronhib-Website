@@ -166,7 +166,7 @@
                 <ng-template ngbNavContent>
                   <div class="modal-body">
                     <form role="form" [formGroup]="tableData.searchForm" (ngSubmit)="nav.select('options')">
-                      <ngb-accordion [closeOthers]="true" #conditionsAcc="ngbAccordion" activeIds="condition-0">
+                      <ngb-accordion [closeOthers]="false" #conditionsAcc="ngbAccordion" activeIds="condition-0">
                         <ngb-panel
                           [id]="'condition-' + i"
                           formArrayName="conditions"
@@ -211,7 +211,16 @@
                                   </div>
                                 </div>
                                 <div class="col">
-                                  <div class="form-group">
+                                  <ng-template #tooltipAccentSensitive>
+                                    <b>Accent insensitive</b> conditions <br />
+                                    cannot be <b>case sensitive</b>
+                                  </ng-template>
+                                  <div
+                                    class="form-group"
+                                    placement="top"
+                                    [ngbTooltip]="tooltipAccentSensitive"
+                                    tooltipClass="width-215"
+                                  >
                                     <div class="custom-control custom-checkbox my-2">
                                       <input
                                         class="custom-control-input"
@@ -221,6 +230,22 @@
                                       />
                                       <label class="custom-control-label" [for]="'caseSensitive' + i">
                                         Case Sensitive Search?
+                                      </label>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div class="col">
+                                  <div class="form-group">
+                                    <div class="custom-control custom-checkbox my-2">
+                                      <input
+                                        class="custom-control-input"
+                                        type="checkbox"
+                                        [id]="'accentSensitive' + i"
+                                        formControlName="accentSensitive"
+                                        (change)="updateCaseSensitive(i)"
+                                      />
+                                      <label class="custom-control-label" [for]="'accentSensitive' + i">
+                                        Accent Sensitive Search?
                                       </label>
                                     </div>
                                   </div>
@@ -270,6 +295,7 @@
                                       <option [value]="'starts with'">starts with</option>
                                       <option [value]="'ends with'">ends with</option>
                                       <option [value]="'LIKE'">like</option>
+                                      <option [value]="'within'">within</option>
                                       <option [value]="'='">equal to</option>
                                       <option [value]="'!='">not equal to</option>
                                     </select>
@@ -277,6 +303,15 @@
                                 </div>
                                 <div class="col-md-6">
                                   <div class="form-group">
+                                    <ng-template #tooltipComparator
+                                      >Remember to use <b>'%'</b> <br />
+                                      for wildcards (not <b>'*'</b>) <br />
+                                      e.g. <b>gen.%.fem.</b>
+                                    </ng-template>
+                                    <ng-template #tooltipComparatorWithin
+                                      >Make sure your list of values <br />
+                                      are comma-separated
+                                    </ng-template>
                                     <ng-container
                                       *ngIf="
                                         columnSearchArray.includes(
@@ -300,7 +335,10 @@
                                           [ngbTooltip]="
                                             tableData.searchForm.get('conditions')['controls'][i].controls.comparator
                                               .value === 'LIKE'
-                                              ? 'Remember to use \'%\' instead of \'*\' for wildcards e.g. gen.%.fem.'
+                                              ? tooltipComparator
+                                              : tableData.searchForm.get('conditions')['controls'][i].controls
+                                                  .comparator.value === 'within'
+                                              ? tooltipComparatorWithin
                                               : ''
                                           "
                                           ngbDropdownToggle
@@ -335,7 +373,10 @@
                                         [ngbTooltip]="
                                           tableData.searchForm.get('conditions')['controls'][i].controls.comparator
                                             .value === 'LIKE'
-                                            ? 'Remember to use \'%\' instead of \'*\' for wildcards e.g. gen.%.fem.'
+                                            ? tooltipComparator
+                                            : tableData.searchForm.get('conditions')['controls'][i].controls.comparator
+                                                .value === 'within'
+                                            ? tooltipComparatorWithin
                                             : ''
                                         "
                                       />
