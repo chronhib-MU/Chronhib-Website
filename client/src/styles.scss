@@ -104,6 +104,11 @@ select {
 .accordion > .card {
   overflow: inherit;
 }
+
+.mat-paginator,
+.mat-paginator-page-size .mat-select-trigger {
+  color: #525f7f;
+}
 .handsontable th {
   color: #fff;
 

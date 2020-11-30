@@ -32,13 +32,16 @@ export class TableDataService {
     }
   };
   allHeaders = { text: [], sentences: [], morphology: [], lemmata: [] };
-  fetchedTable: Observable<{ data: { afterTable: []; beforeTable: [] } }>;
+  fetchedTable: Observable<{ data: { afterTable: []; beforeTable: []; numRows?: number } }>;
   currentApiQuery: any;
   searchTable = { headers: [], data: [] };
   searchForm: FormGroup;
   searchQuerySub: Subject<any> = new Subject<FormGroup>();
   data: any;
-  constructor(private router: Router, private http: HttpClient, private authService: AuthService) {}
+  tableLength = 0;
+  page = 0;
+
+  constructor(public router: Router, private http: HttpClient, private authService: AuthService) {}
 
   // Fetches the headers for each table
   fetchHeaders = async () => {
@@ -63,6 +66,9 @@ export class TableDataService {
   fetchTable = async (apiQuery: ApiGetQuery | string) => {
     this.currentApiQuery = apiQuery;
 
+    this.page = this.currentApiQuery?.page ? this.currentApiQuery?.page : 0;
+
+    // }
     // console.log(window.location.origin);
     // console.log('apiQuery:', apiQuery);
     // console.log(environment.apiUrl);
@@ -70,15 +76,14 @@ export class TableDataService {
       // Checks if the query was a table name e.g. 'text', 'sentences' etc. else it has to be an API query object
       if (this.tables.names.indexOf(apiQuery) > -1 && typeof apiQuery === 'string') {
         this.fetchedTable = this.http.get(`${environment.apiUrl}${apiQuery}`) as Observable<{
-          data: { afterTable: []; beforeTable: [] };
+          data: { afterTable: []; beforeTable: []; numRows?: number };
         }>;
         const { data } = await this.fetchedTable.toPromise();
         // console.log(`${apiQuery}: `, data.afterTable);
         this.tables[apiQuery].data = data.afterTable;
         this.tables[apiQuery].headers = Object.keys(this.tables[apiQuery].data[0]);
         // console.log(this.tables[apiQuery].headers);
-      }
-      if (typeof apiQuery !== 'string') {
+      } else if (typeof apiQuery !== 'string') {
         // Object.keys(apiQuery)
         //   .map(key => key + '=' + apiQuery[key])
         //   .join('&');
@@ -86,11 +91,14 @@ export class TableDataService {
         const search = apiQuery.search === 'true' ? true : false;
         const queryString = qs.stringify(apiQuery);
         this.fetchedTable = this.http.get(`${environment.apiUrl}?${queryString}`) as Observable<{
-          data: { afterTable: []; beforeTable: [] };
+          data: { afterTable: []; beforeTable: []; numRows?: number };
         }>;
         const fetchedData = await this.fetchedTable.toPromise();
         const data = fetchedData.data;
+        this.tableLength = data.numRows;
+        console.log(data);
         if (search) {
+          console.log('Table Length: ', this.tableLength);
           // beforeTable contains the Search Query
           // console.log(data.beforeTable);
           this.searchQuerySub.next(data.beforeTable);
@@ -101,7 +109,7 @@ export class TableDataService {
           }
           // console.log(`${qs.stringify(apiQuery)}: `, data);
         } else {
-          if (apiQuery.dtable !== apiQuery.ctable) {
+          if (apiQuery.dtable !== apiQuery.ctable && apiQuery.ctable) {
             this.tables[apiQuery.ctable].data = data.beforeTable;
             this.tables[apiQuery.ctable].headers = Object.keys(this.tables[apiQuery.ctable].data[0]);
           }
@@ -109,8 +117,8 @@ export class TableDataService {
           this.tables[apiQuery.dtable].headers = Object.keys(this.tables[apiQuery.dtable].data[0]);
           // console.log(this.tables[apiQuery.dtable].headers);
         }
+        // console.log(this.tables[apiQuery.dtable]);
       }
-      return;
     } catch (error) {
       console.log(error);
       console.log('Invalid request made!');

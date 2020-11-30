@@ -15,7 +15,7 @@
                   {{ '#' + tableData.currentApiQuery.id }}
                 </span>
 
-                {{ ' - ' + this.searchTable.data.length + ' matches' }}
+                {{ ' - ' + this.searchTable.data.length + ' out of ' + this.tableData.tableLength + ' matches' }}
               </span>
               <span *ngIf="after !== 'text' && tableData.currentApiQuery.fval">
                 {{ ' - ' + tableData.currentApiQuery.fval }}
@@ -24,12 +24,8 @@
             <button type="button" class="btn btn-outline-default btn-sm" (click)="copyToClipboard()">
               <i class="fa fa-copy"></i> Copy Table Link
             </button>
-            <button
-              type="button"
-              class="btn btn-outline-default btn-sm"
-              (click)="exportToCSV()"
-            >
-            <i class="fa fa-download"></i>
+            <button type="button" class="btn btn-outline-default btn-sm" (click)="exportToCSV()">
+              <i class="fa fa-download"></i>
               Export Table Data to CSV File
             </button>
           </div>
@@ -71,7 +67,7 @@
           <label
             class="btn btn-secondary px-3 py-2"
             (click)="changeID('previous')"
-            [hidden]="after === 'search' || after === 'text' || after === 'lemmata'"
+            *ngIf="before && (after === 'sentences' || after === 'morphology')"
           >
             <i class="fas fa-angle-double-left"></i>
           </label>
@@ -102,7 +98,7 @@
           <label
             class="btn btn-secondary px-3 py-2"
             (click)="changeID('next')"
-            [hidden]="after === 'search' || after.toLowerCase() === 'text' || after.toLowerCase() === 'lemmata'"
+            *ngIf="before && (after === 'sentences' || after === 'morphology')"
           >
             <i class="fas fa-angle-double-right"></i>
           </label>
@@ -179,8 +175,8 @@
   </div>
 </div>
 <!-- Pagination -->
-<div class="row" *ngIf="before || tableData.currentApiQuery.page != 0">
-  <div class="col">
+<div class="row">
+  <div class="col d-flex justify-content-center">
     <!--    <nav aria-label="...">
       <ul class="pagination justify-content-center">
         <li class="page-item" [ngClass]="{ disabled: tableData.currentApiQuery.page == 1 }">
@@ -203,13 +199,45 @@
         </li>
       </ul>
     </nav> -->
-    <ngb-pagination
+    <!-- <ngb-pagination
       class="d-flex justify-content-center"
-      [collectionSize]="120"
-      [(page)]="pagination.page"
-      [maxSize]="5"
+      [collectionSize]="tableData.tableLength"
+      [(page)]="tableData.page"
+      [pageSize]="pagination.getCurrentLimit()"
+      [maxSize]="10"
       [rotate]="true"
       [boundaryLinks]="true"
-    ></ngb-pagination>
+      (pageChange)="pagination.gotoPage($event)"
+    ></ngb-pagination> -->
+
+    <form [formGroup]="pagination.pageForm" (ngSubmit)="pagination.gotoPage()">
+      <mat-form-field>
+        <mat-label>Go to Page</mat-label>
+        <input
+          matInput
+          #gotoInput
+          placeholder="Go to page"
+          [value]="tableData.page | number"
+          id="page"
+          type="number"
+          minlength="0"
+          formControlName="page"
+          [attr.maxlength]="tableData.tableLength / pagination.getCurrentLimit()"
+        />
+        <mat-hint align="end">
+          {{ gotoInput.value | number }} /
+          {{ tableData.tableLength / pagination.getCurrentLimit() - 0.5 | number: '1.0-0' }}
+        </mat-hint>
+      </mat-form-field>
+      <button type="submit" class="btn btn-default btn-sm ml-1" [disabled]="pagination.pageForm.invalid">Go</button>
+    </form>
+    <mat-paginator
+      [length]="tableData.tableLength"
+      [pageSize]="pagination.getCurrentLimit()"
+      [pageSizeOptions]="[50, 100, 500, 1000]"
+      [pageIndex]="tableData.page"
+      (page)="pagination.gotoPage($event)"
+    >
+    </mat-paginator>
   </div>
 </div>

@@ -9,6 +9,7 @@ import { HotTableRegisterer } from '@handsontable/angular';
 import { ApiPostBody } from '../../../interfaces/api-post-body';
 import * as jsonexport from 'jsonexport/dist';
 import * as _ from 'lodash';
+import { Validators } from '@angular/forms';
 declare const $: any;
 @Component({
   selector: 'app-table',
@@ -116,6 +117,11 @@ export class TableComponent implements OnInit {
 
     Handsontable.hooks.add('afterInit', () => {
       $('.htCore').addClass('table');
+      if (this.hotRegisterer.getInstance(this.instance + 'Mini')) {
+        this.hotRegisterer.getInstance(this.instance + 'Mini').updateSettings({
+          manualRowMove: false
+        });
+      }
     });
     // Handsontable.hooks.add('afterChange', changes => {
     //   changes.forEach(([row, prop, oldValue, newValue]) => {
@@ -139,7 +145,7 @@ export class TableComponent implements OnInit {
       if (hook === 'afterChange') {
         this.hotSettings[that.edit ? 1 : 0][hook] = function () {
           let table = that.after;
-          console.log('tableColumn length:', that.tableData.searchForm.get('tableColumns')['controls'].length);
+          // console.log('tableColumn length:', that.tableData.searchForm.get('tableColumns')['controls'].length);
           if (arguments[1] !== 'loadData') {
             if (
               that.after !== 'search' ||
@@ -149,28 +155,32 @@ export class TableComponent implements OnInit {
               // console.log(hook, arguments);
               const tableData = this.getData();
               const colHeaders: Array<string> = this.getColHeader();
-              console.log('TableData', tableData);
-              console.log('ColHeader', this.getColHeader());
-              console.log(that.searchTable);
+              // console.log('TableData', tableData);
+              // console.log('ColHeader', this.getColHeader());
+              // console.log(that.searchTable);
               const values = [];
               arguments[0].forEach((value: any[]) => {
-                console.log('value:', value);
+                // console.log('value:', value);
+                const rowNumber = value[0];
+                const columnName = value[1];
+                const beforeValue = value[2];
+                const afterValue = value[3];
                 // Need to find the index of the id
                 const ids = colHeaders.map((val, index) => ({ val, index })).filter(obj => obj.val === 'Id');
                 // console.log('ids', ids);
                 // Makes sure the edit is not an irrelevant one
-                if (value[2] !== value[3] && ids.length) {
-                  const fieldProperty = value[1];
-                  const id = tableData[value[0]][ids.slice(-1)[0].index];
+                if (beforeValue !== afterValue && ids.length) {
+                  const fieldProperty = columnName;
+                  const id = tableData[rowNumber][ids.slice(-1)[0].index];
                   // console.log('id', id);
                   const result = {
                     id,
                     fieldProperty,
-                    fieldValue: value[3]
+                    fieldValue: afterValue
                   };
                   if (table === 'search') {
                     that.tableData.tables.names.forEach(name => {
-                      if (that.tableData.allHeaders[name].includes(value[1])) {
+                      if (that.tableData.allHeaders[name].includes(columnName)) {
                         table = name;
                         return;
                       }
@@ -322,6 +332,7 @@ export class TableComponent implements OnInit {
     try {
       const fetchedData = await this.tableData.fetchedTable.toPromise();
       const data = fetchedData.data;
+      this.updatePageForm();
       // console.table('After: ' + this.after);
       // console.table('Before: ' + this.before);
       // console.log(`Datatable[${this.after}]: `, data.afterTable);
@@ -337,7 +348,6 @@ export class TableComponent implements OnInit {
         this.searchTable.data = data.afterTable;
         if (this.searchTable.data[0]) {
           this.searchTable.headers = Object.keys(this.searchTable.data[0]);
-          // Moves Sort_ID to first while remove it from last in the after table
           // console.table(this.searchTable);
         }
       } else {
@@ -348,7 +358,7 @@ export class TableComponent implements OnInit {
         // console.table(this.dataTable);
       }
     } catch (error) {
-      console.error('Invalid request made!', error);
+      console.error(error);
       // TODO: Should redirect Search Query not found page
       return error;
     }
@@ -712,7 +722,7 @@ export class TableComponent implements OnInit {
     return table === 'search' ? this.searchTable.data : this.dataTable[table].data;
   }
   getRows(table: string | number) {
-    return table === 'search'
+    return table === 'search' || table === this.before
       ? this.searchTable.data.map((row, index) => index + 1)
       : this.dataTable[table].data.map((row: { Sort_ID: any }) => row.Sort_ID);
   }
@@ -754,7 +764,6 @@ export class TableComponent implements OnInit {
       });
       if (this.hotRegisterer.getInstance(this.instance + 'Mini')) {
         this.hotRegisterer.getInstance(this.instance + 'Mini').updateSettings({
-          manualRowMove: this.edit,
           manualColumnFreeze: this.edit,
           contextMenu: this.edit,
           readOnly: !this.edit,
@@ -764,6 +773,10 @@ export class TableComponent implements OnInit {
     } else if (variable === 'sort') {
       // console.log(variable, this.wordWrap);
       this.sort = !this.sort;
+      this.hotInstance = this.hotRegisterer.getInstance(this.instance);
+      this.hotInstance.updateSettings({
+        manualRowMove: !this.sort && this.edit
+      });
       this.fetchedTable();
     } else if (variable === 'ref') {
       this.ref = !this.ref;
@@ -813,6 +826,16 @@ export class TableComponent implements OnInit {
   }
   goForward() {
     this.location.forward();
+  }
+
+  updatePageForm() {
+    this.pagination.pageForm.controls.page.setValidators([
+      Validators.required,
+      Validators.min(0),
+      Validators.max(this.tableData.tableLength / this.pagination.getCurrentLimit())
+    ]);
+
+    this.pagination.pageForm.controls.page.updateValueAndValidity();
   }
   scrollToTable() {
     // console.log('App Table Height: ', this.appTable.nativeElement.scrollHeight);
