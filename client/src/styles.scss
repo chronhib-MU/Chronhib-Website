@@ -14,18 +14,47 @@
 
   // filter: blur(15px);
 }
-.btn-link:hover {
-  cursor: pointer;
+.btn-link {
+  &:hover {
+    cursor: pointer;
+  }
+  &:focus,
+  &:active,
+  &.focus {
+    box-shadow: none !important;
+  }
 }
 .pointer {
   cursor: pointer !important;
 }
+.custom-checkbox .custom-control-input:checked ~ .custom-control-label:after {
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Cpath fill='%23fff' d='M6.564.75l-3.59 3.612-1.538-1.55L0 4.26l2.974 2.99L8 2.193z'/%3E%3C/svg%3E");
+}
+.custom-control-label:after {
+  background: no-repeat 50%/50% 50%;
+}
 select {
   text-rendering: auto !important; // Potential fix for dropdown to safari 14 changes
 }
-.close.danger > span:not(.sr-only) {
-  color: #ff0000;
+.close.danger,
+.close.hover-danger:hover {
+  &:not(:disabled) > span:not(.sr-only),
+  &:not(:disabled) > i {
+    color: #d0021b;
+  }
 }
+
+.tooltip-inner {
+  max-width: 300px;
+}
+@for $i from 1 through 300 {
+  .width-#{$i} {
+    > .tooltip-inner {
+      width: #{$i}px;
+    }
+  }
+}
+
 .table {
   color: #222;
 }
@@ -41,6 +70,45 @@ select {
   height: 60px;
 }
 
+.dropdown,
+.dropup,
+.dropright,
+.dropleft {
+  display: inherit;
+}
+.dropdown-menu {
+  width: 100%;
+  border: thin grey solid;
+  border-radius: 0;
+  // box-shadow: none;
+  > li > a {
+    color: #8898aa;
+  }
+}
+.ng-dropdown-panel .ng-dropdown-panel-items .ng-option {
+  border-radius: 0;
+  font-size: 0.875rem;
+  &.ng-option-selected,
+  &.ng-option-selected.ng-option-marked {
+    &:last-child {
+      border-radius: 0;
+    }
+  }
+}
+.ng-dropdown-footer {
+  border-radius: 0;
+
+  font-size: 0.875rem;
+}
+
+.accordion > .card {
+  overflow: inherit;
+}
+
+.mat-paginator,
+.mat-paginator-page-size .mat-select-trigger {
+  color: #525f7f;
+}
 .handsontable th {
   color: #fff;
 
@@ -111,6 +179,11 @@ select {
 @media screen and (min-width: 768px) {
   html:not(.auth-layout) .main-content {
     margin-left: 0;
+  }
+}
+@media (min-width: 576px) {
+  .modal-dialog {
+    max-width: 600px;
   }
 }
 // @media (min-width: 768px) {

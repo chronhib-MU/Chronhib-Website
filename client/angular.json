@@ -24,6 +24,7 @@
             "tsConfig": "src/tsconfig.app.json",
             "assets": ["src/favicon.ico", "src/assets"],
             "styles": [
+              "node_modules/@ng-select/ng-select/themes/default.theme.css",
               "node_modules/ngx-toastr/toastr.css",
               "node_modules/handsontable/dist/handsontable.full.css",
               "node_modules/bootstrap-table/dist/bootstrap-table.min.css",

@@ -1,10 +1,27 @@
+import {
+  Analysis,
+  Augm,
+  CausingMut,
+  Contr,
+  Depend,
+  Depon,
+  Hiat,
+  MSChecked,
+  Mut,
+  PartOfSpeech,
+  Rel,
+  Trans
+} from './../../model/columnOpts.model';
 import { TableDataService } from './../../services/table-data.service';
 import { AuthService } from './../../services/auth.service';
-import { Component, OnInit, ElementRef } from '@angular/core';
+import { Component, OnInit, ElementRef, OnDestroy } from '@angular/core';
 import { Location, LocationStrategy, PathLocationStrategy } from '@angular/common';
 import { Router } from '@angular/router';
 import { AbstractControl, FormArray, FormBuilder, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { NgbModal, ModalDismissReasons } from '@ng-bootstrap/ng-bootstrap';
+import Fuse from 'fuse.js';
+import { HttpClient } from '@angular/common/http';
+import { environment } from 'src/environments/environment';
 
 declare interface RouteInfo {
   path: string;
@@ -30,19 +47,36 @@ export const ROUTES: RouteInfo[] = [
   templateUrl: './sidebar.component.html',
   styleUrls: ['./sidebar.component.scss']
 })
-export class SidebarComponent implements OnInit {
+export class SidebarComponent implements OnInit, OnDestroy {
   closeResult: string;
 
   public menuItems: any[];
   public isCollapsed = true;
 
-  public focus;
+  public focus: any;
   public location: Location;
+  public columnSearchArray = [
+    'Analysis',
+    'Augm',
+    'Causing_Mut',
+    'Contr',
+    'Depend',
+    'Depon',
+    'Hiat',
+    'MS_Checked',
+    'Mut',
+    'Part_Of_Speech',
+    'Rel',
+    'Trans'
+  ];
+  active = 'tableColumns';
+  searchQuerySub$: any;
   constructor(
     public authService: AuthService,
     public tableData: TableDataService,
     location: Location,
     private element: ElementRef,
+    private http: HttpClient,
     private router: Router,
     private fb: FormBuilder,
     private modalService: NgbModal
@@ -54,46 +88,68 @@ export class SidebarComponent implements OnInit {
     this.tableData.fetchHeaders();
     this.menuItems = ROUTES.filter(menuItem => menuItem);
     // ROUTES[2].class = this.getTitle() === 'Register' ? 'd-none' : '';
-    this.tableData.searchForm = this.fb.group({
-      tableColumns: this.fb.array([this.createTableColumns(0)]),
-      conditions: this.fb.array([this.createConditions(0)]),
-      options: this.fb.group(this.createOptions(0))
+    this.resetForm();
+    this.searchQuerySub$ = this.tableData.searchQuerySub.subscribe(searchQueryVal => {
+      const { tableColumns, conditions, options } = searchQueryVal;
+      const accentTrueIndex = [];
+      tableColumns.forEach((tableColumn: any, index: number) => {
+        if (index > 0) {
+          this.addFormGroup('tableColumns');
+        }
+      });
+      conditions.forEach((condition: { accentSensitive: any }, index: number) => {
+        if (index > 0) {
+          this.addFormGroup('conditions');
+        }
+        if (condition.accentSensitive) {
+          this.tableData.searchForm.get('conditions')['controls'][index].controls.caseSensitive.enable();
+        }
+      });
+      this.tableData.searchForm.patchValue(searchQueryVal);
+      this.tableData.searchForm.updateValueAndValidity();
     });
     this.router.events.subscribe(event => {
       this.isCollapsed = true;
     });
   }
-
-  validateNoConditions(evt, skip?) {
-    console.log(evt);
-    const checked: boolean = evt.target.checked || skip;
-
-    if (checked) {
-      (this.tableData.searchForm.get('conditions') as FormArray).controls.forEach((formGroup: FormGroup) => {
-        formGroup.controls['comparatorVal'].clearValidators();
-        formGroup.controls['comparatorVal'].updateValueAndValidity();
-        console.log(formGroup);
-      });
-      (this.tableData.searchForm.get('conditions') as FormArray).clearValidators();
-    } else {
-      (this.tableData.searchForm.get('conditions') as FormArray).controls.forEach((formGroup: FormGroup) => {
-        formGroup.controls['comparatorVal'].setValidators(Validators.required);
-        formGroup.controls['comparatorVal'].updateValueAndValidity();
-        console.log(formGroup);
-      });
-    }
-    // this.tableData.searchForm.get('conditions').updateValueAndValidity();
-    console.log('Conditions invalid:', this.tableData.searchForm.get('conditions').status);
-    console.log('noConditions value:', this.tableData.searchForm.get('options').get('noConditions').value);
-    return checked;
+  ngOnDestroy(): void {
+    // Called once, before the instance is destroyed.
+    // Add 'implements OnDestroy' to the class.
+    this.searchQuerySub$.unsubscribe();
   }
-  excludePreviousTableOptions(i) {
-    return this.tableData.tables.names.filter(table => {
+  mapSearchData(data: any[]) {
+    let res = [];
+    res = data.map((value: { replaceAll: (arg0: string, arg1: string) => any }) => ({
+      name: value.replaceAll('_', ' '),
+      value
+    }));
+    return res;
+  }
+  onItemSelect(item: any, index: number) {
+    // console.log(item);
+    this.tableData.searchForm.get('tableColumns')['controls'][index].controls.column.patchValue(['ID']);
+  }
+  selectAll(i: string | number) {
+    return this.tableData.searchForm
+      .get('tableColumns')
+      ['controls'][i].controls.column.patchValue(
+        this.tableData.allHeaders[
+          this.tableData.searchForm.get('tableColumns')['controls'][i].controls.table.value.toLowerCase()
+        ]
+      );
+  }
+
+  unselectAll(i: string | number) {
+    return this.tableData.searchForm.get('tableColumns')['controls'][i].controls.column.patchValue([]);
+  }
+
+  excludePreviousTableOptions(i: any) {
+    return this.tableData.tables.names.filter((table: string) => {
       if (this.tableData.searchForm) {
         const searchFormTables = this.tableData.searchForm
           .get('tableColumns')
-          ['controls'].map(val => val.controls.table.value)
-          .filter((val, index) => index !== i);
+          ['controls'].map((val: { controls: { table: { value: any } } }) => val.controls.table.value)
+          .filter((val: any, index: any) => index !== i);
         if (!searchFormTables.includes(table.toUpperCase())) {
           return true;
         }
@@ -103,22 +159,25 @@ export class SidebarComponent implements OnInit {
       }
     });
   }
-  createTableColumns(i) {
+  createTableColumns(i: number) {
     return this.fb.group({
-      table: [this.excludePreviousTableOptions(i)[0].toUpperCase(), Validators.required],
+      table: [this.excludePreviousTableOptions(i)[0]?.toUpperCase(), Validators.required],
       column: [['ID'], Validators.required]
     });
   }
-  createConditions(i) {
+  createConditions(i: number) {
     return this.fb.group({
       table: ['TEXT', Validators.required],
       column: ['ID', Validators.required],
+      negated: [''],
+      caseSensitive: [{ value: false, disabled: true }, Validators.required],
+      accentSensitive: [false, Validators.required],
       operator: i > 0 ? ['AND', Validators.required] : [''],
       comparator: ['contains', Validators.required],
-      comparatorVal: ['', Validators.required]
+      comparatorVal: ['']
     });
   }
-  createOptions(i) {
+  createOptions() {
     return {
       noConditions: [false, Validators.required],
       duplicateRows: [true, Validators.required],
@@ -126,7 +185,7 @@ export class SidebarComponent implements OnInit {
     };
   }
 
-  addFormGroup(column) {
+  addFormGroup(column: string, conditionsAcc?: { toggle: (arg0: string) => void }) {
     switch (column) {
       case 'tableColumns':
         (this.tableData.searchForm.controls[column] as FormArray).push(
@@ -137,29 +196,47 @@ export class SidebarComponent implements OnInit {
         (this.tableData.searchForm.controls[column] as FormArray).push(
           this.createConditions((this.tableData.searchForm.controls[column] as FormArray).length)
         );
+        if (conditionsAcc) {
+          setTimeout(() => {
+            conditionsAcc.toggle('condition-' + (this.tableData.searchForm.get('conditions')['controls'].length - 1));
+          }, 1);
+        }
         break;
       default:
         break;
     }
   }
-  removeFormGroup(column, index) {
+  removeFormGroup(
+    column: string | number,
+    index: number,
+    conditionsAcc?: { activeIds: string[]; toggle: (arg0: string) => void }
+  ) {
     switch (column) {
       case 'tableColumns':
         (this.tableData.searchForm.controls[column] as FormArray).removeAt(index);
         break;
       case 'conditions':
         (this.tableData.searchForm.controls[column] as FormArray).removeAt(index);
+        if (
+          conditionsAcc.activeIds[0] ===
+          'condition-' + this.tableData.searchForm.get('conditions')['controls'].length
+        ) {
+          setTimeout(() => {
+            console.log(conditionsAcc);
+
+            conditionsAcc.toggle('condition-' + (this.tableData.searchForm.get('conditions')['controls'].length - 1));
+          }, 1);
+        }
         break;
       default:
         break;
     }
   }
-
   resetForm() {
     this.tableData.searchForm = this.fb.group({
       tableColumns: this.fb.array([this.createTableColumns(0)]),
       conditions: this.fb.array([this.createConditions(0)]),
-      options: this.fb.group(this.createOptions(0))
+      options: this.fb.group(this.createOptions())
     });
     this.tableData.searchForm.reset(this.tableData.searchForm.value);
   }
@@ -167,7 +244,7 @@ export class SidebarComponent implements OnInit {
     return this.tableData.searchForm.controls;
   }
 
-  open(content, type, modalDimension) {
+  open(content: any, type: string, modalDimension: string) {
     if (modalDimension === 'sm' && type === 'modal_mini') {
       this.modalService.open(content, { windowClass: 'modal-mini', size: 'sm', centered: true }).result.then(
         result => {
@@ -197,27 +274,94 @@ export class SidebarComponent implements OnInit {
       );
     }
   }
+  updateCaseSensitive(i: string | number) {
+    console.log(this.tableData.searchForm.get('conditions')['controls'][i].controls.accentSensitive.value, i);
+    if (this.tableData.searchForm.get('conditions')['controls'][i].controls.accentSensitive.value === false) {
+      this.tableData.searchForm.get('conditions')['controls'][i].controls.caseSensitive.patchValue(false);
+      this.tableData.searchForm.get('conditions')['controls'][i].controls.caseSensitive.disable();
+    } else {
+      this.tableData.searchForm.get('conditions')['controls'][i].controls.caseSensitive.enable();
+    }
+    console.log(this.tableData.searchForm.get('conditions')['controls'][i].controls.caseSensitive);
+  }
 
-  searchTable(close) {
+  async searchTable(close: () => void) {
     console.log(this.tableData.searchForm.value);
-    const id = performance.now().toString().split('.').join('');
-    console.log(id);
-    localStorage.setItem(id, JSON.stringify(this.tableData.searchForm.value));
-    this.router.navigateByUrl('/', { skipLocationChange: true }).then(() =>
-      this.router.navigate(['/tables'], {
-        queryParams: {
-          page: 0,
-          limit: 0,
-          fprop: '',
-          fval: '',
-          dtable: 'search',
-          ctable: '',
-          search: true,
-          id
+    console.log('Users Email:', this.authService.user.email);
+
+    const id = await this.http
+      .post(
+        `${environment.apiUrl}?`,
+        { query: JSON.stringify(this.tableData.searchForm.value), creator: this.authService.user.email || null },
+        {
+          headers: { 'content-type': 'application/json' }
         }
-      })
+      )
+      .toPromise();
+    console.log(id);
+    this.router.navigateByUrl('/', { skipLocationChange: true }).then(() =>
+      this.router
+        .navigate(['/tables'], {
+          queryParams: {
+            page: 0,
+            limit: 0,
+            fprop: '',
+            fval: '',
+            dtable: 'search',
+            ctable: '',
+            search: true,
+            id
+          }
+        })
+        .then(() => this.resetForm())
     );
     close();
+  }
+
+  comparatorSearch(index: string | number) {
+    const name = this.tableData.searchForm.get('conditions')['controls'][index].controls.column.value;
+    const input = this.tableData.searchForm.get('conditions')['controls'][index].controls.comparatorVal.value;
+
+    let columnVals = [];
+    switch (name) {
+      case 'Analysis':
+        columnVals = Analysis;
+        break;
+      case 'Augm':
+        return Augm;
+      case 'Causing_Mut':
+        return CausingMut;
+      case 'Contr':
+        return Contr;
+      case 'Depend':
+        return Depend;
+      case 'Depon':
+        return Depon;
+      case 'Hiat':
+        return Hiat;
+      case 'MS_Checked':
+        return MSChecked;
+      case 'Mut':
+        return Mut;
+      case 'Part_Of_Speech':
+        columnVals = PartOfSpeech;
+        break;
+      case 'Rel':
+        return Rel;
+      case 'Trans':
+        return Trans;
+      default:
+        break;
+    }
+    const options = {
+      includeScore: true,
+      isCaseSensitive: true
+    };
+
+    const fuse = new Fuse(columnVals, options);
+
+    const result = fuse.search(input);
+    return result.map(res => res.item);
   }
 
   private getDismissReason(reason: any): string {
