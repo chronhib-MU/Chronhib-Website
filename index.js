@@ -55,7 +55,8 @@ const {
   DATABASE,
   JWT_SECRET,
   JWT_EXPIRES_IN,
-  JWT_COOKIE_EXPIRES
+  JWT_COOKIE_EXPIRES,
+  ENVTEST
 } = result.parsed;
 
 const port = process.env.PORT || PORT;
@@ -66,10 +67,23 @@ const node_env = process.env.NODE_ENV || NODE_ENV;
 const user = process.env.USER || USER;
 const jwt_secret = process.env.JWT_SECRET || JWT_SECRET;
 const jwt_expires_in = process.env.JWT_EXPIRES_IN || JWT_EXPIRES_IN;
+const envtest = process.env.ENVTEST || ENVTEST;
 // @ts-ignore
 const jwt_cookie_expires = parseInt(process.env.JWT_COOKIE_EXPIRES || JWT_COOKIE_EXPIRES);
 // console.table({ port, host, password, database, node_env, user, jwt_secret, jwt_expires_in, jwt_cookie_expires });
-// logger.debug({ port, host, password, database, node_env, user, jwt_secret, jwt_expires_in, jwt_cookie_expires });
+
+logger.info({
+  port,
+  host,
+  password,
+  database,
+  node_env,
+  user,
+  jwt_secret,
+  jwt_expires_in,
+  jwt_cookie_expires,
+  envtest
+});
 const app = express();
 const server = http.createServer(app);
 // mysql table queries
@@ -593,15 +607,15 @@ app.get(`/${appName}/api/:path/headers`, (req, res, next) => {
   const path = req.params.path;
   // console.log(tables[path]);
   logger.trace(req.params.path);
-  const headerQuery = 'SELECT COLUMN_NAME  FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = N?';
-  connection.query(headerQuery, [DATABASE, path.split('/')[0]], (err, results) => {
+  const headerQuery = 'SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = N?';
+  connection.query(headerQuery, [DATABASE, path.split('/')[0].toUpperCase()], (err, results) => {
     if (err) {
       logger.error(err);
       next(err);
     } else {
       // console.log(results);
-      // logger.trace(results);
-      res.status(200).send({
+      logger.trace(results);
+      res.status(200).json({
         data: results.map(result => result.COLUMN_NAME)
       });
     }
