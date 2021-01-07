@@ -41,7 +41,7 @@ export class TableDataService {
   tableLength = 0;
   page = 0;
 
-  constructor(public router: Router, private http: HttpClient, private authService: AuthService) {}
+  constructor (public router: Router, private http: HttpClient, private authService: AuthService) { }
 
   // Fetches the headers for each table
   fetchHeaders = async () => {
@@ -96,7 +96,7 @@ export class TableDataService {
         const fetchedData = await this.fetchedTable.toPromise();
         const data = fetchedData.data;
         this.tableLength = data.numRows;
-        console.log(data);
+        // console.log(data);
         if (search) {
           console.log('Table Length: ', this.tableLength);
           // beforeTable contains the Search Query
@@ -122,6 +122,8 @@ export class TableDataService {
     } catch (error) {
       console.log(error);
       console.log('Invalid request made!');
+      const { message, title, type } = error.error;
+      this.authService.showToaster(message, title, type);
       return;
     }
   };
@@ -132,7 +134,7 @@ export class TableDataService {
         table: apiBody.table,
         values: [],
         command: apiBody.command,
-        requestedBy: this.authService.user
+        user: this.authService.user
       };
       if (filteredApiBody.command === 'moveRow') {
         // filteredApiBody.values.push(apiBody.values[0]);
@@ -155,13 +157,13 @@ export class TableDataService {
       // console.log(`Before ${apiBody.table} with `, apiBody, `to ${environment.apiUrl}?`);
 
       // console.log(`Updated ${filteredApiBody.table} with `, filteredApiBody, `to ${environment.apiUrl}?`);
-      if (filteredApiBody.values.length > 0) {
+      if (filteredApiBody.values.length > 0 || filteredApiBody.command === 'createRow') {
         const postedTable: Observable<ApiPostBody> = this.http.post<ApiPostBody>(
           `${environment.apiUrl}?`,
           JSON.stringify(filteredApiBody),
           { headers: { 'content-type': 'application/json' } }
         ) as Observable<ApiPostBody>;
-        await postedTable.toPromise();
+        return await postedTable.toPromise();
         // console.log('Table has finished updating!');
       } else {
         console.log('The values were the same! No changes made.');

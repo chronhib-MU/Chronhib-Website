@@ -26,7 +26,7 @@ export class TablesComponent implements OnInit, OnDestroy {
     this.routeParams = this.route.paramMap.subscribe(params => {
       // 'table' is the variable name from 'admin-layout-routing'
       this.pagination.table = params.get('table');
-      console.log('Table: ', this.pagination.table);
+      // console.log('Table: ', this.pagination.table);
 
       if (this.tableData.tables.names.indexOf(this.pagination.table) > -1) {
         this.before = '';

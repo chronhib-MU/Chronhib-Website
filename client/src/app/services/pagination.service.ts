@@ -1,3 +1,4 @@
+import { Subject } from 'rxjs';
 import { TableDataService } from './table-data.service';
 import { Injectable } from '@angular/core';
 import { FormGroup, FormControl, FormBuilder, Validators } from '@angular/forms';
@@ -7,6 +8,7 @@ import { FormGroup, FormControl, FormBuilder, Validators } from '@angular/forms'
 })
 export class PaginationService {
   pageForm = new FormGroup({});
+  scrollToTableSub: Subject<any> = new Subject<void>();
   table: string;
   constructor(private tableData: TableDataService, private fb: FormBuilder) {
     this.pageForm = fb.group({
@@ -22,46 +24,6 @@ export class PaginationService {
     console.log('Length: ', this.tableData.tableLength);
     this.tableData.page = 1;
     return this.tableData.page;
-  }
-  nextPage() {
-    if (this.tableData.page <= this.tableData.tableLength / this.getCurrentLimit()) {
-      const { fprop, fval, dtable, ctable, search } = this.tableData.currentApiQuery;
-      const queryParams = {
-        page: this.tableData.page + 1,
-        limit: this.getCurrentLimit(),
-        fprop,
-        fval,
-        dtable,
-        ctable,
-        search
-      };
-      if (this.tableData.currentApiQuery.id) {
-        queryParams['id'] = this.tableData.currentApiQuery.id;
-      }
-      return this.tableData.router.navigate(['/tables'], {
-        queryParams
-      });
-    }
-  }
-  previousPage() {
-    if (this.tableData.page >= 1) {
-      const { fprop, fval, dtable, ctable, search } = this.tableData.currentApiQuery;
-      const queryParams = {
-        page: this.tableData.page - 1,
-        limit: this.getCurrentLimit(),
-        fprop,
-        fval,
-        dtable,
-        ctable,
-        search
-      };
-      if (this.tableData.currentApiQuery.id) {
-        queryParams['id'] = this.tableData.currentApiQuery.id;
-      }
-      return this.tableData.router.navigate(['/tables'], {
-        queryParams
-      });
-    }
   }
   gotoPage(e?: any) {
     console.log(e);
@@ -91,13 +53,17 @@ export class PaginationService {
         queryParams['id'] = this.tableData.currentApiQuery.id;
       }
       if (this.table) {
-        return this.tableData.router.navigate(['/tables', this.table], {
-          queryParams
-        });
+        return this.tableData.router
+          .navigate(['/tables', this.table], {
+            queryParams
+          })
+          .then(() => this.scrollToTableSub.next());
       } else {
-        return this.tableData.router.navigate(['/tables'], {
-          queryParams
-        });
+        return this.tableData.router
+          .navigate(['/tables'], {
+            queryParams
+          })
+          .then(() => this.scrollToTableSub.next());
       }
     }
   }

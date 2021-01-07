@@ -20,6 +20,15 @@
               <span *ngIf="after !== 'text' && tableData.currentApiQuery.fval">
                 {{ ' - ' + tableData.currentApiQuery.fval }}
               </span>
+              <span *ngIf="after !== 'search'">
+                {{
+                  ' (' +
+                    this.dataTable[before === 'morphology' ? before : after].data.length +
+                    ' out of ' +
+                    this.tableData.tableLength +
+                    ' matches)'
+                }}
+              </span>
             </h2>
             <button type="button" class="btn btn-outline-default btn-sm" (click)="copyToClipboard()">
               <i class="fa fa-copy"></i> Copy Table Link
@@ -112,7 +121,7 @@
           #hotMini
           [hotId]="instance + 'Mini'"
           [columns]="columnsMini"
-          [rowHeaders]="null"
+          [rowHeaders]="getRows(before)"
           [colHeaders]="true"
           [data]="getTableData(before)"
           [settings]="hotSettings[edit ? 1 : 0]"
@@ -177,39 +186,6 @@
 <!-- Pagination -->
 <div class="row">
   <div class="col d-flex justify-content-center">
-    <!--    <nav aria-label="...">
-      <ul class="pagination justify-content-center">
-        <li class="page-item" [ngClass]="{ disabled: tableData.currentApiQuery.page == 1 }">
-          <a class="page-link" (click)="pagination.previousPage()">
-            <i class="fa fa-angle-left"></i>
-            <span class="sr-only">Previous</span>
-          </a>
-        </li>
-        <li class="page-item active">
-          <a class="page-link" placement="top" [ngbTooltip]="tableData.currentApiQuery | json">
-            {{ tableData.currentApiQuery.page }}
-            <span class="sr-only">(current)</span>
-          </a>
-        </li>
-        <li class="page-item">
-          <a class="page-link" (click)="pagination.nextPage()">
-            <i class="fa fa-angle-right"></i>
-            <span class="sr-only">Next</span>
-          </a>
-        </li>
-      </ul>
-    </nav> -->
-    <!-- <ngb-pagination
-      class="d-flex justify-content-center"
-      [collectionSize]="tableData.tableLength"
-      [(page)]="tableData.page"
-      [pageSize]="pagination.getCurrentLimit()"
-      [maxSize]="10"
-      [rotate]="true"
-      [boundaryLinks]="true"
-      (pageChange)="pagination.gotoPage($event)"
-    ></ngb-pagination> -->
-
     <form [formGroup]="pagination.pageForm" (ngSubmit)="pagination.gotoPage()">
       <mat-form-field>
         <mat-label>Go to Page</mat-label>

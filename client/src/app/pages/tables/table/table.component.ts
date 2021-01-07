@@ -60,7 +60,7 @@ export class TableComponent implements OnInit {
       manualRowMove: true,
       manualColumnMove: true,
       manualColumnFreeze: true,
-      contextMenu: true,
+      contextMenu: [],
       readOnly: false,
       // colWidths: 150,
       multiColumnSorting: false,
@@ -97,8 +97,9 @@ export class TableComponent implements OnInit {
   tableQuery: any;
   routeParams: any;
   routeQueryParams: any;
+  scrollToTableSub$: any;
 
-  constructor(
+  constructor (
     public tableData: TableDataService,
     public pagination: PaginationService,
     private authService: AuthService,
@@ -129,10 +130,12 @@ export class TableComponent implements OnInit {
     //   });
     // });
   }
-  ngOnInit(): void {
+  ngOnInit (): void {
     const that = this;
     this.sort = false;
-
+    this.scrollToTableSub$ = this.pagination.scrollToTableSub.subscribe(() => {
+      this.scrollToTable();
+    });
     this.routeQueryParams = this.route.queryParamMap.subscribe(async _paramMap => {
       this.sort = false;
       this.refresh();
@@ -142,10 +145,11 @@ export class TableComponent implements OnInit {
     const hooks = Handsontable.hooks.getRegistered();
     hooks.forEach(hook => {
       // focuses on the results after changes cause they have before and after data
+      let table = that.after;
       if (hook === 'afterChange') {
         this.hotSettings[that.edit ? 1 : 0][hook] = function () {
-          let table = that.after;
           // console.log('tableColumn length:', that.tableData.searchForm.get('tableColumns')['controls'].length);
+          table = that.after;
           if (arguments[1] !== 'loadData') {
             if (
               that.after !== 'search' ||
@@ -158,6 +162,9 @@ export class TableComponent implements OnInit {
               // console.log('TableData', tableData);
               // console.log('ColHeader', this.getColHeader());
               // console.log(that.searchTable);
+              // Need to find the index of the id
+              const ids = colHeaders.map((val, index) => ({ val, index })).filter(obj => obj.val === 'Id');
+              // console.log('ids', ids);
               const values = [];
               arguments[0].forEach((value: any[]) => {
                 // console.log('value:', value);
@@ -165,12 +172,10 @@ export class TableComponent implements OnInit {
                 const columnName = value[1];
                 const beforeValue = value[2];
                 const afterValue = value[3];
-                // Need to find the index of the id
-                const ids = colHeaders.map((val, index) => ({ val, index })).filter(obj => obj.val === 'Id');
-                // console.log('ids', ids);
                 // Makes sure the edit is not an irrelevant one
                 if (beforeValue !== afterValue && ids.length) {
                   const fieldProperty = columnName;
+                  // Gets the ID even if it has been moved
                   const id = tableData[rowNumber][ids.slice(-1)[0].index];
                   // console.log('id', id);
                   const result = {
@@ -179,12 +184,7 @@ export class TableComponent implements OnInit {
                     fieldValue: afterValue
                   };
                   if (table === 'search') {
-                    that.tableData.tables.names.forEach(name => {
-                      if (that.tableData.allHeaders[name].includes(columnName)) {
-                        table = name;
-                        return;
-                      }
-                    });
+                    table = that.tableData.searchForm.get('tableColumns')['controls'][0].value.table;
                   }
 
                   values.push(result);
@@ -222,6 +222,7 @@ export class TableComponent implements OnInit {
       } else if (hook === 'afterRowMove' && this.after !== 'search') {
         // TODO: refactor this
         this.hotSettings[that.edit ? 1 : 0][hook] = function () {
+          table = that.after
           // console.log(this);
           const tableData = this.getData();
           const newValues = tableData.map((row: { [x: string]: any }, i: number) => {
@@ -249,48 +250,122 @@ export class TableComponent implements OnInit {
             });
           }
         };
-      } else if (hook === 'afterCreateRow' && this.after !== 'search') {
-        // TODO: And this
+      } else if (
+        hook === 'beforeCreateRow' &&
+        (that.after !== 'search' || that.tableData.searchForm.get('tableColumns')['controls'].length === 1)
+      ) {
         this.hotSettings[that.edit ? 1 : 0][hook] = function () {
-          // console.log(this);
+          console.log("Arguments: ", arguments);
+          table = that.after
+          const location = arguments[2].split('.')[1];
           const tableData = this.getData();
-          const newValues = tableData.map((row: { [x: string]: any }, i: number) => {
-            const sortId = i + 1;
-            return { ID: row['1'], Sort_ID: sortId };
-          });
+          // console.log(tableData);
+          const values = [];
+          // console.log('Current API Query: ', that.tableData.currentApiQuery);
+          // If there are fields properties and values to automatically insert into the new row
+          if (that.tableData.currentApiQuery?.fprop && that.tableData.currentApiQuery?.fval) {
+            values.push({
+              fprop: that.tableData.currentApiQuery.fprop,
+              fval: that.tableData.currentApiQuery.fval
+            });
+          } else if (that.after === 'search') {
+            console.log(that.tableData.searchForm.get('tableColumns')['controls'][0].value.table);
+            table = that.tableData.searchForm.get('tableColumns')['controls'][0].value.table;
+          }
+          console.log("Values: ", values);
           const res: ApiPostBody = {
-            table: that.after,
+            table,
             command: 'createRow',
-            values: [newValues],
+            values,
             user: that.authService.user
           };
-          console.log('Result:', res);
           // Checks for which table we're making changes on
           if (this.rootElement.id === 'hotMini') {
             res.table = that.before;
           }
-          // console.log('Result:', res);
+          console.log('Result:', res);
           if (that.edit) {
+            that.refresh();
             that.tableData.updateTable(res).then(() => {
               that.history.push(res);
               // console.log('History: ', that.history);
-              // that.refresh();
+              that.refresh();
             });
           }
         };
+      }
+      else if (hook === 'beforeRemoveRow' && (that.after !== 'search' || that.tableData.searchForm.get('tableColumns')['controls'].length === 1)) {
+        this.hotSettings[that.edit ? 1 : 0][hook] = function () {
+          table = that.after;
+          if (
+            that.after !== 'search' ||
+            (that.tableData.searchForm.get('tableColumns')['controls'].length === 1 &&
+              that.searchTable.headers.includes('ID'))
+          ) {
+            console.log(hook, arguments);
+            const tableData = this.getData();
+            const colHeaders: Array<string> = this.getColHeader();
+            console.log('TableData', tableData);
+            // console.log('ColHeader', this.getColHeader());
+            // console.log(that.searchTable);
+            // Need to find the index of the id
+            const ids = colHeaders.map((val, index) => ({ val, index })).filter(obj => obj.val === 'Id');
+            console.log('ids', ids);
+            const values = [];
+            arguments[2].forEach((value: number) => {
+              console.log('value:', value);
+              const rowNumber = value;
+              // Gets the ID even if it has been moved
+              const id = tableData[rowNumber][ids.slice(-1)[0].index]; // Sort_IDs in index 0
+              if (ids.length) {
+                console.log('id', id);
+                if (table === 'search') {
+                  table = that.tableData.searchForm.get('tableColumns')['controls'][0].value.table;
+                }
+                values.push(id);
+              }
+            });
+            const res = {
+              table,
+              command: 'removeRow',
+              values,
+              user: that.authService.user
+            };
+            // Checks for which table we're making changes on
+            if (this.rootElement.id === 'hotMini') {
+              res.table = that.before;
+            }
+            // console.log('Result:', res);
+            if (that.edit && res.command !== 'loadData') {
+              that.tableData.updateTable(res).then(() => {
+                that.history.push(res);
+                // console.log('History: ', that.history);
+                // that.refresh();
+              });
+            }
+          } else if (that.searchTable.headers.includes('ID')) {
+            that.authService.showToaster(
+              'Row Removal on cross-table search results are not allowed.',
+              'Invalid Row Removal!',
+              'error'
+            );
+          } else {
+            that.authService.showToaster('No ID column found on search table.', 'Invalid Edit!', 'error');
+          }
+        }
       }
     });
 
     // $hooksList = $('#hooksList');
   }
-  copyToClipboard() {
+  copyToClipboard () {
     $('body').append('<input id="copyURL" type="text" value="" />');
     $('#copyURL').val(window.location.href).select();
     document.execCommand('copy');
     $('#copyURL').remove();
     this.authService.showToaster('', 'Search Link Copied to Clipboard!', 'info');
   }
-  exportToCSV() {
+  exportToCSV () {
     let filename =
       this.after === 'search'
         ? 'ChronHib_Search-' + this.tableData.currentApiQuery.id
@@ -318,15 +393,32 @@ export class TableComponent implements OnInit {
       }
     });
   }
-  async fetchedTable() {
+  compareFunctionFactory (sortOrder) {
+    const order = sortOrder === 'asc' ? true : false;
+    return function comparator (a, b) {
+      return order
+        ? (new Intl.Collator().compare(a, b) as 0 | 1 | -1)
+        : (new Intl.Collator().compare(b, a) as 0 | 1 | -1);
+    };
+  }
+
+  async fetchedTable () {
     if (this.hotRegisterer.getInstance(this.instance + 'Mini')) {
       this.hotRegisterer.getInstance(this.instance + 'Mini').updateSettings({
         multiColumnSorting: this.sort
+          ? {
+            compareFunctionFactory: this.compareFunctionFactory
+          }
+          : false
       });
     }
     if (this.hotRegisterer.getInstance(this.instance)) {
       this.hotRegisterer.getInstance(this.instance).updateSettings({
         multiColumnSorting: this.sort
+          ? {
+            compareFunctionFactory: this.compareFunctionFactory
+          }
+          : false
       });
     }
     try {
@@ -372,11 +464,11 @@ export class TableComponent implements OnInit {
     }
     this.after === 'search'
       ? await this.searchTable.headers.forEach((header: string) => {
-          return this.columnRendererSettings(header, this.after, 'columns');
-        })
+        return this.columnRendererSettings(header, this.after, 'columns');
+      })
       : await this.dataTable[this.after].headers.forEach((header: string) => {
-          return this.columnRendererSettings(header, this.after, 'columns');
-        });
+        return this.columnRendererSettings(header, this.after, 'columns');
+      });
 
     // this.dataset = [];
     // this.dataTable[this.after].data.forEach((row: any) => {
@@ -403,6 +495,10 @@ export class TableComponent implements OnInit {
             )
         },
         multiColumnSorting: this.sort
+          ? {
+            compareFunctionFactory: this.compareFunctionFactory
+          }
+          : false
       });
       this.getTableData(this.before);
     }
@@ -425,11 +521,15 @@ export class TableComponent implements OnInit {
             )
         },
         multiColumnSorting: this.sort
+          ? {
+            compareFunctionFactory: this.compareFunctionFactory
+          }
+          : false
       });
       this.getTableData(this.after);
     }
   }
-  columnRendererSettings(header: any, table, columnType) {
+  columnRendererSettings (header: any, table, columnType) {
     switch (header) {
       case 'Rel':
         return this[columnType].push(
@@ -493,7 +593,7 @@ export class TableComponent implements OnInit {
     }
   }
 
-  columnSettings(that: any, table: string, header: string, type: string, source?: any[], renderer?: string) {
+  columnSettings (that: any, table: string, header: string, type: string, source?: any[], renderer?: string) {
     // console.log('I got in here!');
     // console.log({ that, table, header, type, source, renderer });
     const settingsObj: any = {
@@ -549,65 +649,72 @@ export class TableComponent implements OnInit {
             td.style.textAlign = 'center';
           } else {
             let queryParams = {};
-            // console.table({ table, before: that.before, after: that.after, prop });
-            // If this is the Text_ID column on and we're not on the text Table
-            if (that.after !== 'text' && prop === 'Text_ID') {
-              queryParams = {
-                page: 0,
-                limit: 0,
-                fprop: '',
-                fval: '',
-                dtable: 'text',
-                ctable: 'text',
-                search: false
-              };
-            } else if (table === that.after && table === 'text' && prop === 'Text_ID') {
-              // If this is the after or search table
-              queryParams = {
-                page: 0,
-                limit: 0,
-                fprop: prop,
-                fval: value,
-                dtable: 'sentences',
-                ctable: 'text',
-                search: false
-              };
-            } else if (
-              ((table === that.before && table === 'sentences') || (table === that.after && table === 'morphology')) &&
-              prop === 'Text_Unit_ID'
-            ) {
-              queryParams = {
-                page: 0,
-                limit: 0,
-                fprop: 'Text_ID',
-                fval: value.split('-')[0].substr(1),
-                dtable: 'sentences',
-                ctable: 'text',
-                search: false
-              };
-            } else if (
-              (table === 'morphology' || table === 'search' || table === 'sentences') &&
-              prop === 'Text_Unit_ID'
-            ) {
-              queryParams = {
-                page: 0,
-                limit: 0,
-                fprop: prop,
-                fval: value,
-                dtable: 'morphology',
-                ctable: 'sentences',
-                search: false
-              };
-            } else if ((table === 'morphology' || table === 'search' || table === 'lemmata') && prop === 'Lemma') {
-              queryParams = {
-                page: 0,
-                limit: 0,
-                fprop: prop,
-                fval: value,
-                dtable: 'lemmata',
-                ctable: 'morphology',
-                search: false
-              };
+            if (value) {
+              // console.table({ table, before: that.before, after: that.after, prop });
+              // If this is the Text_ID column and we're not on the text Table
+              if (that.after !== 'text' && prop === 'Text_ID') {
+                queryParams = {
+                  page: 0,
+                  limit: 0,
+                  fprop: '',
+                  fval: '',
+                  dtable: 'text',
+                  ctable: 'text',
+                  search: false
+                };
+              } else if (table === that.after && table === 'text' && prop === 'Text_ID') {
+                // If this is the after or search table
+                queryParams = {
+                  page: 0,
+                  limit: 0,
+                  fprop: prop,
+                  fval: value,
+                  dtable: 'sentences',
+                  ctable: 'text',
+                  search: false
+                };
+              } else if (
+                ((table === that.before && table === 'sentences') ||
+                  (table === that.after && table === 'morphology')) &&
+                prop === 'Text_Unit_ID'
+              ) {
+                queryParams = {
+                  page: 0,
+                  limit: 0,
+                  fprop: 'Text_ID',
+                  fval: value.split('-')[0].substr(1),
+                  dtable: 'sentences',
+                  ctable: 'text',
+                  search: false
+                };
+              } else if (
+                (table === 'morphology' || table === 'search' || table === 'sentences') &&
+                prop === 'Text_Unit_ID'
+              ) {
+                queryParams = {
+                  page: 0,
+                  limit: 0,
+                  fprop: prop,
+                  fval: value,
+                  dtable: 'morphology',
+                  ctable: 'sentences',
+                  search: false
+                };
+              } else if ((table === 'morphology' || table === 'search' || table === 'lemmata') && prop === 'Lemma') {
+                queryParams = {
+                  page: 0,
+                  limit: 0,
+                  fprop: prop,
+                  fval: value,
+                  dtable: 'lemmata',
+                  ctable: 'morphology',
+                  search: false
+                };
+              } else {
+                Handsontable.renderers.TextRenderer.apply(this, arguments);
+                td.style.whiteSpace = that.wordWrap ? 'normal' : 'nowrap';
+                return td;
+              }
             } else {
               Handsontable.renderers.TextRenderer.apply(this, arguments);
               td.style.whiteSpace = that.wordWrap ? 'normal' : 'nowrap';
@@ -639,7 +746,7 @@ export class TableComponent implements OnInit {
 
     return settingsObj;
   }
-  getColWidths(index: number, table: string) {
+  getColWidths (index: number, table: string) {
     // console.log('Index: ', index + ' ' + that.dataTable[that.after].headers[index]);
     const indexTitle = table === 'search' ? this.searchTable.headers[index] : this.dataTable[table].headers[index];
     switch (indexTitle) {
@@ -718,39 +825,39 @@ export class TableComponent implements OnInit {
     }
   }
 
-  getTableData(table: string) {
+  getTableData (table: string) {
     return table === 'search' ? this.searchTable.data : this.dataTable[table].data;
   }
-  getRows(table: string | number) {
-    return table === 'search' || table === this.before
+  getRows (table: string | number) {
+    return table === 'search' || (table === this.before && this.before !== this.after)
       ? this.searchTable.data.map((row, index) => index + 1)
       : this.dataTable[table].data.map((row: { Sort_ID: any }) => row.Sort_ID);
   }
-  undo() {
+  undo () {
     this.hotInstance = this.hotRegisterer.getInstance(this.instance);
     if ((this.hotInstance as any).isUndoAvailable()) {
       (this.hotInstance as any).undo();
     }
   }
-  redo() {
+  redo () {
     this.hotInstance = this.hotRegisterer.getInstance(this.instance);
     if ((this.hotInstance as any).isRedoAvailable()) {
       (this.hotInstance as any).redo();
     }
   }
-  async refresh() {
+  async refresh () {
     await this.fetchedTable();
 
     this.hotInstance = this.hotRegisterer.getInstance(this.instance);
     this.hotInstance.loadData(this.getTableData(this.after));
     this.hotInstance.render();
   }
-  toggleMode(variable: string) {
+  toggleMode (variable: string) {
     if (variable === 'edit') {
       this.edit = !this.edit;
       this.hotInstance = this.hotRegisterer.getInstance(this.instance);
       this.hotInstance.updateSettings({
-        manualRowMove: this.edit,
+        manualRowMove: this.edit && !!this.before,
         manualColumnFreeze: this.edit,
         contextMenu: this.edit,
         readOnly: !this.edit,
@@ -775,7 +882,7 @@ export class TableComponent implements OnInit {
       this.sort = !this.sort;
       this.hotInstance = this.hotRegisterer.getInstance(this.instance);
       this.hotInstance.updateSettings({
-        manualRowMove: !this.sort && this.edit
+        manualRowMove: !this.sort && this.edit && !!this.before
       });
       this.fetchedTable();
     } else if (variable === 'ref') {
@@ -787,7 +894,7 @@ export class TableComponent implements OnInit {
       this.fetchedTable();
     }
   }
-  changeID(direction: string) {
+  changeID (direction: string) {
     const urlParams = new URLSearchParams(window.location.search);
     // console.log(urlParams.toString());
     if (urlParams.has('fval') && (this.before === 'text' || this.before === 'sentences')) {
@@ -821,14 +928,14 @@ export class TableComponent implements OnInit {
       }
     }
   }
-  goBack() {
+  goBack () {
     this.location.back();
   }
-  goForward() {
+  goForward () {
     this.location.forward();
   }
 
-  updatePageForm() {
+  updatePageForm () {
     this.pagination.pageForm.controls.page.setValidators([
       Validators.required,
       Validators.min(0),
@@ -837,7 +944,7 @@ export class TableComponent implements OnInit {
 
     this.pagination.pageForm.controls.page.updateValueAndValidity();
   }
-  scrollToTable() {
+  scrollToTable () {
     // console.log('App Table Height: ', this.appTable.nativeElement.scrollHeight);
     // window.scrollTo({ top: this.appTable.nativeElement.scrollHeight, behavior: 'smooth' })
     this.appTable.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });

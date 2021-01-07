@@ -400,6 +400,14 @@
                         <button
                           type="submit"
                           class="btn btn-primary mt-4"
+                          value="No Conditions"
+                          (click)="tableData.searchForm.get('options')['controls']['noConditions'].value = true"
+                        >
+                          No Conditions
+                        </button>
+                        <button
+                          type="submit"
+                          class="btn btn-primary mt-4"
                           value="Next Step"
                           (click)="
                             tableData.searchForm.get('options')['controls']['noConditions'].value = false; (true)
@@ -407,14 +415,6 @@
                           [disabled]="tableData.searchForm.get('conditions').invalid"
                         >
                           Next Step: Options
-                        </button>
-                        <button
-                          type="submit"
-                          class="btn btn-primary mt-4"
-                          value="No Conditions"
-                          (click)="tableData.searchForm.get('options')['controls']['noConditions'].value = true"
-                        >
-                          No Conditions
                         </button>
                       </div>
                     </form>
