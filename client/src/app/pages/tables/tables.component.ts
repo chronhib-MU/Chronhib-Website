@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
+import { PaginationService } from '../../services/pagination.service';
 import { TableDataService } from '../../services/table-data.service';
 
 @Component({
@@ -13,29 +14,37 @@ export class TablesComponent implements OnInit, OnDestroy {
   tableQuery: any;
   before: string;
   after: string;
-  table: string;
-  constructor(public tableData: TableDataService, public router: Router, private route: ActivatedRoute) {}
+
+  constructor(
+    public pagination: PaginationService,
+    public tableData: TableDataService,
+    public router: Router,
+    private route: ActivatedRoute
+  ) {}
 
   ngOnInit() {
     this.routeParams = this.route.paramMap.subscribe(params => {
       // 'table' is the variable name from 'admin-layout-routing'
-      this.table = params.get('table');
-      // console.log('Table: ', this.table);
+      this.pagination.table = params.get('table');
+      // console.log('Table: ', this.pagination.table);
 
-      if (this.tableData.tables.names.indexOf(this.table) > -1) {
+      if (this.tableData.tables.names.indexOf(this.pagination.table) > -1) {
         this.before = '';
-        this.after = this.table;
-        this.tableData.fetchTable(this.table);
+        this.after = this.pagination.table;
+        this.tableData.fetchTable(this.pagination.table);
       }
     });
     this.routeQueryParams = this.route.queryParamMap.subscribe(paramMap => {
       const tableParams: any = { ...paramMap };
-
       this.tableQuery = tableParams.params;
       // console.log({ ...paramMap.keys, ...paramMap });
       // console.log('Table Query: ', this.tableQuery);
       // Checks
-      if (this.table == null && Object.keys(this.tableQuery).length === 0 && this.tableQuery.constructor === Object) {
+      if (
+        this.pagination.table == null &&
+        Object.keys(this.tableQuery).length === 0 &&
+        this.tableQuery.constructor === Object
+      ) {
         this.router.navigate(['/tables'], {
           queryParams: {
             page: 0,

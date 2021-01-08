@@ -1,7 +1,7 @@
 <div class="header bg-gradient-image pb-7 pt-4">
   <div class="container-fluid">
     <div class="header-body">
-      <ng-container *ngIf="!table">
+      <ng-container *ngIf="!pagination.table">
         <div class="row">
           <div
             *ngFor="let table of tableData.tables.names; let key = index"
@@ -24,7 +24,18 @@
                 </div>
               </div>
 
-              <a [routerLink]="['/tables/', table]">
+              <a
+                [routerLink]="['/tables/', table]"
+                [queryParams]="{
+                  page: 0,
+                  limit: 100,
+                  fprop: '',
+                  fval: '',
+                  dtable: table,
+                  ctable: '',
+                  search: false
+                }"
+              >
                 <div id="img-container" class="w-100">
                   <img
                     [src]="
@@ -66,7 +77,7 @@
   <!-- Table -->
 
   <ng-container *ngFor="let name of tableData.tables.names">
-    <app-table *ngIf="table == name" [before]="before" [after]="after" [edit]="false"></app-table>
+    <app-table *ngIf="pagination.table == name" [before]="before" [after]="after" [edit]="false"></app-table>
   </ng-container>
   <app-table
     *ngIf="tableData.tables.names.indexOf(this.before) > -1 || this.after === 'search'"
