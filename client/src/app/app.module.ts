@@ -9,6 +9,8 @@ import { AdminLayoutComponent } from './layouts/admin-layout/admin-layout.compon
 import { AuthLayoutComponent } from './layouts/auth-layout/auth-layout.component';
 
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { MatPaginatorModule } from '@angular/material/paginator';
+import { MatInputModule } from '@angular/material/input';
 
 import { AppRoutingModule } from './app.routing';
 import { ComponentsModule } from './components/components.module';
@@ -22,6 +24,8 @@ import { ToastrModule } from 'ngx-toastr';
     HttpClientModule,
     ComponentsModule,
     NgbModule,
+    MatInputModule,
+    MatPaginatorModule,
     RouterModule,
     AppRoutingModule,
     ToastrModule.forRoot({
