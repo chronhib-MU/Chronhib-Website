@@ -26,6 +26,24 @@ export class TableComponent implements OnInit {
   sort = false;
   ref = false;
   instance = 'hot';
+  contextMenu: Handsontable.contextMenu.Settings =
+    {
+      items:
+      {
+        'row_below': { name: 'Insert Row' },
+        'remove_row': {},
+        'freeze_column': {},
+        'unfreeze_column': {},
+        'sp1': { name: '---------' },
+        'undo': {},
+        'redo': {},
+        'sp2': { name: '---------' },
+        'cut': {},
+        'copy': {},
+        'sp3': { name: '---------' },
+        'alignment': {},
+      }
+    };
   // index 0 if edit mode false OR index 1 if edit mode true
   hotSettings: Handsontable.GridSettings[] = [
     {
@@ -60,7 +78,7 @@ export class TableComponent implements OnInit {
       manualRowMove: true,
       manualColumnMove: true,
       manualColumnFreeze: true,
-      contextMenu: [],
+      contextMenu: this.contextMenu,
       readOnly: false,
       // colWidths: 150,
       multiColumnSorting: false,
@@ -859,7 +877,7 @@ export class TableComponent implements OnInit {
       this.hotInstance.updateSettings({
         manualRowMove: this.edit && !!this.before,
         manualColumnFreeze: this.edit,
-        contextMenu: this.edit,
+        contextMenu: this.edit ? this.contextMenu : this.edit,
         readOnly: !this.edit,
         disableVisualSelection: !this.edit
       });
@@ -872,7 +890,7 @@ export class TableComponent implements OnInit {
       if (this.hotRegisterer.getInstance(this.instance + 'Mini')) {
         this.hotRegisterer.getInstance(this.instance + 'Mini').updateSettings({
           manualColumnFreeze: this.edit,
-          contextMenu: this.edit,
+          contextMenu: this.edit ? this.contextMenu : this.edit,
           readOnly: !this.edit,
           disableVisualSelection: !this.edit
         });

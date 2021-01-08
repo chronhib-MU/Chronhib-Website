@@ -134,7 +134,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
       .get('tableColumns')
       ['controls'][i].controls.column.patchValue(
         this.tableData.allHeaders[
-          this.tableData.searchForm.get('tableColumns')['controls'][i].controls.table.value.toLowerCase()
+          this.tableData.searchForm.get('tableColumns')['controls'][i].controls.table.value?.toLowerCase()
         ]
       );
   }
