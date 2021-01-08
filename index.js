@@ -732,7 +732,7 @@ app.get(`/${appName}/api/`, (req, res, next) => {
                 if (comparator === 'IN') {
                   if (!condition.accentSensitive) {
                     conditionTableColumn = conditionTableColumn + ' COLLATE utf8mb4_unicode_ci';
-                    conditionComparatorVal = conditionComparatorVal + ' COLLATE utf8_unicode_ci';
+                    conditionComparatorVal = conditionComparatorVal + ' COLLATE utf8mb4_unicode_ci';
                   } else if (!condition.caseSensitive) {
                     conditionTableColumn = 'LOWER(' + conditionTableColumn + ')';
                     conditionComparatorVal = 'LOWER(' + conditionComparatorVal + ')';
@@ -740,7 +740,7 @@ app.get(`/${appName}/api/`, (req, res, next) => {
                 } else {
                   if (!condition.accentSensitive) {
                     conditionTableColumn = conditionTableColumn + ' COLLATE utf8mb4_unicode_ci';
-                    conditionComparatorVal = conditionComparatorVal + ' COLLATE utf8_unicode_ci';
+                    conditionComparatorVal = conditionComparatorVal + ' COLLATE utf8mb4_unicode_ci';
                   } else if (!condition.caseSensitive) {
                     conditionTableColumn = 'LOWER(' + conditionTableColumn + ')';
                     conditionComparatorVal = 'LOWER(' + conditionComparatorVal + ')';
