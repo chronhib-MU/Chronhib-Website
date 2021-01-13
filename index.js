@@ -691,7 +691,6 @@ app.get(`/${appName}/api/`, (req, res, next) => {
               if (condition.negated) {
                 whereConditions.push('NOT');
               }
-              const whereCondition = [];
               let comparator, comparatorVal;
               comparator = comparatorVal = '';
               switch (condition.comparator) {
@@ -731,39 +730,42 @@ app.get(`/${appName}/api/`, (req, res, next) => {
               if (!excludeCollation.includes(condition.column)) {
                 if (comparator === 'IN') {
                   if (!condition.accentSensitive) {
-                    conditionTableColumn = conditionTableColumn + ' COLLATE utf8mb4_unicode_ci';
-                    conditionComparatorVal = conditionComparatorVal + ' COLLATE utf8mb4_unicode_ci';
+                    conditionTableColumn = conditionTableColumn + ' COLLATE utf8mb4_general_ci';
+                    conditionComparatorVal = conditionComparatorVal + ' COLLATE utf8_general_ci';
                   } else if (!condition.caseSensitive) {
                     conditionTableColumn = 'LOWER(' + conditionTableColumn + ')';
                     conditionComparatorVal = 'LOWER(' + conditionComparatorVal + ')';
                   }
                 } else {
                   if (!condition.accentSensitive) {
-                    conditionTableColumn = conditionTableColumn + ' COLLATE utf8mb4_unicode_ci';
-                    conditionComparatorVal = conditionComparatorVal + ' COLLATE utf8mb4_unicode_ci';
+                    conditionTableColumn = conditionTableColumn + ' COLLATE utf8mb4_general_ci';
+                    conditionComparatorVal = conditionComparatorVal + ' COLLATE utf8_general_ci';
                   } else if (!condition.caseSensitive) {
                     conditionTableColumn = 'LOWER(' + conditionTableColumn + ')';
                     conditionComparatorVal = 'LOWER(' + conditionComparatorVal + ')';
                   }
                 }
               }
-              whereConditions.push(conditionTableColumn, conditionComparator, conditionComparatorVal, whereCondition.join(' '));
+              whereConditions.push(conditionTableColumn, conditionComparator, conditionComparatorVal);
             });
-            let openBracket = false;
-            for (let index = 2; index < whereConditions.length; index += 2) {
-              if (whereConditions[index] === 'AND' && openBracket === true) {
-                whereConditions.splice(index, 0, ')'); // Add a closing bracket to the previous index in between the last condition and this and operator
-                index++; // To compensate for the added element in the array
-                openBracket = false;
-              } else if (whereConditions[index] === 'OR' && openBracket === false) {
-                whereConditions.splice(index - 1, 0, '('); // Add opening bracket before previous condition
-                index++; // To compensate for the added element in the array
-                openBracket = true;
+            logger.info('Where pre brackets: ', JSON.stringify(whereConditions))
+            if (whereConditions.includes('AND')) {
+              let openBracket = false;
+              for (let index = 2; index < whereConditions.length; index += 2) {
+                if (whereConditions[index] === 'AND' && openBracket === true) {
+                  whereConditions.splice(index, 0, ')'); // Add a closing bracket to the previous index in between the last condition and this and operator
+                  index++; // To compensate for the added element in the array
+                  openBracket = false;
+                } else if (whereConditions[index] === 'OR' && openBracket === false) {
+                  whereConditions.splice(index - 3, 0, '('); // Add opening bracket before previous condition
+                  index++; // To compensate for the added element in the array
+                  openBracket = true;
+                }
               }
-            }
-            // We've finished going through the where conditions
-            if (openBracket === true) {
-              whereConditions.push(')'); // If there's still an openBracket then we add a closing bracket at the very last index
+              // We've finished going through the where conditions
+              if (openBracket === true) {
+                whereConditions.push(')'); // If there's still an openBracket then we add a closing bracket at the very last index
+              }
             }
           }
           const limit =
@@ -794,23 +796,37 @@ app.get(`/${appName}/api/`, (req, res, next) => {
           try {
             console.log('Count Query: ', countQuery);
             connection.query(countQuery, (error, result) => {
-              const numRows = result[0].numRows;
-              console.log('Offset: ', page * limit);
+              if (error) {
+                console.log('Error: ', error);
+                logger.info({ id: req.query.id, searchQuery });
+                logger.error(error);
+                next(err);
+              }
+              else if (result) {
+                const numRows = result[0].numRows;
+                console.log('Offset: ', page * limit);
 
-              finalQuery += ' OFFSET ' + page * limit + ';';
-              console.log('Final Query: ', finalQuery);
-
-              connection.query(finalQuery, (err, results) => {
-                if (err) {
-                  console.log('Error: ', err);
-                  logger.info({ id: req.query.id, searchQuery });
-                  logger.error(err);
-                } else {
-                  res.status(200).send({
-                    data: { beforeTable: searchQuery, afterTable: results, numRows }
-                  });
-                }
-              });
+                finalQuery += ' OFFSET ' + page * limit + ';';
+                console.log('Final Query: ', finalQuery);
+                connection.query(finalQuery, (err, results) => {
+                  if (err) {
+                    console.log('Error: ', err);
+                    logger.info({ id: req.query.id, searchQuery });
+                    logger.error(err);
+                    next(err);
+                  } else {
+                    res.status(200).send({
+                      data: { beforeTable: searchQuery, afterTable: results, numRows }
+                    });
+                  }
+                });
+              } else {
+                res.status(400).send({
+                  message: req.query.id ? 'Search ID ' + req.query.id + ' does not exist.' : 'Search ID needed to show search results.',
+                  title: req.query.id ? 'Invalid Search ID!' : 'No Search ID found!',
+                  type: 'error'
+                });
+              }
             });
           } catch (error) {
             console.log('Error: ', error);

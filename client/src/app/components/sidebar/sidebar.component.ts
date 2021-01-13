@@ -71,7 +71,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
   ];
   active = 'tableColumns';
   searchQuerySub$: any;
-  constructor(
+  constructor (
     public authService: AuthService,
     public tableData: TableDataService,
     location: Location,
@@ -84,7 +84,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
     this.location = location;
   }
 
-  ngOnInit() {
+  ngOnInit () {
     this.tableData.fetchHeaders();
     this.menuItems = ROUTES.filter(menuItem => menuItem);
     // ROUTES[2].class = this.getTitle() === 'Register' ? 'd-none' : '';
@@ -112,12 +112,12 @@ export class SidebarComponent implements OnInit, OnDestroy {
       this.isCollapsed = true;
     });
   }
-  ngOnDestroy(): void {
+  ngOnDestroy (): void {
     // Called once, before the instance is destroyed.
     // Add 'implements OnDestroy' to the class.
     this.searchQuerySub$.unsubscribe();
   }
-  mapSearchData(data: any[]) {
+  mapSearchData (data: any[]) {
     let res = [];
     res = data.map((value: { replaceAll: (arg0: string, arg1: string) => any }) => ({
       name: value.replaceAll('_', ' '),
@@ -125,30 +125,30 @@ export class SidebarComponent implements OnInit, OnDestroy {
     }));
     return res;
   }
-  onItemSelect(item: any, index: number) {
+  onItemSelect (item: any, index: number) {
     // console.log(item);
     this.tableData.searchForm.get('tableColumns')['controls'][index].controls.column.patchValue(['ID']);
   }
-  selectAll(i: string | number) {
+  selectAll (i: string | number) {
     return this.tableData.searchForm
       .get('tableColumns')
-      ['controls'][i].controls.column.patchValue(
-        this.tableData.allHeaders[
-          this.tableData.searchForm.get('tableColumns')['controls'][i].controls.table.value?.toLowerCase()
-        ]
-      );
+    ['controls'][i].controls.column.patchValue(
+      this.tableData.allHeaders[
+      this.tableData.searchForm.get('tableColumns')['controls'][i].controls.table.value?.toLowerCase()
+      ]
+    );
   }
 
-  unselectAll(i: string | number) {
+  unselectAll (i: string | number) {
     return this.tableData.searchForm.get('tableColumns')['controls'][i].controls.column.patchValue([]);
   }
 
-  excludePreviousTableOptions(i: any) {
+  excludePreviousTableOptions (i: any) {
     return this.tableData.tables.names.filter((table: string) => {
       if (this.tableData.searchForm) {
         const searchFormTables = this.tableData.searchForm
           .get('tableColumns')
-          ['controls'].map((val: { controls: { table: { value: any } } }) => val.controls.table.value)
+        ['controls'].map((val: { controls: { table: { value: any } } }) => val.controls.table.value)
           .filter((val: any, index: any) => index !== i);
         if (!searchFormTables.includes(table.toUpperCase())) {
           return true;
@@ -159,13 +159,13 @@ export class SidebarComponent implements OnInit, OnDestroy {
       }
     });
   }
-  createTableColumns(i: number) {
+  createTableColumns (i: number) {
     return this.fb.group({
       table: [this.excludePreviousTableOptions(i)[0]?.toUpperCase(), Validators.required],
       column: [['ID'], Validators.required]
     });
   }
-  createConditions(i: number) {
+  createConditions (i: number) {
     return this.fb.group({
       table: ['TEXT', Validators.required],
       column: ['ID', Validators.required],
@@ -177,7 +177,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
       comparatorVal: ['']
     });
   }
-  createOptions() {
+  createOptions () {
     return {
       noConditions: [false, Validators.required],
       duplicateRows: [true, Validators.required],
@@ -185,7 +185,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
     };
   }
 
-  addFormGroup(column: string, conditionsAcc?: { toggle: (arg0: string) => void }) {
+  addFormGroup (column: string, conditionsAcc?: { toggle: (arg0: string) => void }) {
     switch (column) {
       case 'tableColumns':
         (this.tableData.searchForm.controls[column] as FormArray).push(
@@ -206,7 +206,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
         break;
     }
   }
-  removeFormGroup(
+  removeFormGroup (
     column: string | number,
     index: number,
     conditionsAcc?: { activeIds: string[]; toggle: (arg0: string) => void }
@@ -232,7 +232,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
         break;
     }
   }
-  resetForm() {
+  resetForm () {
     this.tableData.searchForm = this.fb.group({
       tableColumns: this.fb.array([this.createTableColumns(0)]),
       conditions: this.fb.array([this.createConditions(0)]),
@@ -240,11 +240,11 @@ export class SidebarComponent implements OnInit, OnDestroy {
     });
     this.tableData.searchForm.reset(this.tableData.searchForm.value);
   }
-  get sF() {
+  get sF () {
     return this.tableData.searchForm.controls;
   }
 
-  open(content: any, type: string, modalDimension: string) {
+  open (content: any, type: string, modalDimension: string) {
     if (modalDimension === 'sm' && type === 'modal_mini') {
       this.modalService.open(content, { windowClass: 'modal-mini', size: 'sm', centered: true }).result.then(
         result => {
@@ -274,7 +274,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
       );
     }
   }
-  updateCaseSensitive(i: string | number) {
+  updateCaseSensitive (i: string | number) {
     console.log(this.tableData.searchForm.get('conditions')['controls'][i].controls.accentSensitive.value, i);
     if (this.tableData.searchForm.get('conditions')['controls'][i].controls.accentSensitive.value === false) {
       this.tableData.searchForm.get('conditions')['controls'][i].controls.caseSensitive.patchValue(false);
@@ -285,7 +285,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
     console.log(this.tableData.searchForm.get('conditions')['controls'][i].controls.caseSensitive);
   }
 
-  async searchTable(close: () => void) {
+  async searchTable (close: () => void) {
     console.log(this.tableData.searchForm.value);
     console.log('Users Email:', this.authService.user.email);
 
@@ -318,7 +318,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
     close();
   }
 
-  comparatorSearch(index: string | number) {
+  comparatorSearch (index: string | number) {
     const name = this.tableData.searchForm.get('conditions')['controls'][index].controls.column.value;
     const input = this.tableData.searchForm.get('conditions')['controls'][index].controls.comparatorVal.value;
 
@@ -364,7 +364,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
     return result.map(res => res.item);
   }
 
-  private getDismissReason(reason: any): string {
+  private getDismissReason (reason: any): string {
     if (reason === ModalDismissReasons.ESC) {
       return 'by pressing ESC';
     } else if (reason === ModalDismissReasons.BACKDROP_CLICK) {
@@ -373,7 +373,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
       return 'with: $reason';
     }
   }
-  getTitle() {
+  getTitle () {
     let title = this.location.prepareExternalUrl(this.location.path());
     if (title.charAt(0) === '#') {
       title = title.slice(1);

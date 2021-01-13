@@ -10,6 +10,7 @@ import { ApiPostBody } from '../../../interfaces/api-post-body';
 import * as jsonexport from 'jsonexport/dist';
 import * as _ from 'lodash';
 import { Validators } from '@angular/forms';
+import { Lemma } from '../../../model/columnOpts.model';
 declare const $: any;
 @Component({
   selector: 'app-table',
@@ -606,6 +607,16 @@ export class TableComponent implements OnInit {
             'autocomplete'
           )
         );
+      case 'Lemma':
+        return this[columnType].push(
+          this.columnSettings(
+            this,
+            table,
+            header,
+            'autocomplete',
+            Lemma
+          )
+        );
       default:
         return this[columnType].push(this.columnSettings(this, table, header, 'text'));
     }
@@ -614,7 +625,7 @@ export class TableComponent implements OnInit {
   columnSettings (that: any, table: string, header: string, type: string, source?: any[], renderer?: string) {
     // console.log('I got in here!');
     // console.log({ that, table, header, type, source, renderer });
-    const settingsObj: any = {
+    const settingsObj: Handsontable.ColumnSettings = {
       data: header,
       title: _.capitalize(header.replace(/_/g, ' ')),
       type,
@@ -623,11 +634,11 @@ export class TableComponent implements OnInit {
         renderer ||
         function (
           _instance: any,
-          td: HTMLElement,
-          _row: any,
-          _col: any,
-          prop: string,
-          value: string,
+          td: HTMLTableCellElement,
+          _row: number,
+          _col: number,
+          prop: string | string,
+          value: Handsontable.CellValue,
           _cellProperties: any
         ) {
           // console.log(that);
@@ -730,12 +741,12 @@ export class TableComponent implements OnInit {
                 };
               } else {
                 Handsontable.renderers.TextRenderer.apply(this, arguments);
-                td.style.whiteSpace = that.wordWrap ? 'normal' : 'nowrap';
+                td.style.whiteSpace = that.wordWrap ? 'pre-wrap' : 'nowrap';
                 return td;
               }
             } else {
               Handsontable.renderers.TextRenderer.apply(this, arguments);
-              td.style.whiteSpace = that.wordWrap ? 'normal' : 'nowrap';
+              td.style.whiteSpace = that.wordWrap ? 'pre-wrap' : 'nowrap';
               return td;
             }
             const a = document.createElement('span');
@@ -753,12 +764,16 @@ export class TableComponent implements OnInit {
             td.appendChild(a);
             td.style.textAlign = 'center';
           }
-          td.style.whiteSpace = that.wordWrap ? 'normal' : 'nowrap';
+          td.style.whiteSpace = that.wordWrap ? 'pre-wrap' : 'nowrap';
           return td;
         }
     };
     if (source) {
       settingsObj.source = source;
+    }
+    if (type === 'autocomplete') {
+      settingsObj.visible = 5;
+      settingsObj.strict = false;
     }
     // console.log(settingsObj);
 
@@ -965,6 +980,6 @@ export class TableComponent implements OnInit {
   scrollToTable () {
     // console.log('App Table Height: ', this.appTable.nativeElement.scrollHeight);
     // window.scrollTo({ top: this.appTable.nativeElement.scrollHeight, behavior: 'smooth' })
-    this.appTable.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    this.appTable.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 }
