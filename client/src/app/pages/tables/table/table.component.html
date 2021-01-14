@@ -9,14 +9,42 @@
             </h5>
             <h2 class="mb-0 font-weight-bolder text-dark">
               {{ after | titlecase }}
+              <span *ngIf="after === 'search'">
+                {{ ' Results ' }}
+                <span placement="top" ngbTooltip="Search Query ID" tooltipClass="width-125">
+                  {{ '#' + tableData.currentApiQuery.id }}
+                </span>
+
+                {{ ' - ' + this.searchTable.data.length + ' out of ' + this.tableData.tableLength + ' matches' }}
+              </span>
               <span *ngIf="after !== 'text' && tableData.currentApiQuery.fval">
                 {{ ' - ' + tableData.currentApiQuery.fval }}
               </span>
+              <span *ngIf="after !== 'search'">
+                {{
+                  ' (' +
+                    this.dataTable[before === 'morphology' ? before : after].data.length +
+                    ' out of ' +
+                    this.tableData.tableLength +
+                    ' matches)'
+                }}
+              </span>
             </h2>
+            <button type="button" class="btn btn-outline-default btn-sm" (click)="copyToClipboard()">
+              <i class="fa fa-copy"></i> Copy Table Link
+            </button>
+            <button type="button" class="btn btn-outline-default btn-sm" (click)="exportToCSV()">
+              <i class="fa fa-download"></i>
+              Export Table Data to CSV File
+            </button>
           </div>
 
           <div class="btn-group col-auto pr-0">
-            <label class="btn btn-secondary px-3 py-2" (click)="toggleMode('edit')">
+            <label
+              class="btn btn-secondary px-3 py-2"
+              (click)="toggleMode('edit')"
+              *ngIf="after !== 'search' || tableData.searchForm.get('tableColumns')['controls'].length === 1"
+            >
               Edit <i class="fa fa-toggle-on" *ngIf="edit"></i><i class="fa fa-toggle-off" *ngIf="!edit"></i>
             </label>
             <label
@@ -48,7 +76,7 @@
           <label
             class="btn btn-secondary px-3 py-2"
             (click)="changeID('previous')"
-            [hidden]="after === 'text' || after === 'lemmata'"
+            *ngIf="before && (after === 'sentences' || after === 'morphology')"
           >
             <i class="fas fa-angle-double-left"></i>
           </label>
@@ -79,59 +107,113 @@
           <label
             class="btn btn-secondary px-3 py-2"
             (click)="changeID('next')"
-            [hidden]="after.toLowerCase() === 'text' || after.toLowerCase() === 'lemmata'"
+            *ngIf="before && (after === 'sentences' || after === 'morphology')"
           >
             <i class="fas fa-angle-double-right"></i>
           </label>
           <label class="btn btn-secondary px-3 py-2" (click)="goForward()"><i class="fas fa-arrow-right"></i></label>
         </div>
       </div>
-      <!-- Shows when we're not on the letter tables and not on the Text, Morphology, Lemmata -->
-      <hot-table
-        *ngIf="before && after !== 'text' && after !== 'lemmata' && ref"
-        #hotMini
-        [hotId]="instance + 'Mini'"
-        [columns]="columnsMini"
-        [rowHeaders]="null"
-        [colHeaders]="true"
-        [data]="getTableData(before)"
-        [settings]="hotSettings[edit ? 1 : 0]"
-        [height]="110"
-        className="htCenter"
-        licenseKey="non-commercial-and-evaluation"
-        [id]="instance + 'Mini'"
-      >
-      </hot-table>
-
-      <hot-table
-        #hot
-        [hotId]="instance"
-        [columns]="columns"
-        [rowHeaders]="getRows(after)"
-        [colHeaders]="true"
-        [data]="getTableData(after)"
-        [settings]="hotSettings[edit ? 1 : 0]"
-        [height]="before && after !== before && after === 'lemmata' ? 100 : '70vh'"
-        className="htCenter"
-        licenseKey="non-commercial-and-evaluation"
-        [id]="instance"
-      >
-      </hot-table>
-      <hot-table
-        *ngIf="before && after !== before && after === 'lemmata'"
-        #hotMini
-        [hotId]="instance + 'Mini'"
-        [columns]="columnsMini"
-        [rowHeaders]="getRows(before)"
-        [colHeaders]="true"
-        [data]="getTableData(before)"
-        [settings]="hotSettings[edit ? 1 : 0]"
-        [height]="'70vh'"
-        className="htCenter"
-        licenseKey="non-commercial-and-evaluation"
-        [id]="instance + 'Mini'"
-      >
-      </hot-table>
+      <ng-container *ngIf="this.after !== 'search'">
+        <!-- Shows when we're not on the letter tables and not on the Lemmata Table -->
+        <hot-table
+          *ngIf="before && after !== 'text' && after !== 'lemmata' && ref"
+          #hotMini
+          [hotId]="instance + 'Mini'"
+          [columns]="columnsMini"
+          [rowHeaders]="getRows(before)"
+          [colHeaders]="true"
+          [data]="getTableData(before)"
+          [settings]="hotSettings[edit ? 1 : 0]"
+          [height]="110"
+          className="htCenter"
+          licenseKey="non-commercial-and-evaluation"
+          [id]="instance + 'Mini'"
+        >
+        </hot-table>
+        <!-- Shows on all Tables and becomes a mini table as/on Lemmata -->
+        <hot-table
+          #hot
+          [hotId]="instance"
+          [columns]="columns"
+          [rowHeaders]="getRows(after)"
+          [colHeaders]="true"
+          [data]="getTableData(after)"
+          [settings]="hotSettings[edit ? 1 : 0]"
+          [height]="before && after !== before && after === 'lemmata' ? 100 : '70vh'"
+          className="htCenter"
+          licenseKey="non-commercial-and-evaluation"
+          [id]="instance"
+        >
+        </hot-table>
+        <!-- Shows on the Lemmata Table as the big Morphology reference table-->
+        <hot-table
+          *ngIf="before && after !== before && after === 'lemmata'"
+          #hotMini
+          [hotId]="instance + 'Mini'"
+          [columns]="columnsMini"
+          [rowHeaders]="getRows(before)"
+          [colHeaders]="true"
+          [data]="getTableData(before)"
+          [settings]="hotSettings[edit ? 1 : 0]"
+          [height]="'70vh'"
+          className="htCenter"
+          licenseKey="non-commercial-and-evaluation"
+          [id]="instance + 'Mini'"
+        >
+        </hot-table>
+      </ng-container>
+      <!-- Search Table-->
+      <ng-container *ngIf="after === 'search'">
+        <hot-table
+          #hot
+          [hotId]="instance"
+          [columns]="columns"
+          [rowHeaders]="getRows(after)"
+          [colHeaders]="true"
+          [data]="getTableData(after)"
+          [settings]="hotSettings[edit ? 1 : 0]"
+          [height]="'70vh'"
+          className="htCenter"
+          licenseKey="non-commercial-and-evaluation"
+          [id]="instance"
+        >
+        </hot-table>
+      </ng-container>
     </div>
+  </div>
+</div>
+<!-- Pagination -->
+<div class="row">
+  <div class="col d-flex justify-content-center">
+    <form [formGroup]="pagination.pageForm" (ngSubmit)="pagination.gotoPage()">
+      <mat-form-field>
+        <mat-label>Go to Page</mat-label>
+        <input
+          matInput
+          #gotoInput
+          placeholder="Go to page"
+          [value]="tableData.page | number"
+          id="page"
+          type="number"
+          minlength="0"
+          formControlName="page"
+          [attr.maxlength]="tableData.tableLength / pagination.getCurrentLimit()"
+        />
+        <mat-hint align="end">
+          {{ gotoInput.value | number }} /
+          {{ tableData.tableLength / pagination.getCurrentLimit() - 0.5 | number: '1.0-0' }}
+        </mat-hint>
+      </mat-form-field>
+      <button type="submit" class="btn btn-default btn-sm ml-1" [disabled]="pagination.pageForm.invalid">Go</button>
+    </form>
+    <mat-paginator
+      [length]="tableData.tableLength"
+      [pageSize]="pagination.getCurrentLimit()"
+      [pageSizeOptions]="[50, 100, 500, 1000]"
+      [pageIndex]="tableData.page"
+      (page)="pagination.gotoPage($event)"
+    >
+    </mat-paginator>
   </div>
 </div>
