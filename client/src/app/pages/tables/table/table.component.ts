@@ -393,7 +393,8 @@ export class TableComponent implements OnInit {
       filename += '-' + this.tableData.currentApiQuery.fval;
     }
     filename += '.csv';
-    jsonexport(this.getTableData(this.after), (err, csv) => {
+    const tableName = this.before === 'morphology' ? this.before : this.after;
+    jsonexport(this.getTableData(tableName), (err, csv) => {
       if (err) {
         return console.error(err);
       }
