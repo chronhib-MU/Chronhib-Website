@@ -88,19 +88,11 @@ export class TableComponent implements OnInit {
   ];
   headers: any;
   dataTable: any = {
-    text: {
+    before: {
       headers: [],
       data: []
     },
-    sentences: {
-      headers: [],
-      data: []
-    },
-    morphology: {
-      headers: [],
-      data: []
-    },
-    lemmata: {
+    after: {
       headers: [],
       data: []
     }
@@ -128,10 +120,8 @@ export class TableComponent implements OnInit {
     private ngZone: NgZone
   ) {
     this.dataTable = {
-      text: this.tableData.tables.text,
-      sentences: this.tableData.tables.sentences,
-      morphology: this.tableData.tables.morphology,
-      lemmata: this.tableData.tables.lemmata
+      before: this.tableData.tables.before,
+      after: this.tableData.tables.after,
     };
     this.searchTable = this.tableData.searchTable;
 
@@ -445,16 +435,16 @@ export class TableComponent implements OnInit {
       const fetchedData = await this.tableData.fetchedTable.toPromise();
       const data = fetchedData.data;
       this.updatePageForm();
-      // console.table('After: ' + this.after);
-      // console.table('Before: ' + this.before);
-      // console.log(`Datatable[${this.after}]: `, data.afterTable);
+      console.table('After: ' + this.after);
+      console.table('Before: ' + this.before);
+      console.log(`Datatable[${this.after}]: `, data.afterTable);
 
       // If this is a scenario where there is a before table
       if (this.before && this.before !== this.after) {
-        this.dataTable[this.before].data = data.beforeTable;
-        this.dataTable[this.before].headers = Object.keys(this.dataTable[this.before].data[0]);
+        this.dataTable['before'].data = data.beforeTable;
+        this.dataTable['before'].headers = Object.keys(this.dataTable['before'].data[0]);
         // Moves Sort_ID to first while remove it from last in the before table
-        this.dataTable[this.before].headers.splice(0, 0, this.dataTable[this.before].headers.pop());
+        this.dataTable['before'].headers.splice(0, 0, this.dataTable['before'].headers.pop());
       }
       if (this.after === 'search') {
         this.searchTable.data = data.afterTable;
@@ -463,10 +453,10 @@ export class TableComponent implements OnInit {
           // console.table(this.searchTable);
         }
       } else {
-        this.dataTable[this.after].data = data.afterTable;
-        this.dataTable[this.after].headers = Object.keys(this.dataTable[this.after].data[0]);
+        this.dataTable['after'].data = data.afterTable;
+        this.dataTable['after'].headers = Object.keys(this.dataTable['after'].data[0]);
         // Moves Sort_ID to first while remove it from last in the after table
-        this.dataTable[this.after].headers.splice(0, 0, this.dataTable[this.after].headers.pop());
+        this.dataTable['after'].headers.splice(0, 0, this.dataTable['after'].headers.pop());
         // console.table(this.dataTable);
       }
     } catch (error) {
@@ -478,7 +468,7 @@ export class TableComponent implements OnInit {
     this.columnsMini = [];
 
     if (this.before && this.before !== this.after) {
-      await this.dataTable[this.before].headers.forEach((header: string) => {
+      await this.dataTable['before'].headers.forEach((header: string) => {
         return this.columnRendererSettings(header, this.before, 'columnsMini');
       });
     }
@@ -486,23 +476,23 @@ export class TableComponent implements OnInit {
       ? await this.searchTable.headers.forEach((header: string) => {
         return this.columnRendererSettings(header, this.after, 'columns');
       })
-      : await this.dataTable[this.after].headers.forEach((header: string) => {
+      : await this.dataTable['after'].headers.forEach((header: string) => {
         return this.columnRendererSettings(header, this.after, 'columns');
       });
 
     // this.dataset = [];
-    // this.dataTable[this.after].data.forEach((row: any) => {
+    // this.dataTable['after'].data.forEach((row: any) => {
     //   this.dataset.push(row);
     // });
     // console.log(this.columns, this.dataset);
     const columnFilter = ['Sort_ID'];
     if (this.hotRegisterer.getInstance(this.instance + 'Mini')) {
-      const beforeColWidths = this.dataTable[this.before].headers.map((val: any, index: any) =>
+      const beforeColWidths = this.dataTable['before'].headers.map((val: any, index: any) =>
         this.getColWidths(index, this.before)
       );
       const getBeforeColWidths = (index: string | number) => beforeColWidths[index];
       const headerArr =
-        this.after === 'search' ? [...this.searchTable.headers] : [...this.dataTable[this.before].headers];
+        this.after === 'search' ? [...this.searchTable.headers] : [...this.dataTable['before'].headers];
 
       this.hotRegisterer.getInstance(this.instance + 'Mini').updateSettings({
         colWidths: getBeforeColWidths,
@@ -526,10 +516,10 @@ export class TableComponent implements OnInit {
       const afterColWidths =
         this.after === 'search'
           ? this.searchTable.headers.map((val: any, index: any) => this.getColWidths(index, this.after))
-          : this.dataTable[this.after].headers.map((val: any, index: any) => this.getColWidths(index, this.after));
+          : this.dataTable['after'].headers.map((val: any, index: any) => this.getColWidths(index, this.after));
       const getAfterColWidths = (index: string | number) => afterColWidths[index];
       const headerArr =
-        this.after === 'search' ? [...this.searchTable.headers] : [...this.dataTable[this.after].headers];
+        this.after === 'search' ? [...this.searchTable.headers] : [...this.dataTable['after'].headers];
       this.hotRegisterer.getInstance(this.instance).updateSettings({
         colWidths: getAfterColWidths,
         hiddenColumns: {
@@ -781,8 +771,8 @@ export class TableComponent implements OnInit {
     return settingsObj;
   }
   getColWidths (index: number, table: string) {
-    // console.log('Index: ', index + ' ' + that.dataTable[that.after].headers[index]);
-    const indexTitle = table === 'search' ? this.searchTable.headers[index] : this.dataTable[table].headers[index];
+    // console.log('Index: ', index + ' ' + that.dataTable['after'].headers[index]);
+    const indexTitle = table === 'search' ? this.searchTable.headers[index] : this.dataTable[table === this.after ? 'after' : 'before'].headers[index];
     switch (indexTitle) {
       case 'Augm':
         return 75;
@@ -860,12 +850,12 @@ export class TableComponent implements OnInit {
   }
 
   getTableData (table: string) {
-    return table === 'search' ? this.searchTable.data : this.dataTable[table].data;
+    return table === 'search' ? this.searchTable.data : this.dataTable[table === this.after ? 'after' : 'before'].data;
   }
   getRows (table: string | number) {
     return table === 'search' || (table === this.before && this.before !== this.after)
       ? this.searchTable.data.map((row, index) => index + 1)
-      : this.dataTable[table].data.map((row: { Sort_ID: any }) => row.Sort_ID);
+      : this.dataTable[table === this.after ? 'after' : 'before'].data.map((row: { Sort_ID: any }) => row.Sort_ID);
   }
   undo () {
     this.hotInstance = this.hotRegisterer.getInstance(this.instance);

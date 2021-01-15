@@ -14,19 +14,11 @@ import * as qs from 'qs';
 export class TableDataService {
   tables: any = {
     names: ['text', 'sentences', 'morphology', 'lemmata'],
-    text: {
+    before: {
       headers: [],
       data: []
     },
-    sentences: {
-      headers: [],
-      data: []
-    },
-    morphology: {
-      headers: [],
-      data: []
-    },
-    lemmata: {
+    after: {
       headers: [],
       data: []
     }
@@ -80,8 +72,8 @@ export class TableDataService {
         }>;
         const { data } = await this.fetchedTable.toPromise();
         // console.log(`${apiQuery}: `, data.afterTable);
-        this.tables[apiQuery].data = data.afterTable;
-        this.tables[apiQuery].headers = Object.keys(this.tables[apiQuery].data[0]);
+        this.tables['after'].data = data.afterTable;
+        this.tables['after'].headers = Object.keys(this.tables['after'].data[0]);
         // console.log(this.tables[apiQuery].headers);
       } else if (typeof apiQuery !== 'string') {
         // Object.keys(apiQuery)
@@ -110,14 +102,15 @@ export class TableDataService {
           // console.log(`${qs.stringify(apiQuery)}: `, data);
         } else {
           if (apiQuery.dtable !== apiQuery.ctable && apiQuery.ctable) {
-            this.tables[apiQuery.ctable].data = data.beforeTable;
-            this.tables[apiQuery.ctable].headers = Object.keys(this.tables[apiQuery.ctable].data[0]);
+            this.tables['before'].data = data.beforeTable;
+            this.tables['before'].headers = Object.keys(this.tables['before'].data[0]);
           }
-          this.tables[apiQuery.dtable].data = data.afterTable;
-          this.tables[apiQuery.dtable].headers = Object.keys(this.tables[apiQuery.dtable].data[0]);
-          // console.log(this.tables[apiQuery.dtable].headers);
+          this.tables['after'].data = data.afterTable;
+          this.tables['after'].headers = Object.keys(this.tables['after'].data[0]);
+          console.log(this.tables['after'].headers);
+          console.log(this.tables['after'].data);
         }
-        // console.log(this.tables[apiQuery.dtable]);
+        // console.log(this.tables['after']);
       }
     } catch (error) {
       console.log(error);
@@ -138,7 +131,7 @@ export class TableDataService {
       };
       if (filteredApiBody.command === 'moveRow') {
         // filteredApiBody.values.push(apiBody.values[0]);
-        const tableData = this.tables[filteredApiBody.table].data;
+        const tableData = this.tables[filteredApiBody.table === 'morphology' ? 'before' : 'after'].data;
         const newData = apiBody.values[0];
         for (let i = 0; i < tableData.length; i++) {
           const row = tableData[i];

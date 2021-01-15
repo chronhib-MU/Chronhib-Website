@@ -23,7 +23,7 @@
               <span *ngIf="after !== 'search'">
                 {{
                   ' (' +
-                    this.dataTable[before === 'morphology' ? before : after].data.length +
+                    this.dataTable[before === 'morphology' ? 'before' : 'after'].data.length +
                     ' out of ' +
                     this.tableData.tableLength +
                     ' matches)'
@@ -82,25 +82,25 @@
           </label>
         </div>
         <div
-          *ngIf="before && before !== after && after === 'morphology' && dataTable[before]?.data[0]"
+          *ngIf="before && before !== after && after === 'morphology' && dataTable['before']?.data[0]"
           class="text-center col"
         >
           <h4>
-            {{ dataTable[before].data[0].Textual_Unit }}
+            {{ dataTable['before'].data[0].Textual_Unit }}
           </h4>
           <h4 class="text-muted">
-            {{ dataTable[before].data[0].Translation }}
+            {{ dataTable['before'].data[0].Translation }}
           </h4>
         </div>
         <div
-          *ngIf="before && before !== after && after === 'sentences' && dataTable[before]?.data[0]"
+          *ngIf="before && before !== after && after === 'sentences' && dataTable['before']?.data[0]"
           class="text-center col"
         >
           <h4 class="mt-2">
-            {{ dataTable[before].data[0].Title.replaceAll('_', ' ') }}
+            {{ dataTable['before'].data[0].Title.replaceAll('_', ' ') }}
           </h4>
           <h4 class="text-muted">
-            {{ dataTable[before].data[0].Translation }}
+            {{ dataTable['before'].data[0].Translation }}
           </h4>
         </div>
         <div class="text-right col-auto">
