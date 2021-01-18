@@ -82,15 +82,13 @@ export class TableDataService {
         console.log(apiQuery);
         const search = apiQuery.search === 'true' ? true : false;
         const queryString = qs.stringify(apiQuery);
-        this.fetchedTable = this.http.get(`${environment.apiUrl}?${queryString}`) as Observable<{
+        this.fetchedTable = this.http.get(`${environment.apiUrl}${search ? 'search/' : 'tables/'}?${queryString}`) as Observable<{
           data: { afterTable: []; beforeTable: []; numRows?: number };
         }>;
-        const fetchedData = await this.fetchedTable.toPromise();
-        const data = fetchedData.data;
+        const { data } = await this.fetchedTable.toPromise();
         this.tableLength = data.numRows;
         // console.log(data);
         if (search) {
-          console.log('Table Length: ', this.tableLength);
           // beforeTable contains the Search Query
           // console.log(data.beforeTable);
           this.searchQuerySub.next(data.beforeTable);
@@ -115,7 +113,7 @@ export class TableDataService {
     } catch (error) {
       console.log(error);
       console.log('Invalid request made!');
-      const { message, title, type } = error.error;
+      const { message, title, type } = error;
       this.authService.showToaster(message, title, type);
       return;
     }
@@ -127,7 +125,8 @@ export class TableDataService {
         table: apiBody.table,
         values: [],
         command: apiBody.command,
-        user: this.authService.user
+        user: this.authService.user,
+        token: this.authService.token
       };
       if (filteredApiBody.command === 'moveRow') {
         // filteredApiBody.values.push(apiBody.values[0]);
@@ -144,18 +143,43 @@ export class TableDataService {
       } else {
         filteredApiBody.values = [...apiBody.values];
       }
-      // const queryString = Object.keys(filteredApiBody)
-      //   .map(key => key + '=' + filteredApiBody[key])
-      //   .join('&');
       // console.log(`Before ${apiBody.table} with `, apiBody, `to ${environment.apiUrl}?`);
 
       // console.log(`Updated ${filteredApiBody.table} with `, filteredApiBody, `to ${environment.apiUrl}?`);
       if (filteredApiBody.values.length > 0 || filteredApiBody.command === 'createRow') {
-        const postedTable: Observable<ApiPostBody> = this.http.post<ApiPostBody>(
-          `${environment.apiUrl}?`,
-          JSON.stringify(filteredApiBody),
-          { headers: { 'content-type': 'application/json' } }
-        ) as Observable<ApiPostBody>;
+        let postedTable: Observable<ApiPostBody>;
+        switch (filteredApiBody.command) {
+          case 'createRow':
+            postedTable = this.http.post<ApiPostBody>(
+              `${environment.apiUrl}rows/?`,
+              JSON.stringify(filteredApiBody),
+              { headers: { 'content-type': 'application/json' } }
+            ) as Observable<ApiPostBody>;
+            break;
+          case 'moveRow':
+            postedTable = this.http.patch<ApiPostBody>(
+              `${environment.apiUrl}rows/?`,
+              JSON.stringify(filteredApiBody),
+              { headers: { 'content-type': 'application/json' } }
+            ) as Observable<ApiPostBody>;
+            break;
+          case 'removeRow':
+            console.log("Delete: ", filteredApiBody)
+            const queryString = qs.stringify(filteredApiBody);
+            postedTable = this.http.delete<ApiPostBody>(
+              `${environment.apiUrl}rows/?${queryString}`,
+            ) as Observable<ApiPostBody>;
+            break;
+          case 'updateRow':
+            postedTable = this.http.patch<ApiPostBody>(
+              `${environment.apiUrl}rows/?`,
+              JSON.stringify(filteredApiBody),
+              { headers: { 'content-type': 'application/json' } }
+            ) as Observable<ApiPostBody>;
+            break;
+          default:
+            break;
+        }
         return await postedTable.toPromise();
         // console.log('Table has finished updating!');
       } else {

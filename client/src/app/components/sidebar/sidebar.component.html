@@ -92,7 +92,7 @@
                                     tableData.allHeaders[
                                       tableData.searchForm
                                         .get('tableColumns')
-                                        ['controls'][i].controls.table.value.toLowerCase()
+                                        ['controls'][i].controls.table.value?.toLowerCase()
                                     ]
                                   "
                                   [multiple]="true"
@@ -277,7 +277,7 @@
                                           let column of tableData.allHeaders[
                                             tableData.searchForm
                                               .get('conditions')
-                                              ['controls'][i].controls.table.value.toLowerCase()
+                                              ['controls'][i].controls.table.value?.toLowerCase()
                                           ]
                                         "
                                       >

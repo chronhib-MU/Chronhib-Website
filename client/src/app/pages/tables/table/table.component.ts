@@ -165,7 +165,7 @@ export class TableComponent implements OnInit {
               (that.tableData.searchForm.get('tableColumns')['controls'].length === 1 &&
                 that.searchTable.headers.includes('ID'))
             ) {
-              // console.log(hook, arguments);
+              console.log(hook, arguments);
               const tableData = this.getData();
               const colHeaders: Array<string> = this.getColHeader();
               // console.log('TableData', tableData);
@@ -201,7 +201,7 @@ export class TableComponent implements OnInit {
               });
               const res = {
                 table,
-                command: arguments[1],
+                command: 'updateRow',
                 values,
                 user: that.authService.user
               };
@@ -432,8 +432,7 @@ export class TableComponent implements OnInit {
       });
     }
     try {
-      const fetchedData = await this.tableData.fetchedTable.toPromise();
-      const data = fetchedData.data;
+      const { data } = await this.tableData.fetchedTable.toPromise();
       this.updatePageForm();
       console.table('After: ' + this.after);
       console.table('Before: ' + this.before);

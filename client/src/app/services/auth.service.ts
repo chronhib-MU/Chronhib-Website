@@ -21,11 +21,12 @@ export class AuthService {
   timeout = 1;
   timeLeftString = '59s';
   authenticated = false;
-  constructor(private http: HttpClient, private notifyService: NotificationService, private router: Router) {
+  token
+  constructor (private http: HttpClient, private notifyService: NotificationService, private router: Router) {
     // console.log(localStorage.getItem(`${window.location.origin}token`));
     if (localStorage.getItem(`${window.location.origin}token`)) {
-      const token = localStorage[`${window.location.origin}token`];
-      this.isLoggedIn(token);
+      this.token = localStorage[`${window.location.origin}token`];
+      this.isLoggedIn(this.token);
     }
   }
   showToaster = (message, title, type, options?) => {
@@ -46,14 +47,14 @@ export class AuthService {
         break;
     }
   };
-  async logOut() {
+  async logOut () {
     console.log('Logged out');
     this.showToaster('You have successfully logged out.', 'Logout successful!', 'success');
     localStorage.removeItem(`${window.location.origin}token`);
     await this.isLoggedIn(null);
     this.router.navigate(['/login']);
   }
-  async login(loginForm) {
+  async login (loginForm) {
     if (this.authenticated) {
       this.logOut();
     }
@@ -85,7 +86,7 @@ export class AuthService {
     }
   }
 
-  async register(registerForm) {
+  async register (registerForm) {
     // console.table(registerForm.value);
     const { firstName, lastName, email, password, confirmPassword, accessCode } = registerForm.value;
     // console.log(registerForm.value);
@@ -142,7 +143,7 @@ export class AuthService {
       }
     }
   }
-  async isLoggedIn(token) {
+  async isLoggedIn (token) {
     try {
       const userData: { First_Name; Last_Name; Email } = await (this.http.post<string>(
         `${environment.wsUrl}isLoggedIn`,

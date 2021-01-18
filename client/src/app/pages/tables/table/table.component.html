@@ -54,6 +54,7 @@
             >
               Ref. <i class="fa fa-toggle-on" *ngIf="ref"></i><i class="fa fa-toggle-off" *ngIf="!ref"></i>
             </label>
+            <br>
           </div>
           <div class="btn-group col-auto">
             <label class="btn btn-secondary px-3 py-2" (click)="toggleMode('sort')">
@@ -97,7 +98,7 @@
           class="text-center col"
         >
           <h4 class="mt-2">
-            {{ dataTable['before'].data[0].Title.replaceAll('_', ' ') }}
+            {{ dataTable['before'].data[0].Title?.replaceAll('_', ' ') }}
           </h4>
           <h4 class="text-muted">
             {{ dataTable['before'].data[0].Translation }}
@@ -210,7 +211,7 @@
     <mat-paginator
       [length]="tableData.tableLength"
       [pageSize]="pagination.getCurrentLimit()"
-      [pageSizeOptions]="[50, 100, 500, 1000]"
+      [pageSizeOptions]="[50, 100, 500, 1000, 5000, 10000, 50000, 100000, 500000]"
       [pageIndex]="tableData.page"
       (page)="pagination.gotoPage($event)"
     >

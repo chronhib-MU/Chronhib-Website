@@ -291,7 +291,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
     const id = await this.http
       .post(
-        `${environment.apiUrl}?`,
+        `${environment.apiUrl}searchQuery/?`,
         { query: JSON.stringify(this.tableData.searchForm.value), creator: this.authService.user.email || null },
         {
           headers: { 'content-type': 'application/json' }
