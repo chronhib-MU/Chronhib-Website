@@ -1,73 +1,80 @@
-<nav class="navbar navbar-vertical navbar-light bg-white" id="sidenav-main">
+<nav class="navbar navbar-vertical navbar-light bg-white"
+     id="sidenav-main">
   <div class="container-fluid">
     <!-- Toggler -->
     <div class="toggler">
-      <button
-        class="navbar-toggler ml-2 mr-2 p-0"
-        type="button"
-        (click)="isCollapsed = !isCollapsed"
-        aria-controls="sidenav-collapse-main"
-      >
+      <button class="navbar-toggler ml-2 mr-2 p-0"
+              type="button"
+              (click)="isCollapsed = !isCollapsed"
+              aria-controls="sidenav-collapse-main">
         <span class="navbar-toggler-icon"></span>
       </button>
       <span class="h4 mb-0 text-black text-uppercase inline-block">{{ getTitle() }}</span>
     </div>
     <!-- Brand -->
-    <a class="navbar-brand pt-0" routerLinkActive="active" [routerLink]="['/dashboard']">
-      <img src="./assets/img/brand/Logo1.png" class="navbar-brand-img" alt="ChronHib Logo" />
+    <a class="navbar-brand pt-0"
+       routerLinkActive="active"
+       [routerLink]="['/dashboard']">
+      <img src="./assets/img/brand/Logo1.png"
+           class="navbar-brand-img"
+           alt="ChronHib Logo" />
     </a>
     <!-- User -->
     <ul class="nav align-items-center">
-      <li class="nav-item" ngbDropdown placement="bottom-right">
+      <li class="nav-item"
+          ngbDropdown
+          placement="bottom-right">
         <!-- <a class="nav-link nav-link-icon" role="button" ngbDropdownToggle>
           <i class="ni ni-bell-55 text-default"></i>
         </a> -->
-        <a class="nav-link nav-link-icon" role="button" (click)="open(search, '', '')">
+        <a class="nav-link nav-link-icon"
+           role="button"
+           (click)="open(search, '', '')">
           Search <i class="fa fa-search"></i>
         </a>
         <!-- Search Modal -->
-        <ng-template #search let-c="close" let-d="dismiss">
+        <ng-template #search
+                     let-c="close"
+                     let-d="dismiss">
           <div class="modal-content">
             <div class="modal-header">
-              <h3 class="modal-title" id="modal-title-default">Search</h3>
-              <button
-                type="button"
-                class="close hover-danger"
-                data-dismiss="modal"
-                aria-label="Close"
-                (click)="d('Cross click')"
-              >
+              <h3 class="modal-title"
+                  id="modal-title-default">Search</h3>
+              <button type="button"
+                      class="close hover-danger"
+                      data-dismiss="modal"
+                      aria-label="Close"
+                      (click)="d('Cross click')">
                 <span aria-hidden="true">×</span>
               </button>
             </div>
-            <ul
-              ngbNav
-              #nav="ngbNav"
-              [(activeId)]="active"
-              class="nav nav-pills nav-fill flex-column flex-md-row px-3"
-              id="tabs-icons-text"
-              role="tablist"
-            >
+            <ul ngbNav
+                #nav="ngbNav"
+                [(activeId)]="active"
+                class="nav nav-pills nav-fill flex-column flex-md-row px-3"
+                id="tabs-icons-text"
+                role="tablist">
               <!-- Tables & Columns Tab -->
               <li [ngbNavItem]="'tableColumns'">
                 <a ngbNavLink><b>Tables & Columns</b></a>
                 <ng-template ngbNavContent>
                   <div class="modal-body">
-                    <form role="form" [formGroup]="tableData.searchForm" (ngSubmit)="nav.select('conditions')">
-                      <div
-                        formArrayName="tableColumns"
-                        *ngFor="let column of tableData.searchForm.get('tableColumns')['controls']; let i = index"
-                      >
-                        <div [formGroupName]="i" class="my-2">
+                    <form role="form"
+                          [formGroup]="tableData.searchForm"
+                          (ngSubmit)="nav.select('conditions')">
+                      <div formArrayName="tableColumns"
+                           *ngFor="let column of tableData.searchForm.get('tableColumns')['controls']; let i = index">
+                        <div [formGroupName]="i"
+                             class="my-2">
                           <div class="row">
                             <div class="col-md-4">
                               <h3>Table:</h3>
                               <div class="form-group">
-                                <select class="form-control" formControlName="table" (change)="onItemSelect($event, i)">
-                                  <option
-                                    [value]="table | uppercase"
-                                    *ngFor="let table of excludePreviousTableOptions(i)"
-                                  >
+                                <select class="form-control"
+                                        formControlName="table"
+                                        (change)="onItemSelect($event, i)">
+                                  <option [value]="table | uppercase"
+                                          *ngFor="let table of excludePreviousTableOptions(i)">
                                     {{ table | uppercase }}
                                   </option>
                                 </select>
@@ -76,37 +83,37 @@
                             <div class="col-md-8">
                               <h3>
                                 Columns:
-                                <button
-                                  *ngIf="i > 0 || tableData.searchForm.get('tableColumns')['controls'].length > 1"
-                                  type="button"
-                                  class="close danger"
-                                  aria-label="Close"
-                                  (click)="removeFormGroup('tableColumns', i)"
-                                >
+                                <button *ngIf="i > 0 || tableData.searchForm.get('tableColumns')['controls'].length > 1"
+                                        type="button"
+                                        class="close danger"
+                                        aria-label="Close"
+                                        (click)="removeFormGroup('tableColumns', i)">
                                   <span aria-hidden="true">×</span>
                                 </button>
                               </h3>
                               <div class="form-group">
-                                <ng-select
-                                  [items]="
+                                <ng-select [items]="
                                     tableData.allHeaders[
                                       tableData.searchForm
                                         .get('tableColumns')
                                         ['controls'][i].controls.table.value?.toLowerCase()
                                     ]
                                   "
-                                  [multiple]="true"
-                                  placeholder="Select columns"
-                                  clearAllText="Clear"
-                                  [searchable]="true"
-                                  [closeOnSelect]="false"
-                                  formControlName="column"
-                                >
+                                           [multiple]="true"
+                                           placeholder="Select columns"
+                                           clearAllText="Clear"
+                                           [searchable]="true"
+                                           [closeOnSelect]="false"
+                                           formControlName="column">
                                   <ng-template ng-header-tmp>
-                                    <button type="button" (click)="selectAll(i)" class="btn btn-sm btn-default">
+                                    <button type="button"
+                                            (click)="selectAll(i)"
+                                            class="btn btn-sm btn-default">
                                       Select all
                                     </button>
-                                    <button type="button" (click)="unselectAll(i)" class="btn btn-sm btn-default">
+                                    <button type="button"
+                                            (click)="unselectAll(i)"
+                                            class="btn btn-sm btn-default">
                                       Unselect all
                                     </button>
                                   </ng-template>
@@ -117,18 +124,23 @@
                                         .length
                                     }}
                                   </ng-template>
-                                  <ng-template ng-multi-label-tmp let-items="items" let-clear="clear">
-                                    <div class="ng-value" *ngFor="let item of items | slice: 0:2">
+                                  <ng-template ng-multi-label-tmp
+                                               let-items="items"
+                                               let-clear="clear">
+                                    <div class="ng-value"
+                                         *ngFor="let item of items | slice: 0:2">
                                       <span class="ng-value-label">{{ item.replaceAll('_', ' ') }}</span>
-                                      <span class="ng-value-icon right" (click)="clear(item)" aria-hidden="true"
-                                        >×</span
-                                      >
+                                      <span class="ng-value-icon right"
+                                            (click)="clear(item)"
+                                            aria-hidden="true">×</span>
                                     </div>
-                                    <div class="ng-value" *ngIf="items.length > 2">
+                                    <div class="ng-value"
+                                         *ngIf="items.length > 2">
                                       <span class="ng-value-label">{{ items.length - 2 }} more...</span>
                                     </div>
                                   </ng-template>
-                                  <ng-template ng-option-tmp let-item="item">
+                                  <ng-template ng-option-tmp
+                                               let-item="item">
                                     {{ item.replaceAll('_', ' ') }}
                                   </ng-template>
                                 </ng-select>
@@ -137,22 +149,18 @@
                           </div>
                         </div>
                       </div>
-                      <button
-                        *ngIf="tableData.searchForm.get('tableColumns')['controls'].length < 4"
-                        type="button"
-                        class="btn btn-secondary"
-                        value="Add More Tables & Columns"
-                        (click)="addFormGroup('tableColumns')"
-                      >
+                      <button *ngIf="tableData.searchForm.get('tableColumns')['controls'].length < 4"
+                              type="button"
+                              class="btn btn-secondary"
+                              value="Add More Tables & Columns"
+                              (click)="addFormGroup('tableColumns')">
                         Add More Tables & Columns
                       </button>
                       <div class="text-right">
-                        <button
-                          type="submit"
-                          class="btn btn-primary mt-4"
-                          value="Next Step"
-                          [disabled]="tableData.searchForm.get('tableColumns').invalid"
-                        >
+                        <button type="submit"
+                                class="btn btn-primary mt-4"
+                                value="Next Step"
+                                [disabled]="tableData.searchForm.get('tableColumns').invalid">
                           Next Step: Conditions
                         </button>
                       </div>
@@ -165,38 +173,50 @@
                 <a ngbNavLink><b>Conditions</b></a>
                 <ng-template ngbNavContent>
                   <div class="modal-body">
-                    <form role="form" [formGroup]="tableData.searchForm" (ngSubmit)="nav.select('options')">
-                      <ngb-accordion [closeOthers]="false" #conditionsAcc="ngbAccordion" activeIds="condition-0">
-                        <ngb-panel
-                          [id]="'condition-' + i"
-                          formArrayName="conditions"
-                          *ngFor="let column of tableData.searchForm.get('conditions')['controls']; let i = index"
-                        >
-                          <ng-template ngbPanelHeader let-opened="opened">
-                            <button class="btn text-default btn-link m-0 p-0" ngbPanelToggle>
+                    <form role="form"
+                          [formGroup]="tableData.searchForm"
+                          (ngSubmit)="nav.select('options')">
+                      <ngb-accordion [closeOthers]="false"
+                                     #conditionsAcc="ngbAccordion"
+                                     activeIds="condition-0">
+                        <ngb-panel [id]="'condition-' + i"
+                                   formArrayName="conditions"
+                                   *ngFor="let column of tableData.searchForm.get('conditions')['controls']; let i = index">
+                          <ng-template ngbPanelHeader
+                                       let-opened="opened">
+                            <button class="btn text-default btn-link m-0 p-0"
+                                    ngbPanelToggle>
                               <b>{{ 'Condition #' + (i + 1) }}</b>
                             </button>
-                            <button
-                              *ngIf="i > 0 || tableData.searchForm.get('conditions')['controls'].length > 1"
-                              type="button"
-                              class="close danger ml-2"
-                              aria-label="Close"
-                              (click)="removeFormGroup('conditions', i, conditionsAcc)"
-                            >
-                              <i class="ni ni-fat-delete" aria-hidden="true"></i>
+                            <button *ngIf="i > 0 || tableData.searchForm.get('conditions')['controls'].length > 1"
+                                    type="button"
+                                    class="close danger ml-2"
+                                    aria-label="Close"
+                                    (click)="removeFormGroup('conditions', i, conditionsAcc)">
+                              <i class="ni ni-fat-delete"
+                                 aria-hidden="true"></i>
                             </button>
-                            <button type="button" class="close" ngbPanelToggle>
-                              <i *ngIf="opened" class="ni ni-bold-down" aria-hidden="true"></i>
-                              <i *ngIf="!opened" class="ni ni-bold-left" aria-hidden="true"></i>
+                            <button type="button"
+                                    class="close"
+                                    ngbPanelToggle>
+                              <i *ngIf="opened"
+                                 class="ni ni-bold-down"
+                                 aria-hidden="true"></i>
+                              <i *ngIf="!opened"
+                                 class="ni ni-bold-left"
+                                 aria-hidden="true"></i>
                             </button>
                           </ng-template>
                           <ng-template ngbPanelContent>
-                            <div [formGroupName]="i" class="my-2">
+                            <div [formGroupName]="i"
+                                 class="my-2">
                               <div class="row">
                                 <!-- Operator Row -->
-                                <div class="col-md-3" *ngIf="i > 0">
+                                <div class="col-md-3"
+                                     *ngIf="i > 0">
                                   <div class="form-group">
-                                    <select class="form-control" formControlName="operator">
+                                    <select class="form-control"
+                                            formControlName="operator">
                                       <option [value]="'AND'">AND</option>
                                       <option [value]="'OR'">OR</option>
                                     </select>
@@ -204,7 +224,8 @@
                                 </div>
                                 <div class="col-md-3">
                                   <div class="form-group">
-                                    <select class="form-control" formControlName="negated">
+                                    <select class="form-control"
+                                            formControlName="negated">
                                       <option [value]="''"></option>
                                       <option [value]="'NOT'">NOT</option>
                                     </select>
@@ -215,20 +236,17 @@
                                     <b>Accent insensitive</b> conditions <br />
                                     cannot be <b>case sensitive</b>
                                   </ng-template>
-                                  <div
-                                    class="form-group"
-                                    placement="top"
-                                    [ngbTooltip]="tooltipAccentSensitive"
-                                    tooltipClass="width-215"
-                                  >
+                                  <div class="form-group"
+                                       placement="top"
+                                       [ngbTooltip]="tooltipAccentSensitive"
+                                       tooltipClass="width-215">
                                     <div class="custom-control custom-checkbox my-2">
-                                      <input
-                                        class="custom-control-input"
-                                        type="checkbox"
-                                        [id]="'caseSensitive' + i"
-                                        formControlName="caseSensitive"
-                                      />
-                                      <label class="custom-control-label" [for]="'caseSensitive' + i">
+                                      <input class="custom-control-input"
+                                             type="checkbox"
+                                             [id]="'caseSensitive' + i"
+                                             formControlName="caseSensitive" />
+                                      <label class="custom-control-label"
+                                             [for]="'caseSensitive' + i">
                                         Case Sensitive Search?
                                       </label>
                                     </div>
@@ -237,14 +255,13 @@
                                 <div class="col">
                                   <div class="form-group">
                                     <div class="custom-control custom-checkbox my-2">
-                                      <input
-                                        class="custom-control-input"
-                                        type="checkbox"
-                                        [id]="'accentSensitive' + i"
-                                        formControlName="accentSensitive"
-                                        (change)="updateCaseSensitive(i)"
-                                      />
-                                      <label class="custom-control-label" [for]="'accentSensitive' + i">
+                                      <input class="custom-control-input"
+                                             type="checkbox"
+                                             [id]="'accentSensitive' + i"
+                                             formControlName="accentSensitive"
+                                             (change)="updateCaseSensitive(i)" />
+                                      <label class="custom-control-label"
+                                             [for]="'accentSensitive' + i">
                                         Accent Sensitive Search?
                                       </label>
                                     </div>
@@ -256,11 +273,10 @@
                                   <h4>Table:</h4>
                                   <div class="form-group">
                                     <!-- <input class="form-control" formControlName="table" /> -->
-                                    <select class="form-control" formControlName="table">
-                                      <option
-                                        [value]="table.toUpperCase()"
-                                        *ngFor="let table of tableData.tables.names"
-                                      >
+                                    <select class="form-control"
+                                            formControlName="table">
+                                      <option [value]="table.toUpperCase()"
+                                              *ngFor="let table of tableData.tables.names">
                                         {{ table | uppercase }}
                                       </option>
                                     </select>
@@ -270,17 +286,16 @@
                                   <h4>Column:</h4>
                                   <div class="form-group">
                                     <!-- <input class="form-control" formControlName="column" /> -->
-                                    <select class="form-control" formControlName="column">
-                                      <option
-                                        [value]="column"
-                                        *ngFor="
+                                    <select class="form-control"
+                                            formControlName="column">
+                                      <option [value]="column"
+                                              *ngFor="
                                           let column of tableData.allHeaders[
                                             tableData.searchForm
                                               .get('conditions')
                                               ['controls'][i].controls.table.value?.toLowerCase()
                                           ]
-                                        "
-                                      >
+                                        ">
                                         {{ column.replaceAll('_', ' ') }}
                                       </option>
                                     </select>
@@ -290,7 +305,8 @@
                               <div class="row">
                                 <div class="col-md-6">
                                   <div class="form-group">
-                                    <select class="form-control" formControlName="comparator">
+                                    <select class="form-control"
+                                            formControlName="comparator">
                                       <option [value]="'contains'">contains</option>
                                       <option [value]="'starts with'">starts with</option>
                                       <option [value]="'ends with'">ends with</option>
@@ -303,36 +319,31 @@
                                 </div>
                                 <div class="col-md-6">
                                   <div class="form-group">
-                                    <ng-template #tooltipComparator
-                                      >Remember to use <b>'%'</b> <br />
+                                    <ng-template #tooltipComparator>Remember to use <b>'%'</b> <br />
                                       for wildcards (not <b>'*'</b>) <br />
                                       e.g. <b>gen.%.fem.</b>
                                     </ng-template>
-                                    <ng-template #tooltipComparatorWithin
-                                      >Make sure your list of values <br />
+                                    <ng-template #tooltipComparatorWithin>Make sure your list of values <br />
                                       are comma-separated
                                     </ng-template>
-                                    <ng-container
-                                      *ngIf="
+                                    <ng-container *ngIf="
                                         columnSearchArray.includes(
                                           tableData.searchForm.get('conditions')['controls'][i].controls.column.value
                                         );
                                         else comparatorElse
-                                      "
-                                    >
+                                      ">
                                       <div ngbDropdown>
-                                        <input
-                                          [id]="'navbarDropdownMenuLink' + i"
-                                          class="form-control dropdown-toggle"
-                                          formControlName="comparatorVal"
-                                          autocomplete="off"
-                                          type="text"
-                                          [value]="
+                                        <input [id]="'navbarDropdownMenuLink' + i"
+                                               class="form-control dropdown-toggle"
+                                               formControlName="comparatorVal"
+                                               autocomplete="off"
+                                               type="text"
+                                               [value]="
                                             tableData.searchForm.get('conditions')['controls'][i].controls.comparatorVal
                                               .value
                                           "
-                                          placement="right"
-                                          [ngbTooltip]="
+                                               placement="right"
+                                               [ngbTooltip]="
                                             tableData.searchForm.get('conditions')['controls'][i].controls.comparator
                                               .value === 'LIKE'
                                               ? tooltipComparator
@@ -341,23 +352,18 @@
                                               ? tooltipComparatorWithin
                                               : ''
                                           "
-                                          ngbDropdownToggle
-                                        />
-                                        <ul
-                                          [hidden]="!comparatorSearch(i).length"
-                                          attr.aria-labelledby="{{ 'navbarDropdownMenuLink' + i }}"
-                                          ngbDropdownMenu
-                                        >
+                                               ngbDropdownToggle />
+                                        <ul [hidden]="!comparatorSearch(i).length"
+                                            attr.aria-labelledby="{{ 'navbarDropdownMenuLink' + i }}"
+                                            ngbDropdownMenu>
                                           <li *ngFor="let item of comparatorSearch(i)">
-                                            <a
-                                              class="dropdown-item"
-                                              href="javascript:void(0)"
-                                              (click)="
+                                            <a class="dropdown-item"
+                                               href="javascript:void(0)"
+                                               (click)="
                                                 tableData.searchForm.get('conditions')['controls'][
                                                   i
                                                 ].controls.comparatorVal.value = item
-                                              "
-                                            >
+                                              ">
                                               {{ item }}
                                             </a>
                                           </li>
@@ -365,12 +371,11 @@
                                       </div>
                                     </ng-container>
                                     <ng-template #comparatorElse>
-                                      <input
-                                        class="form-control"
-                                        formControlName="comparatorVal"
-                                        type="text"
-                                        placement="right"
-                                        [ngbTooltip]="
+                                      <input class="form-control"
+                                             formControlName="comparatorVal"
+                                             type="text"
+                                             placement="right"
+                                             [ngbTooltip]="
                                           tableData.searchForm.get('conditions')['controls'][i].controls.comparator
                                             .value === 'LIKE'
                                             ? tooltipComparator
@@ -378,8 +383,7 @@
                                                 .value === 'within'
                                             ? tooltipComparatorWithin
                                             : ''
-                                        "
-                                      />
+                                        " />
                                     </ng-template>
                                   </div>
                                 </div>
@@ -388,32 +392,26 @@
                           </ng-template>
                         </ngb-panel>
                       </ngb-accordion>
-                      <button
-                        type="button"
-                        class="btn btn-secondary mt-4"
-                        value="Add More Conditions"
-                        (click)="addFormGroup('conditions', conditionsAcc)"
-                      >
+                      <button type="button"
+                              class="btn btn-secondary mt-4"
+                              value="Add More Conditions"
+                              (click)="addFormGroup('conditions', conditionsAcc)">
                         Add More Conditions
                       </button>
                       <div class="text-right">
-                        <button
-                          type="submit"
-                          class="btn btn-primary mt-4"
-                          value="No Conditions"
-                          (click)="tableData.searchForm.get('options')['controls']['noConditions'].value = true"
-                        >
+                        <button type="submit"
+                                class="btn btn-primary mt-4"
+                                value="No Conditions"
+                                (click)="tableData.searchForm.get('options')['controls']['noConditions'].value = true">
                           No Conditions
                         </button>
-                        <button
-                          type="submit"
-                          class="btn btn-primary mt-4"
-                          value="Next Step"
-                          (click)="
+                        <button type="submit"
+                                class="btn btn-primary mt-4"
+                                value="Next Step"
+                                (click)="
                             tableData.searchForm.get('options')['controls']['noConditions'].value = false; (true)
                           "
-                          [disabled]="tableData.searchForm.get('conditions').invalid"
-                        >
+                                [disabled]="tableData.searchForm.get('conditions').invalid">
                           Next Step: Options
                         </button>
                       </div>
@@ -426,20 +424,22 @@
                 <a ngbNavLink><b>Options</b></a>
                 <ng-template ngbNavContent>
                   <div class="modal-body">
-                    <form role="form" [formGroup]="tableData.searchForm" (ngSubmit)="searchTable(c)">
-                      <div formGroupName="options" class="my-2">
+                    <form role="form"
+                          [formGroup]="tableData.searchForm"
+                          (ngSubmit)="searchTable(c)">
+                      <div formGroupName="options"
+                           class="my-2">
                         <div class="row">
                           <div class="col-6 align-content-left">
                             <div class="form-group">
                               <div class="custom-control custom-checkbox mb-3">
-                                <input
-                                  class="custom-control-input"
-                                  type="checkbox"
-                                  id="conditionsCheck"
-                                  formControlName="noConditions"
-                                  #noConditionsInput
-                                />
-                                <label class="custom-control-label" for="conditionsCheck"> No Conditions? </label>
+                                <input class="custom-control-input"
+                                       type="checkbox"
+                                       id="conditionsCheck"
+                                       formControlName="noConditions"
+                                       #noConditionsInput />
+                                <label class="custom-control-label"
+                                       for="conditionsCheck"> No Conditions? </label>
                               </div>
                             </div>
                           </div>
@@ -448,14 +448,13 @@
                           <div class="col-6 align-content-left">
                             <div class="form-group">
                               <div class="custom-control custom-checkbox mb-3">
-                                <input
-                                  class="custom-control-input"
-                                  type="checkbox"
-                                  id="duplicateCheck"
-                                  (change)="(true)"
-                                  formControlName="duplicateRows"
-                                />
-                                <label class="custom-control-label" for="duplicateCheck"> See duplicate rows? </label>
+                                <input class="custom-control-input"
+                                       type="checkbox"
+                                       id="duplicateCheck"
+                                       (change)="(true)"
+                                       formControlName="duplicateRows" />
+                                <label class="custom-control-label"
+                                       for="duplicateCheck"> See duplicate rows? </label>
                               </div>
                             </div>
                           </div>
@@ -464,40 +463,38 @@
                           <div class="col-6 align-content-left">
                             <div class="form-group">
                               <div class="custom-control custom-checkbox mb-3">
-                                <input
-                                  class="custom-control-input"
-                                  (change)="(false)"
-                                  (click)="tableData.searchForm.get('options')['controls']['limit'].value = 0"
-                                  id="limitCheck"
-                                  type="checkbox"
-                                  #limitChecker
-                                />
-                                <label class="custom-control-label" for="limitCheck">
+                                <input class="custom-control-input"
+                                       (change)="(false)"
+                                       (click)="tableData.searchForm.get('options')['controls']['limit'].value = 0"
+                                       id="limitCheck"
+                                       type="checkbox"
+                                       #limitChecker />
+                                <label class="custom-control-label"
+                                       for="limitCheck">
                                   Number of results per page?
                                 </label>
-                                <input
-                                  class="form-control"
-                                  *ngIf="limitChecker.checked"
-                                  type="number"
-                                  min="0"
-                                  formControlName="limit"
-                                  #limitInput
-                                />
+                                <input class="form-control"
+                                       *ngIf="limitChecker.checked"
+                                       type="number"
+                                       min="0"
+                                       formControlName="limit"
+                                       #limitInput />
                               </div>
                             </div>
                           </div>
                         </div>
                       </div>
                       <div class="text-center">
-                        <button type="button" class="btn btn-danger mt-4" value="Search" (click)="resetForm()">
+                        <button type="button"
+                                class="btn btn-danger mt-4"
+                                value="Search"
+                                (click)="resetForm()">
                           Clear
                         </button>
-                        <button
-                          type="submit"
-                          class="btn btn-primary mt-4"
-                          value="Search"
-                          [disabled]="tableData.searchForm.invalid"
-                        >
+                        <button type="submit"
+                                class="btn btn-primary mt-4"
+                                value="Search"
+                                [disabled]="tableData.searchForm.invalid">
                           Search Table
                         </button>
                       </div>
@@ -506,46 +503,68 @@
                 </ng-template>
               </li>
             </ul>
-            <div [ngbNavOutlet]="nav" class="mt-2"></div>
+            <div [ngbNavOutlet]="nav"
+                 class="mt-2"></div>
           </div>
         </ng-template>
-        <div class="dropdown-menu-arrow dropdown-menu-right" ngbDropdownMenu>
-          <a class="dropdown-item" href="javascript:void(0)">Action</a>
-          <a class="dropdown-item" href="javascript:void(0)">Another action</a>
+        <div class="dropdown-menu-arrow dropdown-menu-right"
+             ngbDropdownMenu>
+          <a class="dropdown-item"
+             href="javascript:void(0)">Action</a>
+          <a class="dropdown-item"
+             href="javascript:void(0)">Another action</a>
           <div class="dropdown-divider"></div>
-          <a class="dropdown-item" href="javascript:void(0)">Something else here</a>
+          <a class="dropdown-item"
+             href="javascript:void(0)">Something else here</a>
         </div>
       </li>
-      <li class="nav-item" ngbDropdown placement="bottom-right">
-        <a class="nav-link" role="button" ngbDropdownToggle>
+      <li class="nav-item"
+          ngbDropdown
+          placement="bottom-right">
+        <a class="nav-link"
+           role="button"
+           ngbDropdownToggle>
           <div class="media align-items-center">
             <span class="avatar avatar-sm rounded-circle">
-              <img alt="Image placeholder" src="./assets/img/theme/team-4-800x800.jpg" />
+              <img alt="Image placeholder"
+                   src="./assets/img/theme/team-4-800x800.jpg" />
             </span>
           </div>
         </a>
-        <div class="dropdown-menu-arrow dropdown-menu-right" ngbDropdownMenu>
+        <div class="dropdown-menu-arrow dropdown-menu-right"
+             ngbDropdownMenu>
           <div class="dropdown-header noti-title">
             <h6 class="text-overflow m-0">Welcome!</h6>
           </div>
-          <a routerLinkActive="active" [routerLink]="['/user-profile']" class="dropdown-item">
+          <a routerLinkActive="active"
+             [routerLink]="['/user-profile']"
+             class="dropdown-item">
             <i class="ni ni-single-02"></i>
             <span>My profile</span>
           </a>
-          <a routerLinkActive="active" [routerLink]="['/user-profile']" class="dropdown-item">
+          <a routerLinkActive="active"
+             [routerLink]="['/user-profile']"
+             class="dropdown-item">
             <i class="ni ni-settings-gear-65"></i>
             <span>Settings</span>
           </a>
-          <a routerLinkActive="active" [routerLink]="['/user-profile']" class="dropdown-item">
+          <a routerLinkActive="active"
+             [routerLink]="['/user-profile']"
+             class="dropdown-item">
             <i class="ni ni-calendar-grid-58"></i>
             <span>Activity</span>
           </a>
-          <a routerLinkActive="active" [routerLink]="['/user-profile']" class="dropdown-item">
+          <a routerLinkActive="active"
+             [routerLink]="['/user-profile']"
+             class="dropdown-item">
             <i class="ni ni-support-16"></i>
             <span>Support</span>
           </a>
-          <div class="dropdown-divider" [hidden]="!authService.authenticated"></div>
-          <a (click)="authService.logOut()" class="dropdown-item pointer" [hidden]="!authService.authenticated">
+          <div class="dropdown-divider"
+               [hidden]="!authService.authenticated"></div>
+          <a (click)="authService.logOut()"
+             class="dropdown-item pointer"
+             [hidden]="!authService.authenticated">
             <i class="ni ni-lock-circle-open text-marigold"></i>
             <span>Logout</span>
           </a>
@@ -553,17 +572,22 @@
       </li>
     </ul>
     <!-- Collapse -->
-    <div class="collapse navbar-collapse" [ngbCollapse]="isCollapsed" id="sidenav-collapse-main">
+    <div class="collapse navbar-collapse"
+         [ngbCollapse]="isCollapsed"
+         id="sidenav-collapse-main">
       <!-- Collapse header -->
       <div class="navbar-collapse-header">
         <div class="row">
           <div class="col-6 collapse-brand">
-            <a routerLinkActive="active" [routerLink]="['/dashboard']">
+            <a routerLinkActive="active"
+               [routerLink]="['/dashboard']">
               <img src="./assets/img/brand/Logo1.png" />
             </a>
           </div>
           <div class="col-6 collapse-close">
-            <button type="button" class="navbar-toggler" (click)="isCollapsed = !isCollapsed">
+            <button type="button"
+                    class="navbar-toggler"
+                    (click)="isCollapsed = !isCollapsed">
               <span></span>
               <span></span>
             </button>
@@ -588,12 +612,12 @@
       </form> -->
       <!-- Navigation -->
       <ul class="navbar-nav">
-        <li
-          *ngFor="let menuItem of menuItems"
-          class="{{ menuItem.class }} nav-item"
-          [ngClass]="{ 'd-none': authService.authenticated && menuItem.class === 'auth' }"
-        >
-          <a routerLinkActive="active" [routerLink]="[menuItem.path]" class="nav-link">
+        <li *ngFor="let menuItem of menuItems"
+            class="{{ menuItem.class }} nav-item"
+            [ngClass]="{ 'd-none': authService.authenticated && menuItem.class === 'auth' }">
+          <a routerLinkActive="active"
+             [routerLink]="[menuItem.path]"
+             class="nav-link">
             <i class="ni {{ menuItem.icon }}"></i>
             {{ menuItem.title }}
           </a>
