@@ -198,11 +198,14 @@ const searchTable = (connection, logger, req, res, next) => {
         logger.info('Search Query: ', finalQuery);
         let countQuery = 'SELECT COUNT(';
         if (!options.duplicateRows) {
-          countQuery += 'DISTINCT ';
+          countQuery += 'DISTINCT ' + selectedTableColumns.toString() +
+            ') as numRows ';
+
+        } else {
+          countQuery += selectedTableColumns[0] +
+            ') as numRows ';
         }
         countQuery +=
-          selectedTableColumns.toString() +
-          ') as numRows ' +
           fromInnerJoins.join(' ') +
           (options.noConditions ? '' : whereConditions.join(' '));
         try {
