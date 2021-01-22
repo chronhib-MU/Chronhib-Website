@@ -1,17 +1,3 @@
-import {
-  Analysis,
-  Augm,
-  CausingMut,
-  Contr,
-  Depend,
-  Depon,
-  Hiat,
-  MSChecked,
-  Mut,
-  PartOfSpeech,
-  Rel,
-  Trans
-} from './../../model/columnOpts.model';
 import { TableDataService } from './../../services/table-data.service';
 import { AuthService } from './../../services/auth.service';
 import { Component, OnInit, ElementRef, OnDestroy } from '@angular/core';
@@ -19,7 +5,6 @@ import { Location, LocationStrategy, PathLocationStrategy } from '@angular/commo
 import { Router } from '@angular/router';
 import { AbstractControl, FormArray, FormBuilder, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { NgbModal, ModalDismissReasons } from '@ng-bootstrap/ng-bootstrap';
-import Fuse from 'fuse.js';
 import { HttpClient } from '@angular/common/http';
 import { environment } from 'src/environments/environment';
 
@@ -30,14 +15,9 @@ declare interface RouteInfo {
   class: string;
 }
 export const ROUTES: RouteInfo[] = [
-  {
-    path: '/dashboard',
-    title: 'Dashboard',
-    icon: 'ni-tv-2 text-marigold',
-    class: ''
-  },
-  { path: '/user-profile', title: 'User profile', icon: 'ni-single-02 text-marigold', class: '' },
+  { path: '/dashboard', title: 'Dashboard', icon: 'ni-tv-2 text-marigold', class: '' },
   { path: '/tables', title: 'Tables', icon: 'ni-bullet-list-67 text-marigold', class: '' },
+  { path: '/user-profile', title: 'User profile', icon: 'ni-single-02 text-marigold', class: '' },
   { path: '/login', title: 'Login', icon: 'ni-key-25 text-marigold', class: 'auth' },
   { path: '/register', title: 'Register', icon: 'ni-circle-08 text-marigold', class: 'auth' }
 ];
@@ -63,12 +43,18 @@ export class SidebarComponent implements OnInit, OnDestroy {
     'Depend',
     'Depon',
     'Hiat',
+    'Lemma',
     'MS_Checked',
     'Mut',
     'Part_Of_Speech',
     'Rel',
     'Trans'
   ];
+  options = {
+    threshold: 0.1,
+    includeScore: true,
+    isCaseSensitive: true
+  };
   active = 'tableColumns';
   searchQuerySub$: any;
   constructor (
@@ -119,8 +105,8 @@ export class SidebarComponent implements OnInit, OnDestroy {
   }
   mapSearchData (data: any[]) {
     let res = [];
-    res = data.map((value: { replaceAll: (arg0: string, arg1: string) => any }) => ({
-      name: value.replaceAll('_', ' '),
+    res = data.map((value) => ({
+      name: value?.replaceAll('_', ' '),
       value
     }));
     return res;
@@ -316,52 +302,6 @@ export class SidebarComponent implements OnInit, OnDestroy {
         .then(() => this.resetForm())
     );
     close();
-  }
-
-  comparatorSearch (index: string | number) {
-    const name = this.tableData.searchForm.get('conditions')['controls'][index].controls.column.value;
-    const input = this.tableData.searchForm.get('conditions')['controls'][index].controls.comparatorVal.value;
-
-    let columnVals = [];
-    switch (name) {
-      case 'Analysis':
-        columnVals = Analysis;
-        break;
-      case 'Augm':
-        return Augm;
-      case 'Causing_Mut':
-        return CausingMut;
-      case 'Contr':
-        return Contr;
-      case 'Depend':
-        return Depend;
-      case 'Depon':
-        return Depon;
-      case 'Hiat':
-        return Hiat;
-      case 'MS_Checked':
-        return MSChecked;
-      case 'Mut':
-        return Mut;
-      case 'Part_Of_Speech':
-        columnVals = PartOfSpeech;
-        break;
-      case 'Rel':
-        return Rel;
-      case 'Trans':
-        return Trans;
-      default:
-        break;
-    }
-    const options = {
-      includeScore: true,
-      isCaseSensitive: true
-    };
-
-    const fuse = new Fuse(columnVals, options);
-
-    const result = fuse.search(input);
-    return result.map(res => res.item);
   }
 
   private getDismissReason (reason: any): string {

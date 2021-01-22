@@ -1,4 +1,103 @@
 /* You can add global styles to this file, and also import other style files */
+body {
+  background: rgba(255, 255, 255, 1);
+  background: -moz-linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(229, 230, 230, 1) 75%,
+    rgba(220, 221, 222, 1) 100%
+  );
+  background: -webkit-gradient(
+    left bottom,
+    right top,
+    color-stop(0%, rgba(255, 255, 255, 1)),
+    color-stop(75%, rgba(229, 230, 230, 1)),
+    color-stop(100%, rgba(220, 221, 222, 1))
+  );
+  background: -webkit-linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(229, 230, 230, 1) 75%,
+    rgba(220, 221, 222, 1) 100%
+  );
+  background: -o-linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(229, 230, 230, 1) 75%,
+    rgba(220, 221, 222, 1) 100%
+  );
+  background: -ms-linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(229, 230, 230, 1) 75%,
+    rgba(220, 221, 222, 1) 100%
+  );
+  background: linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(229, 230, 230, 1) 75%,
+    rgba(220, 221, 222, 1) 100%
+  );
+  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='rgba(255, 255, 255, 1)fff', endColorstr='#dcddde', GradientType=1 );
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.h1,
+.h2,
+.h3,
+.h4,
+.h5,
+.h6 {
+  color: rgba(77, 77, 77, 1);
+}
+
+.main-text {
+  color: rgba(0, 153, 153, 1);
+}
+.sub-text {
+  color: rgba(239, 174, 30, 1);
+}
+
+.btn-link {
+  color: rgba(10, 103, 178, 1);
+  &:hover {
+    color: rgba(10, 103, 178, 0.85);
+  }
+}
+.btn-default {
+  color: rgba(255, 255, 255, 1);
+  background-color: rgba(10, 103, 178, 1);
+  border-color: rgba(10, 103, 178, 1);
+  &:hover {
+    color: rgba(255, 255, 255, 1);
+    background-color: rgba(10, 103, 178, 1);
+    border-color: rgba(10, 103, 178, 1);
+  }
+  &:not(:disabled):not(.disabled):active,
+  &:not(:disabled):not(.disabled).active {
+    color: rgba(255, 255, 255, 1);
+    background-color: rgba(10, 103, 178, 0.85);
+    border-color: rgba(10, 103, 178, 1);
+  }
+}
+.btn-outline-default {
+  color: rgba(10, 103, 178, 1);
+  background-color: transparent;
+  background-image: none;
+  border-color: rgba(10, 103, 178, 1);
+  &:hover,
+  &:not(:disabled):not(.disabled):active,
+  &:not(:disabled):not(.disabled).active {
+    color: rgba(255, 255, 255, 1);
+    background-color: rgba(10, 103, 178, 1);
+    border-color: rgba(10, 103, 178, 1);
+  }
+}
 
 .bg-gradient-image {
   background-image: linear-gradient(
@@ -60,6 +159,10 @@ select {
 }
 .footer {
   padding: 1.5rem 0;
+  background: transparent;
+  .nav .nav-item .nav-link {
+    color: rgba(109, 110, 113, 1) !important;
+  }
 }
 .navbar-vertical.navbar-expand-md .navbar-brand-img,
 .navbar-vertical .navbar-brand-img,
@@ -83,6 +186,32 @@ select {
   // box-shadow: none;
   > li > a {
     color: #8898aa;
+    &.dropdown-item {
+      &:hover {
+        background-color: rgba(10, 103, 178, 0.75);
+        color: rgba(255, 255, 255, 1);
+      }
+      &:focus {
+        background-color: rgba(10, 103, 178, 1);
+        color: rgba(255, 255, 255, 1);
+      }
+    }
+  }
+}
+
+.ng-select.ng-select-multiple .ng-select-container .ng-value-container .ng-value {
+  background-color: rgba(10, 103, 178, 1);
+  color: rgba(255, 255, 255, 1);
+  font-size: 0.9em;
+  margin-bottom: 5px;
+  border-radius: 3px;
+  margin-right: 5px;
+  .ng-value-icon.right {
+    border-left: 1px solid rgba(255, 255, 255, 0.5);
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.25);
+      color: rgba(255, 255, 255, 1);
+    }
   }
 }
 .ng-dropdown-panel .ng-dropdown-panel-items .ng-option {
@@ -90,9 +219,15 @@ select {
   font-size: 0.875rem;
   &.ng-option-selected,
   &.ng-option-selected.ng-option-marked {
+    background-color: rgba(10, 103, 178, 1);
+    color: rgba(255, 255, 255, 1);
     &:last-child {
       border-radius: 0;
     }
+  }
+  &.ng-option-marked {
+    background-color: rgba(10, 103, 178, 0.75);
+    color: rgba(255, 255, 255, 1);
   }
 }
 .ng-dropdown-footer {
@@ -107,19 +242,19 @@ select {
 
 .mat-paginator,
 .mat-paginator-page-size .mat-select-trigger {
-  color: #525f7f;
+  color: rgba(109, 110, 113, 1);
 }
 .handsontable th {
-  color: #fff;
+  color: rgba(255, 255, 255, 1);
 
-  background-color: #a53d36;
+  background-color: rgba(156, 35, 41, 1);
   & .handsontable td {
     color: #222;
   }
 }
 .handsontable tbody th.ht__highlight,
 .handsontable thead th.ht__highlight {
-  color: #fff;
+  color: rgba(255, 255, 255, 1);
 
   background-color: #c3999d;
 }
@@ -137,8 +272,8 @@ select {
 .handsontable td.area-5:before,
 .handsontable td.area-6:before,
 .handsontable td.area-7:before {
-  background: #1079ab;
-  background-color: rgb(16, 121, 171);
+  background: rgba(10, 103, 178, 1);
+  background-color: rgba(10, 103, 178, 1);
 }
 .handsontable th.beforeHiddenColumn::after,
 .handsontable th.afterHiddenColumn::before {
@@ -162,12 +297,17 @@ select {
     color: #222;
   }
 }
-
+.text-muted {
+  color: rgba(147, 149, 152, 1) !important;
+}
+.text-dark {
+  color: rgba(0, 0, 0, 1) !important;
+}
 .text-burgundy {
-  color: #a53d36;
+  color: rgba(156, 35, 41, 1);
 }
 .text-marigold {
-  color: #f0b428;
+  color: rgba(239, 174, 30, 1);
 }
 
 .toast-container .ngx-toastr {

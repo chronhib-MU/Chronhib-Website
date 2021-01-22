@@ -1,4 +1,4 @@
-export const Analysis = [
+export let Analysis = [
   '3sg.pres.subj.',
   '+dat. exceptionally',
   '-',
@@ -466,15 +466,15 @@ export const Analysis = [
   'voc.sg.neut.'
 ];
 
-export const Augm = ['', 'Yes', 'No', 'Maybe'];
-export const CausingMut = ['', '+ Nas.', '- Nas.', '+ Len.', '- Len.', '+ Gem.', '- Gem.'];
-export const Contr = ['', 'Yes', 'No', 'Maybe'];
-export const Depend = ['', 'abs.', 'conj.', ' deut.', 'prot.'];
-export const Depon = ['', 'Yes', 'No', 'Maybe'];
-export const Hiat = ['', 'Yes', 'No', 'Maybe'];
-export const MSChecked = ['', 'Yes', 'No'];
-export const Mut = ['', '+ Nas.', '- Nas.', '+ Len.', '- Len.', '+ Gem.', '- Gem.'];
-export const PartOfSpeech = [
+export let Augm = ['', 'Yes', 'No', 'Maybe'];
+export let CausingMut = ['', '+ Nas.', '- Nas.', '+ Len.', '- Len.', '+ Gem.', '- Gem.'];
+export let Contr = ['', 'Yes', 'No', 'Maybe'];
+export let Depend = ['', 'abs.', 'conj.', ' deut.', 'prot.'];
+export let Depon = ['', 'Yes', 'No', 'Maybe'];
+export let Hiat = ['', 'Yes', 'No', 'Maybe'];
+export let MSChecked = ['', 'Yes', 'No'];
+export let Mut = ['', '+ Nas.', '- Nas.', '+ Len.', '- Len.', '+ Gem.', '- Gem.'];
+export let PartOfSpeech = [
   'numeral',
   'pronoun_relative',
   'unk.',
@@ -541,9 +541,9 @@ export const PartOfSpeech = [
   'o',
   'verbal_nou'
 ];
-export const Rel = ['', 'Yes', 'No', 'Maybe'];
-export const Trans = ['', 'trans.', 'intrans.', 'pass.', 'unclear'];
-export const Lemma = [
+export let Rel = ['', 'Yes', 'No', 'Maybe'];
+export let Trans = ['', 'trans.', 'intrans.', 'pass.', 'unclear'];
+export let Lemma = [
   "(Latin letters and suffixes)",
   "(Roman numerals)",
   "*guinecht",
@@ -922,10 +922,10 @@ export const Lemma = [
   "Connmach ?",
   "Conodor",
   "Conrai",
-  "Constantin",
-  "Constantinopol",
-  "Constantīnopolītānus",
-  "Constantīnus",
+  "letantin",
+  "letantinopol",
+  "letantīnopolītānus",
+  "letantīnus",
   "Conáed ?",
   "Conán",
   "Conóc",
@@ -3669,10 +3669,10 @@ export const Lemma = [
   "consilium",
   "conson",
   "conspectus",
-  "constituō",
-  "constringō",
-  "constructiō",
-  "construō",
+  "letituō",
+  "letringō",
+  "letructiō",
+  "letruō",
   "consummō",
   "consīderō",
   "contentiō",

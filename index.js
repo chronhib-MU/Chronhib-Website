@@ -17,7 +17,7 @@ const { query } = require('express');
 const { throws } = require('assert');
 const auth = require('./models/auth.js');
 const commands = require('./models/commands.js');
-const tabledata = require('./models/tabledata.js');
+const tableDataQuery = require('./models/tableDataQuery.js');
 const currentDate = new Date();
 const formattedDate = `-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${currentDate.getFullYear()}`;
 log4js.configure({
@@ -174,7 +174,7 @@ app.post(`/${appName}/api/searchQuery/`, (req, res, next) => {
 app.get(`/${appName}/api/search/`, (req, res, next) => {
   console.table(req.query);
   logger.trace(req.query);
-  tabledata.searchTable(connection, logger, req, res, next);
+  tableDataQuery.searchTable(connection, logger, req, res, next);
 });
 
 // Handles all the advanced get api table queries
@@ -189,7 +189,7 @@ app.get(`/${appName}/api/tables/`, (req, res, next) => {
     typeof req.query.dtable === 'string' &&
     typeof req.query.ctable === 'string'
   ) {
-    tabledata.navigateTable(connection, logger, req, res, next);
+    tableDataQuery.navigateTable(connection, logger, req, res, next);
   } else {
     console.log(req.query);
     res.send(
@@ -201,26 +201,33 @@ app.get(`/${appName}/api/tables/`, (req, res, next) => {
   }
 });
 
+app.get(`/${appName}/api/tableColumnRows`, (req, res, next) => {
+  console.table(req.query);
+  logger.trace(req.query);
+  if (
+    typeof req.query.table === 'string' &&
+    typeof req.query.column === 'string'
+  ) {
+    const { table, column, filter } = req.query;
+    tableDataQuery.getTableColumnRows(connection, logger, table, column, filter, res, next);
+  } else {
+    res.status(404).send({
+      data: []
+    });
+  }
+});
 
 // Gets the table headers / column names
 app.get(`/${appName}/api/:path/headers`, (req, res, next) => {
   // console.log(req.params.path);
   const path = req.params.path;
-  // console.log(tables[path]);
-  logger.trace(req.params.path);
-  const headerQuery = 'SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = N?';
-  connection.query(headerQuery, [DATABASE, path.split('/')[0].toUpperCase()], (err, results) => {
-    if (err) {
-      logger.error(err);
-      next(err);
-    } else {
-      // console.log(results);
-      logger.trace(results);
-      res.status(200).send({
-        data: results.map(result => result.COLUMN_NAME)
-      });
-    }
-  });
+  if (path in tables) {
+    tableDataQuery.getHeaders(connection, logger, path, DATABASE, res, next);
+  } else {
+    res.status(404).send({
+      data: []
+    });
+  }
 });
 
 // Gets the Table Data for the picture tables T,S,M,L
@@ -238,7 +245,7 @@ app.get(`/${appName}/api/:path`, (req, res, next) => {
         // console.log(results);
         // logger.info(results);
         res.status(200).send({
-          data: { beforeTable: {}, afterTable: results }
+          data: { beforeTable: [], afterTable: results }
         });
       }
     });

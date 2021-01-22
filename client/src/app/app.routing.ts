@@ -9,7 +9,7 @@ import { AuthLayoutComponent } from './layouts/auth-layout/auth-layout.component
 const routes: Routes = [
   {
     path: '',
-    redirectTo: 'dashboard',
+    redirectTo: 'tables',
     pathMatch: 'full'
   },
   {
@@ -39,7 +39,7 @@ const routes: Routes = [
 ];
 
 @NgModule({
-  imports: [CommonModule, BrowserModule, RouterModule.forRoot(routes)],
+  imports: [CommonModule, BrowserModule, RouterModule.forRoot(routes, { relativeLinkResolution: 'legacy' })],
   exports: []
 })
-export class AppRoutingModule {}
+export class AppRoutingModule { }

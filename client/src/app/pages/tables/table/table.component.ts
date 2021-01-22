@@ -10,7 +10,7 @@ import { ApiPostBody } from '../../../interfaces/api-post-body';
 import * as jsonexport from 'jsonexport/dist';
 import * as _ from 'lodash';
 import { Validators } from '@angular/forms';
-import { Lemma } from '../../../model/columnOpts.model';
+import { Lemma } from '../../../model/autocompleteOpts.model';
 declare const $: any;
 @Component({
   selector: 'app-table',
@@ -434,9 +434,9 @@ export class TableComponent implements OnInit {
     try {
       const { data } = await this.tableData.fetchedTable.toPromise();
       this.updatePageForm();
-      console.table('After: ' + this.after);
-      console.table('Before: ' + this.before);
-      console.log(`Datatable[${this.after}]: `, data.afterTable);
+      // console.table('After: ' + this.after);
+      // console.table('Before: ' + this.before);
+      // console.log(`Datatable[${this.after}]: `, data.afterTable);
 
       // If this is a scenario where there is a before table
       if (this.before && this.before !== this.after) {
@@ -604,7 +604,9 @@ export class TableComponent implements OnInit {
             table,
             header,
             'autocomplete',
-            Lemma
+            async (query, process) => {
+              process(await this.tableData.dynamicAutoComplete(query, table, header));
+            }
           )
         );
       default:
@@ -612,7 +614,7 @@ export class TableComponent implements OnInit {
     }
   }
 
-  columnSettings (that: any, table: string, header: string, type: string, source?: any[], renderer?: string) {
+  columnSettings (that: any, table: string, header: string, type: string, source?: string[] | number[] | ((this: Handsontable.CellProperties, query: string, callback: (items: string[]) => void) => void), renderer?: string) {
     // console.log('I got in here!');
     // console.log({ that, table, header, type, source, renderer });
     const settingsObj: Handsontable.ColumnSettings = {

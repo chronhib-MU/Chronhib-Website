@@ -1,13 +1,14 @@
 import { AuthService } from './auth.service';
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, Subject, throwError } from 'rxjs';
+import { Observable, Subject, SubscribableOrPromise, Subscription, throwError } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { ApiGetQuery } from '../interfaces/api-get-query';
 import { ApiPostBody } from '../interfaces/api-post-body';
 import { FormGroup } from '@angular/forms';
 import { Router } from '@angular/router';
 import * as qs from 'qs';
+import Fuse from 'fuse.js';
 @Injectable({
   providedIn: 'root'
 })
@@ -29,11 +30,13 @@ export class TableDataService {
   searchTable = { headers: [], data: [] };
   searchForm: FormGroup;
   searchQuerySub: Subject<any> = new Subject<FormGroup>();
-  data: any;
+  fetchedTableColumnRows: Observable<any>;
   tableLength = 0;
   page = 0;
+  columnVals: any;
 
-  constructor (public router: Router, private http: HttpClient, private authService: AuthService) { }
+  constructor (public router: Router, private http: HttpClient, private authService: AuthService) {
+  }
 
   // Fetches the headers for each table
   fetchHeaders = async () => {
@@ -45,7 +48,8 @@ export class TableDataService {
         ) as Observable<any>;
         const { data } = await fetchedHeaders.toPromise();
         // console.log(data);
-        this.allHeaders[name] = data;
+        const excludeColumns = ['Sort_ID'];
+        this.allHeaders[name] = data.filter(column => !excludeColumns.includes(column));
       });
       // console.log(this.allHeaders);
     } catch (error) {
@@ -105,8 +109,8 @@ export class TableDataService {
           }
           this.tables['after'].data = data.afterTable;
           this.tables['after'].headers = Object.keys(this.tables['after'].data[0]);
-          console.log(this.tables['after'].headers);
-          console.log(this.tables['after'].data);
+          // console.log(this.tables['after'].headers);
+          // console.log(this.tables['after'].data);
         }
         // console.log(this.tables['after']);
       }
@@ -118,6 +122,38 @@ export class TableDataService {
       return;
     }
   };
+
+  // Fetches the rows from a particular column in a given table
+  fetchTableColumnRows = (table: string, column: string, filter: string = null) => {
+    // console.log('Table-Column', table + '-' + column);
+    table = table.toUpperCase();
+    const queryString = qs.stringify({ table, column, filter });
+    this.fetchedTableColumnRows = this.http.get<any>(
+      `${environment.apiUrl}tableColumnRows/?${queryString}`
+    ) as Observable<any>;
+    return this.fetchedTableColumnRows;
+  }
+
+  //
+  async dynamicAutoComplete (query, table, column) {
+    const options = {
+      threshold: 0.1,
+      includeScore: true,
+      isCaseSensitive: true
+    };
+    const data = await this.fetchTableColumnRows(table, column).toPromise();
+    if (data) {
+      const fuse = new Fuse(data, options);
+      const result = fuse.search(query);
+      if (query === '') {
+        return data;
+      } else {
+        return result.map(res => res.item);
+      }
+    } else {
+      return [];
+    }
+  }
 
   updateTable = async (apiBody: ApiPostBody) => {
     if (apiBody.command !== 'loadData') {

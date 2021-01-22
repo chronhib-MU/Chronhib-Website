@@ -181,10 +181,10 @@ const searchTable = (connection, logger, req, res, next) => {
           }
         }
         const limit =
-          parseInt(options.limit) > 0
-            ? parseInt(options.limit)
-            : parseInt(req.query.limit) > 0
-              ? parseInt(req.query.limit)
+          parseInt(req.query.limit) > 0
+            ? parseInt(req.query.limit)
+            : parseInt(options.limit) > 0
+              ? parseInt(options.limit)
               : 100;
         const page = parseInt(req.query.page) > 0 ? parseInt(req.query.page) : 0;
         // console.log(limit, page);
@@ -201,7 +201,7 @@ const searchTable = (connection, logger, req, res, next) => {
           countQuery += 'DISTINCT ';
         }
         countQuery +=
-          selectedTableColumns[0] +
+          selectedTableColumns.toString() +
           ') as numRows ' +
           fromInnerJoins.join(' ') +
           (options.noConditions ? '' : whereConditions.join(' '));
@@ -371,7 +371,53 @@ const navigateTable = (connection, logger, req, res, next) => {
   }
 }
 
+const getTableColumnRows = (connection, logger, table, column, filter, res, next) => {
+  let query = `SELECT ?? FROM ??`;
+  let queryValues = [column, table];
+  if (filter !== null) {
+    query += ` WHERE ?? LIKE ?;`;
+    queryValues = [column, table, column, '%' + filter + '%'];
+  }
+  console.log(query);
+  console.log(queryValues);
+  connection.query(query, queryValues, (err, results) => {
+    if (err) {
+      // console.log('Error: ', err);
+      logger.error('Error: ', err);
+      next(err);
+      // res.status(200).send([]);
+    } else {
+      // Extract columns from Rows
+      // Remove Unique values with Set
+      // Remove null or empty results
+      const filteredResults = [...new Set(results.map(data => data[column]))].filter(data => data);
+      console.log(filteredResults);
+      res.status(200).send(filteredResults);
+    }
+  });
+}
+
+const getHeaders = (connection, logger, path, DATABASE, res, next) => {
+  // console.log(tables[path]);
+  logger.trace(path);
+  const headerQuery = 'SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = N?';
+  connection.query(headerQuery, [DATABASE, path.split('/')[0].toUpperCase()], (err, results) => {
+    if (err) {
+      logger.error(err);
+      next(err);
+    } else {
+      // console.log(results);
+      logger.trace(results);
+      res.status(200).send({
+        data: results.map(result => result.COLUMN_NAME)
+      });
+    }
+  });
+}
+
 module.exports = Object.assign({
   searchTable,
-  navigateTable
+  navigateTable,
+  getTableColumnRows,
+  getHeaders
 });

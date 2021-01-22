@@ -30,4 +30,4 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
   ],
   declarations: [DashboardComponent, UserProfileComponent, TablesComponent, TableComponent]
 })
-export class AdminLayoutModule {}
+export class AdminLayoutModule { }

@@ -4,87 +4,95 @@
     <div class="card shadow w-100">
       <div class="card-header border-0 pb-2"
            (click)="scrollToTable()">
-        <div class="row">
-          <div class="card-title text-uppercase mb-0 col">
-            <h5 *ngIf="before && after !== before"
-                class="mb-0 font-weight-bold text-muted">
-              {{ before | titlecase }}
-            </h5>
-            <h2 class="mb-0 font-weight-bolder text-dark">
-              {{ after | titlecase }}
-              <span *ngIf="after === 'search'">
-                {{ ' Results ' }}
-                <span placement="top"
-                      ngbTooltip="Search Query ID"
-                      tooltipClass="width-125">
-                  {{ '#' + tableData.currentApiQuery.id }}
+        <div class="row card-title ">
+          <div class="text-uppercase mb-0 col">
+            <div class="row ml-1">
+              <h5 *ngIf="before && after !== before"
+                  class="mb-0 font-weight-bold text-muted">
+                {{ before | titlecase }}
+              </h5>
+            </div>
+            <div class="row ml-1">
+              <h2 class="mb-0 font-weight-bolder text-dark">
+                {{ after | titlecase }}
+                <span *ngIf="after === 'search'">
+                  {{ ' Results ' }}
+                  <span placement="top"
+                        ngbTooltip="Search Query ID"
+                        tooltipClass="width-125">
+                    {{ '#' + tableData.currentApiQuery.id }}
+                  </span>
+                  {{ ' - ' + this.searchTable.data.length + ' out of ' + this.tableData.tableLength + ' matches' }}
                 </span>
-
-                {{ ' - ' + this.searchTable.data.length + ' out of ' + this.tableData.tableLength + ' matches' }}
-              </span>
-              <span *ngIf="after !== 'text' && tableData.currentApiQuery.fval">
-                {{ ' - ' + tableData.currentApiQuery.fval }}
-              </span>
-              <span *ngIf="after !== 'search'">
-                {{
-                  ' (' +
-                    this.dataTable[before === 'morphology' ? 'before' : 'after'].data.length +
-                    ' out of ' +
-                    this.tableData.tableLength +
-                    ' matches)'
-                }}
-              </span>
-            </h2>
-            <button type="button"
-                    class="btn btn-outline-default btn-sm"
-                    (click)="copyToClipboard()">
-              <i class="fa fa-copy"></i> Copy Table Link
-            </button>
-            <button type="button"
-                    class="btn btn-outline-default btn-sm"
-                    (click)="exportToCSV()">
-              <i class="fa fa-download"></i>
-              Export Table Data to CSV File
-            </button>
+                <span *ngIf="after !== 'text' && tableData.currentApiQuery.fval">
+                  {{ ' - ' + tableData.currentApiQuery.fval }}
+                </span>
+                <span *ngIf="after !== 'search'">
+                  {{
+                ' (' +
+                this.dataTable[before === 'morphology' ? 'before' : 'after'].data.length +
+                ' out of ' +
+                this.tableData.tableLength +
+                ' matches)'
+              }}
+                </span>
+              </h2>
+            </div>
+            <div class="row ml-1">
+              <button type="button"
+                      class="btn btn-outline-default btn-sm"
+                      (click)="copyToClipboard()">
+                <i class="fa fa-copy"></i> Copy Table Link
+              </button>
+              <button type="button"
+                      class="btn btn-outline-default btn-sm"
+                      (click)="exportToCSV()">
+                <i class="fa fa-download"></i>
+                Export Table Data to CSV File
+              </button>
+            </div>
           </div>
-
-          <div class="btn-group col-auto pr-0">
-            <label class="btn btn-secondary px-3 py-2"
-                   (click)="toggleMode('edit')"
-                   *ngIf="after !== 'search' || tableData.searchForm.get('tableColumns')['controls'].length === 1">
-              Edit <i class="fa fa-toggle-on"
-                 *ngIf="edit"></i><i class="fa fa-toggle-off"
-                 *ngIf="!edit"></i>
-            </label>
-            <label *ngIf="before && (after === 'sentences' || after === 'morphology')"
-                   class="btn btn-secondary px-3 py-2"
-                   (click)="toggleMode('ref')">
-              Ref. <i class="fa fa-toggle-on"
-                 *ngIf="ref"></i><i class="fa fa-toggle-off"
-                 *ngIf="!ref"></i>
-            </label>
-            <br>
-          </div>
-          <div class="btn-group col-auto">
-            <label class="btn btn-secondary px-3 py-2"
-                   (click)="toggleMode('sort')">
-              Sort <i class="fa fa-toggle-on"
-                 *ngIf="sort"></i><i class="fa fa-toggle-off"
-                 *ngIf="!sort"></i>
-            </label>
-            <label class="btn btn-secondary px-3 py-2"
-                   (click)="toggleMode('wordWrap')">
-              Word-Wrap <i class="fa fa-toggle-on"
-                 *ngIf="wordWrap"></i><i class="fa fa-toggle-off"
-                 *ngIf="!wordWrap"></i>
-            </label>
-          </div>
-          <div class="btn-group col-auto pl-0"
-               *ngIf="edit">
-            <label class="btn btn-secondary px-3 py-2"
-                   (click)="undo()"> Undo </label>
-            <label class="btn btn-secondary px-3 py-2"
-                   (click)="redo()"> Redo </label>
+          <div class="mb-0 col">
+            <div class="row float-right">
+              <div class="btn-group col-auto pr-0">
+                <label class="btn btn-secondary px-3 py-2"
+                       (click)="toggleMode('edit')"
+                       *ngIf="after !== 'search' || tableData.searchForm.get('tableColumns')['controls'].length === 1">
+                  Edit <i class="fa fa-toggle-on"
+                     *ngIf="edit"></i><i class="fa fa-toggle-off"
+                     *ngIf="!edit"></i>
+                </label>
+                <label *ngIf="before && (after === 'sentences' || after === 'morphology')"
+                       class="btn btn-secondary px-3 py-2"
+                       (click)="toggleMode('ref')">
+                  Ref. <i class="fa fa-toggle-on"
+                     *ngIf="ref"></i><i class="fa fa-toggle-off"
+                     *ngIf="!ref"></i>
+                </label>
+                <br>
+              </div>
+              <div class="btn-group col-auto">
+                <label class="btn btn-secondary px-3 py-2"
+                       (click)="toggleMode('sort')">
+                  Sort <i class="fa fa-toggle-on"
+                     *ngIf="sort"></i><i class="fa fa-toggle-off"
+                     *ngIf="!sort"></i>
+                </label>
+                <label class="btn btn-secondary px-3 py-2"
+                       (click)="toggleMode('wordWrap')">
+                  Word-Wrap <i class="fa fa-toggle-on"
+                     *ngIf="wordWrap"></i><i class="fa fa-toggle-off"
+                     *ngIf="!wordWrap"></i>
+                </label>
+              </div>
+              <div class="btn-group col-auto pl-0"
+                   *ngIf="edit">
+                <label class="btn btn-secondary px-3 py-2"
+                       (click)="undo()"> Undo </label>
+                <label class="btn btn-secondary px-3 py-2"
+                       (click)="redo()"> Redo </label>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -100,21 +108,21 @@
         </div>
         <div *ngIf="before && before !== after && after === 'morphology' && dataTable['before']?.data[0]"
              class="text-center col">
-          <h4>
+          <h4 class="main-text">
             {{ dataTable['before'].data[0].Textual_Unit }}
           </h4>
-          <h4 class="text-muted">
+          <h4 class="sub-text">
             {{ dataTable['before'].data[0].Translation }}
           </h4>
         </div>
         <div *ngIf="before && before !== after && after === 'sentences' && dataTable['before']?.data[0]"
              class="text-center col">
-          <h4 class="mt-2">
+          <h3 class="mt-2 main-text">
             {{ dataTable['before'].data[0].Title?.replaceAll('_', ' ') }}
-          </h4>
-          <h4 class="text-muted">
+          </h3>
+          <!-- <h4 class="text-muted">
             {{ dataTable['before'].data[0].Translation }}
-          </h4>
+          </h4> -->
         </div>
         <div class="text-right col-auto">
           <label class="btn btn-secondary px-3 py-2"
