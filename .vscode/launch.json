@@ -1,0 +1,48 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Run Script: Start",
+      "command": "npm run start",
+      "request": "launch",
+      "type": "node-terminal",
+      "preLaunchTask": "Kill Server",
+      "postDebugTask": "Kill Server"
+    },
+    {
+      "name": "Launch Firefox",
+      "type": "firefox",
+      "request": "launch",
+      "reAttach": true,
+      "url": "http://localhost:4200",
+      "webRoot": "${workspaceFolder}/client",
+      "preLaunchTask": "Run Script: Start - Client",
+      "pathMappings": [
+        {
+          "url": "webpack:///src/app",
+          "path": "${workspaceFolder}/client/src/app"
+        }
+      ]
+    },
+    {
+      "name": "Launch Chrome Debugger",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:4200",
+      "webRoot": "${workspaceFolder}/client",
+      "preLaunchTask": "Run Script: Start - Client"
+    },
+  ],
+  "compounds": [
+    {
+      "name": "Server & Client",
+      "configurations": [
+        "Run Script: Start",
+        "Launch Chrome Debugger"
+      ]
+    }
+  ]
+}
