@@ -492,12 +492,12 @@
         "affectsGlobalScope": false
       },
       "./server/models/tableDataQuery.ts": {
-        "version": "95765345e168267a0c14e14caa602ea6006c9853f8b85ed4165c991fd00dfb2f",
+        "version": "6608ee9873a6a1fcac35861d4bd8874806b53ad460139081d43ae97f8186c8cb",
         "signature": "dc5b006474b5757949b4ea9571efa5474ad0d96d3f41178c82c66b10803d96e8",
         "affectsGlobalScope": false
       },
       "./server/index.ts": {
-        "version": "f319657dceca0522a667f46824f4a1b9addf82e20558f60c31b2c43c04a6a9d2",
+        "version": "6eef3a1773746bf8029bf64c6e134ddb7bd7bf8e3a32d4300e87f8d8191832f4",
         "signature": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881",
         "affectsGlobalScope": false
       },

@@ -106,21 +106,21 @@ app.use(`/${appName}/assets/`, express.static(path.join(__dirname, folderLoc + '
 
 app.use(cors()).use(express.json());
 
-app.post(`/ ${appName} / register`, (req, res, next) => {
+app.post(`/${appName}/register`, (req, res, next) => {
   const { firstName, lastName, email, password } = req.body;
   register(logger, connection, firstName, lastName, email, password, res, next);
 });
 
-app.post(`/ ${appName} / login`, (req, res) => {
+app.post(`/${appName}/login`, (req, res) => {
   const { email, password } = req.body;
   login(logger, connection, email, password, res);
 });
 
-app.post(`/ ${appName} / isLoggedIn`, (req, res): void => {
+app.post(`/${appName}/isLoggedIn`, (req, res): void => {
   isLoggedIn(logger, connection, req.body.token, res);
 });
 
-app.patch(`/ ${appName} / api / rows / `, (req, res, next) => {
+app.patch(`/${appName}/api/rows/`, (req, res, next) => {
   console.log('PATCH Variable: ', req.body);
   logger.trace('PATCH Variable: ', req.body);
   const { command, values, user, token } = req.body;
@@ -137,7 +137,7 @@ app.patch(`/ ${appName} / api / rows / `, (req, res, next) => {
   }
 });
 
-app.delete(`/ ${appName} / api / rows / `, (req, res, next) => {
+app.delete(`/${appName}/api/rows/`, (req, res, next) => {
   console.log('DELETE Variable: ', req.body);
   logger.trace('DELETE Variable: ', req.body);
   const { values, token } = req.query;
@@ -147,7 +147,7 @@ app.delete(`/ ${appName} / api / rows / `, (req, res, next) => {
   }
 });
 
-app.post(`/ ${appName} / api / rows / `, (req, res, next) => {
+app.post(`/${appName}/api/rows/`, (req, res, next) => {
   console.log('POST Variable: ', req.body);
   logger.trace('POST Variable: ', req.body);
   const { values, user, token } = req.body;
@@ -156,7 +156,7 @@ app.post(`/ ${appName} / api / rows / `, (req, res, next) => {
   createRow(connection, logger, table, values, user, token, res, next);
 });
 
-app.post(`/ ${appName} / api / searchQuery / `, (req, res, next) => {
+app.post(`/${appName}/api/searchQuery/`, (req, res, next) => {
   console.log('POST Variable: ', req.body);
   logger.trace('POST Variable: ', req.body);
   const { query, creator } = req.body
@@ -164,7 +164,7 @@ app.post(`/ ${appName} / api / searchQuery / `, (req, res, next) => {
 });
 
 
-app.get(`/ ${appName} / api / search / `, (req, res, next) => {
+app.get(`/${appName}/api/search/`, (req, res, next) => {
   console.table(req.query);
   logger.trace(req.query);
   if (typeof req.query === 'string') {
@@ -173,14 +173,13 @@ app.get(`/ ${appName} / api / search / `, (req, res, next) => {
 });
 
 // Handles all the advanced get api table queries
-app.get(`/ ${appName} / api / tables / `, (req, res, next) => {
+app.get(`/${appName}/api/tables/`, (req, res, next) => {
   console.table(req.query);
   logger.trace(req.query);
   navigateTable(connection, logger, req.query, res, next);
-  console.log(req.query);
 });
 
-app.get(`/ ${appName} / api / tableColumnRows`, (req, res, next) => {
+app.get(`/${appName}/api/tableColumnRows`, (req, res, next) => {
   console.table(req.query);
   logger.trace(req.query);
   if (
@@ -198,7 +197,7 @@ app.get(`/ ${appName} / api / tableColumnRows`, (req, res, next) => {
 });
 
 // Gets the table headers / column names
-app.get(`/ ${appName} / api /: path / headers`, (req, res, next) => {
+app.get(`/${appName}/api/:path/headers`, (req, res, next) => {
   // console.log(req.params.path);
   const path = req.params.path;
   if (path in tables) {
@@ -211,7 +210,7 @@ app.get(`/ ${appName} / api /: path / headers`, (req, res, next) => {
 });
 
 // Gets the Table Data for the picture tables T,S,M,L
-app.get(`/ ${appName} / api /: path`, (req, res, next) => {
+app.get(`/${appName}/api/:path`, (req, res, next) => {
   // console.log(req.params.path);
   const path = req.params.path;
   // console.log(tables[path]);
@@ -231,7 +230,7 @@ app.get(`/ ${appName} / api /: path`, (req, res, next) => {
     });
   } else {
     // Handles any requests that don't match the ones above
-    res.redirect(`/ ${appName}/*`); // redirect back to the homepage
+    res.redirect(`/${appName}/*`); // redirect back to the homepage
   }
 });
 

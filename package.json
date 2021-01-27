@@ -12,7 +12,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node ./build/index.js",
-    "build": "\\rm -i -rf ./build/* && tsc && cd client && npm run build && cd ..",
+    "build": "cd client && npm run build && cd .. && \\rm -i -rf ./build/* && tsc",
     "start:dev": "nodemon build/index.js",
     "build:dev": "tsc --watch --preserveWatchOutput",
     "dev": "concurrently \"npm run build:dev\" \"npm run start:dev\"",

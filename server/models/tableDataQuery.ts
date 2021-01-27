@@ -306,14 +306,12 @@ const navigateTable = (
   query: Query,
   res: Response, next: NextFunction): void => {
   if (
-    typeof query.id === 'number' &&
     typeof query.limit === 'string' &&
     typeof query.page === 'string' &&
-    typeof query.fprop === 'string' &&
-    typeof query.fval === 'string' &&
+    (typeof query.fprop === 'string' || !query.fprop) &&
+    (typeof query.fval === 'string' || !query.fval) &&
     typeof query.dtable === 'string' &&
     typeof query.ctable === 'string') {
-
     const page: number = (parseInt(query.page, 10) > 0 ? parseInt(query.page, 10) : 0) || 0, // pagination page number
       limit: number = (parseInt(query.limit, 10) > 0 ? parseInt(query.limit, 10) : 100) || 100, // pagination limit (how many rows per page)
       fieldProperty = query.fprop || '', // the property to filter by
@@ -427,6 +425,7 @@ const navigateTable = (
       logger.error('Error: ', error);
     }
   } else {
+    console.log('Error Occured:', query);
     res.status(404);
   }
 }

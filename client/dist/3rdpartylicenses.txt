@@ -262,7 +262,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
 dompurify
-MPL-2.0 OR Apache-2.0
+(MPL-2.0 OR Apache-2.0)
 DOMPurify
 Copyright 2015 Mario Heiderich
 

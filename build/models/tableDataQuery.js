@@ -295,11 +295,10 @@ var searchTable = function (connection, logger, query, res, next) {
 exports.searchTable = searchTable;
 // Gets the Table Data from the pages navigated to, on the main table
 var navigateTable = function (connection, logger, query, res, next) {
-    if (typeof query.id === 'number' &&
-        typeof query.limit === 'string' &&
+    if (typeof query.limit === 'string' &&
         typeof query.page === 'string' &&
-        typeof query.fprop === 'string' &&
-        typeof query.fval === 'string' &&
+        (typeof query.fprop === 'string' || !query.fprop) &&
+        (typeof query.fval === 'string' || !query.fval) &&
         typeof query.dtable === 'string' &&
         typeof query.ctable === 'string') {
         var page = (parseInt(query.page, 10) > 0 ? parseInt(query.page, 10) : 0) || 0, // pagination page number
@@ -407,6 +406,7 @@ var navigateTable = function (connection, logger, query, res, next) {
         }
     }
     else {
+        console.log('Error Occured:', query);
         res.status(404);
     }
 };
