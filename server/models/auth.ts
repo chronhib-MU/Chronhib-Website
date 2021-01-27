@@ -1,6 +1,9 @@
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
-const dotenv = require('dotenv');
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
+import dotenv from 'dotenv';
+import { NextFunction, Response } from 'express-serve-static-core';
+import { Logger } from 'log4js';
+import { Connection } from 'mysql';
 
 const result = dotenv.config();
 
@@ -9,16 +12,14 @@ if (result.error) {
   throw result.error;
 }
 
-const { JWT_SECRET, JWT_EXPIRES_IN, JWT_COOKIE_EXPIRES, ENVTEST } = result.parsed;
-const jwt_secret = process.env.JWT_SECRET || JWT_SECRET;
-const jwt_expires_in = process.env.JWT_EXPIRES_IN || JWT_EXPIRES_IN;
-const envtest = process.env.ENVTEST || ENVTEST;
-const jwt_cookie_expires = parseInt(process.env.JWT_COOKIE_EXPIRES || JWT_COOKIE_EXPIRES);
+const jwt_secret = process.env.JWT_SECRET || result.parsed?.JWT_SECRET || '';
+const jwt_expires_in = process.env.JWT_EXPIRES_IN || result.parsed?.JWT_EXPIRES_IN;
+// const envtest = process.env.ENVTEST || ENVTEST;
+// const jwt_cookie_expires = parseInt(process.env.JWT_COOKIE_EXPIRES || JWT_COOKIE_EXPIRES);
 // Creates a new account
-const register = (logger, connection, req, res, next) => {
-  // console.table(req.body);
-  // logger.trace(req.body);
-  const { firstName, lastName, email, password } = req.body;
+const register = (logger: Logger, connection: Connection, firstName: string, lastName: string, email: string, password: string, res: Response, next: NextFunction):void => {
+  // console.table(reqBody);
+  // logger.trace(reqBody);
   if (!email) {
     logger.error({
       message: 'Please provide an email to create an account.',
@@ -65,7 +66,7 @@ const register = (logger, connection, req, res, next) => {
         // logger.debug(result);
 
         // Encrypt password
-        let hashedPassword = await bcrypt.hash(password, 10);
+        const hashedPassword = await bcrypt.hash(password, 10);
         // console.log(hashedPassword);
         // logger.trace(hashedPassword);
         connection.query(
@@ -76,7 +77,7 @@ const register = (logger, connection, req, res, next) => {
             Email: email,
             Password: hashedPassword
           },
-          (error, result) => {
+          (error) => {
             if (error) {
               // console.log(error);
               logger.error(error);
@@ -102,21 +103,21 @@ const register = (logger, connection, req, res, next) => {
   }
 }
 // Signs user in
-const login = (logger, connection, req, res) => {
-  console.table(req.body);
-  const { email, password } = req.body;
+const login = (logger: Logger, connection: Connection, email: string, password: string, res: Response): void => {
+  const reqBody = { email, password }
+  console.table(reqBody);
   if (!email) {
     logger.error({
       message: 'Please provide an email to login.',
       title: 'No email provided!',
       type: 'error',
-      error: req.body
+      error: reqBody
     });
     res.status(401).send({
       message: 'Please provide an email to login.',
       title: 'No email provided!',
       type: 'error',
-      error: req.body
+      error: reqBody
     });
   } else if (!password) {
     logger.error({
@@ -130,7 +131,7 @@ const login = (logger, connection, req, res) => {
       type: 'error'
     });
   } else {
-    connection.query('SELECT * FROM `USERS` WHERE `Email` = ?', [email], async (error, result) => {
+    connection.query('SELECT * FROM `USERS` WHERE `Email` = ?', [email], (_error, result) => {
       // console.log(result);
       // logger.trace(result);
       if (!result || (result && result.length === 0)) {
@@ -144,7 +145,7 @@ const login = (logger, connection, req, res) => {
           title: 'Email not registered!',
           type: 'error'
         });
-      } else if (!(await bcrypt.compareSync(password, result[0].Password))) {
+      } else if (!(bcrypt.compareSync(password, result[0].Password))) {
         logger.error({
           message: 'Please double-check your password.',
           title: 'Incorrect password!',
@@ -179,7 +180,7 @@ const login = (logger, connection, req, res) => {
 }
 
 // Checks to see if user is logged in
-const isLoggedIn = (logger, connection, token, res, redirect = false) => {
+const isLoggedIn = (logger: Logger, connection: Connection, token: string, res: Response, redirect = false): void => {
   if (!token) {
     logger.warn('401`- Unauthorized!');
     res.status(401).send({
@@ -188,10 +189,10 @@ const isLoggedIn = (logger, connection, token, res, redirect = false) => {
       type: 'error'
     });
   } else {
-    const decoded = jwt.verify(token, jwt_secret);
+    const decoded = <{ exp: number, id: string }> jwt.verify(token, jwt_secret);
     // console.log(decoded);
     if (decoded.exp > 0) {
-      connection.query('SELECT * FROM `USERS` WHERE `User_ID` = ?', [decoded.id], async (error, result) => {
+      connection.query('SELECT * FROM `USERS` WHERE `User_ID` = ?', [decoded.id], (_error, result: { First_Name: string; Last_Name: string; Email: string; }[]) => {
         // console.log(result[0]);
         const { First_Name, Last_Name, Email } = result[0];
         logger.info({ First_Name, Last_Name, Email });
@@ -201,7 +202,8 @@ const isLoggedIn = (logger, connection, token, res, redirect = false) => {
           res.status(200).send({ First_Name, Last_Name, Email });
         }
       });
-    } else {
+    }
+    else {
       logger.warn('401`- Unauthorized!');
       res.status(401).send({
         message: 'You need to be logged in to access this page.',
@@ -211,9 +213,8 @@ const isLoggedIn = (logger, connection, token, res, redirect = false) => {
     }
   }
 }
-
-module.exports = Object.assign({
+export {
   register,
   login,
   isLoggedIn
-});
+};

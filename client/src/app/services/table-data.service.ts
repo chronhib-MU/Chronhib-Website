@@ -41,7 +41,7 @@ export class TableDataService {
   // Fetches the headers for each table
   fetchHeaders = async () => {
     try {
-      await this.tables.names.forEach(async name => {
+      await this.tables.names.forEach(async (name: string) => {
         // console.log(name);
         const fetchedHeaders: Observable<any> = this.http.get<any>(
           `${environment.apiUrl}${name}/headers`
@@ -49,7 +49,7 @@ export class TableDataService {
         const { data } = await fetchedHeaders.toPromise();
         // console.log(data);
         const excludeColumns = ['Sort_ID'];
-        this.allHeaders[name] = data.filter(column => !excludeColumns.includes(column));
+        this.allHeaders[name] = data.filter((column: string) => !excludeColumns.includes(column));
       });
       // console.log(this.allHeaders);
     } catch (error) {

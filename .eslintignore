@@ -1,0 +1,4 @@
+backupClient/**
+client/**
+build/
+!build/index.js

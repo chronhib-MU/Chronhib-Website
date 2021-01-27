@@ -5,8 +5,8 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Run Script: Start",
-      "command": "npm run start",
+      "name": "Run Script: Dev",
+      "command": "npm run dev",
       "request": "launch",
       "type": "node-terminal",
       "preLaunchTask": "Kill Server",
@@ -40,7 +40,7 @@
     {
       "name": "Server & Client",
       "configurations": [
-        "Run Script: Start",
+        "Run Script: Dev",
         "Launch Chrome Debugger"
       ]
     }

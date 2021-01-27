@@ -1,17 +1,32 @@
 "use strict";
-var __spreadArrays = (this && this.__spreadArrays) || function () {
-    for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
-    for (var r = Array(s), k = 0, i = 0; i < il; i++)
-        for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
-            r[k] = a[j];
-    return r;
+var __read = (this && this.__read) || function (o, n) {
+    var m = typeof Symbol === "function" && o[Symbol.iterator];
+    if (!m) return o;
+    var i = m.call(o), r, ar = [], e;
+    try {
+        while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
+    }
+    catch (error) { e = { error: error }; }
+    finally {
+        try {
+            if (r && !r.done && (m = i["return"])) m.call(i);
+        }
+        finally { if (e) throw e.error; }
+    }
+    return ar;
 };
+var __spread = (this && this.__spread) || function () {
+    for (var ar = [], i = 0; i < arguments.length; i++) ar = ar.concat(__read(arguments[i]));
+    return ar;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.getHeaders = exports.getTableColumnRows = exports.navigateTable = exports.searchTable = void 0;
 // Search Feature
-var searchTable = function (connection, logger, req, res, next) {
-    var searchQuery = {};
+var searchTable = function (connection, logger, query, res, next) {
+    var searchQuery;
     try {
         // Check for the Search ID needed
-        if (!req.query.id) {
+        if (!query.id) {
             res.status(404).send({
                 message: 'Search ID needed to show search results.',
                 title: 'No Search ID found!',
@@ -19,7 +34,7 @@ var searchTable = function (connection, logger, req, res, next) {
             });
         }
         // Look for the Search Query using the Search ID provided
-        connection.query('SELECT `Query` FROM `SEARCH` WHERE `ID`= ?', req.query.id, function (error, results) {
+        connection.query('SELECT `Query` FROM `SEARCH` WHERE `ID`= ?', query.id, function (error, results) {
             var _a;
             // If there was an error in the Query, log the error
             if (error) {
@@ -34,8 +49,8 @@ var searchTable = function (connection, logger, req, res, next) {
                 var conditions = searchQuery.conditions, options = searchQuery.options, tableColumns = searchQuery.tableColumns;
                 // Select
                 var selectedTableColumns_1 = []; // ['`TEXT`.`Text_ID`', '`SENTENCES`.`Textual_Unit`']
-                var selectStart = (options === null || options === void 0 ? void 0 : options.duplicateRows) ? 'SELECT ' : 'SELECT DISTINCT ';
-                // Stores all the Tables & Columsn that need to be viewed
+                var selectStart = options.duplicateRows ? 'SELECT ' : 'SELECT DISTINCT ';
+                // Stores all the Tables & Columns that need to be viewed
                 tableColumns.forEach(function (obj) {
                     Object.values(obj.column).forEach(function (column) { return selectedTableColumns_1.push(obj.table + '.' + column); });
                 });
@@ -193,12 +208,12 @@ var searchTable = function (connection, logger, req, res, next) {
                         }
                     }
                 }
-                var limit_1 = parseInt(req.query.limit) > 0
-                    ? parseInt(req.query.limit)
+                var limit_1 = parseInt(query.limit) > 0
+                    ? parseInt(query.limit)
                     : parseInt(options.limit) > 0
                         ? parseInt(options.limit)
                         : 100;
-                var page_1 = parseInt(req.query.page) > 0 ? parseInt(req.query.page) : 0;
+                var page_1 = parseInt(query.page) > 0 ? parseInt(query.page) : 0;
                 // console.log(limit, page);
                 var finalQuery_1 = selectStart +
                     selectedTableColumns_1.join(', ') +
@@ -224,9 +239,9 @@ var searchTable = function (connection, logger, req, res, next) {
                     connection.query(countQuery, function (error, result) {
                         if (error) {
                             console.log('Error: ', error);
-                            logger.info({ id: req.query.id, searchQuery: searchQuery });
+                            logger.info({ id: query.id, searchQuery: searchQuery });
                             logger.error(error);
-                            next(err);
+                            next(error);
                         }
                         else if (result) {
                             var numRows_1 = result[0].numRows;
@@ -236,7 +251,7 @@ var searchTable = function (connection, logger, req, res, next) {
                             connection.query(finalQuery_1, function (err, results) {
                                 if (err) {
                                     console.log('Error: ', err);
-                                    logger.info({ id: req.query.id, searchQuery: searchQuery });
+                                    logger.info({ id: query.id, searchQuery: searchQuery });
                                     logger.error(err);
                                     next(err);
                                 }
@@ -249,7 +264,7 @@ var searchTable = function (connection, logger, req, res, next) {
                         }
                         else {
                             res.status(400).send({
-                                message: 'Search ID ' + req.query.id + ' does not exist.',
+                                message: 'Search ID ' + query.id + ' does not exist.',
                                 title: 'Invalid Search ID!',
                                 type: 'error'
                             });
@@ -258,15 +273,15 @@ var searchTable = function (connection, logger, req, res, next) {
                 }
                 catch (error) {
                     console.log('Error: ', error);
-                    logger.info({ id: req.query.id, searchQuery: searchQuery });
+                    logger.info({ id: query.id, searchQuery: searchQuery });
                     logger.error(error);
                 }
             }
             else { // If the Search Query doesn't exist or if no Search ID is provided
-                logger.error('Error: Search ID does not exist - ', req.query.id);
+                logger.error('Error: Search ID does not exist - ', query.id);
                 res.status(404).send({
-                    message: req.query.id ? 'Search ID ' + req.query.id + ' does not exist.' : 'Search ID needed to show query.',
-                    title: req.query.id ? 'Invalid Search ID!' : 'No Search ID found!',
+                    message: query.id ? 'Search ID ' + query.id + ' does not exist.' : 'Search ID needed to show query.',
+                    title: query.id ? 'Invalid Search ID!' : 'No Search ID found!',
                     type: 'error'
                 });
             }
@@ -277,111 +292,129 @@ var searchTable = function (connection, logger, req, res, next) {
         next(error);
     }
 };
+exports.searchTable = searchTable;
 // Gets the Table Data from the pages navigated to, on the main table
-var navigateTable = function (connection, logger, req, res, next) {
-    var page = (parseInt(req.query.page, 10) > 0 ? parseInt(req.query.page, 10) : 0) || 0, // pagination page number
-    limit = (parseInt(req.query.limit, 10) > 0 ? parseInt(req.query.limit, 10) : 100) || 100, // pagination limit (how many rows per page)
-    fieldProperty = req.query.fprop || '', // the property to filter by
-    fieldValue = req.query.fval || '', // the value of the property to filter by
-    destinationTable = req.query.dtable || 'text', // the table we're navigating to
-    currentTable = req.query.ctable || 'text', // the table we're navigating from
-    beforeQueryValues = [currentTable.toUpperCase(), fieldProperty, fieldValue], afterQueryValues = [destinationTable.toUpperCase()], beforeQuery = '', afterQuery = 'SELECT * FROM ?? ', countQuery = 'SELECT * FROM ?? ';
-    // Check if fieldProperty and fValue exist
-    if (fieldProperty && fieldValue) {
-        // afterQuery
-        afterQuery += 'WHERE ?? = ? ';
-        afterQueryValues.push(fieldProperty, fieldValue);
-        countQuery = afterQuery;
-        // Reference Table
-        if (currentTable !== destinationTable) {
-            // if not the same table
-            beforeQuery = 'SELECT * FROM ?? WHERE ?? = ?';
-            if (currentTable === 'morphology' && destinationTable === 'lemmata') {
-                countQuery = beforeQuery;
-                beforeQuery += ' LIMIT ? OFFSET ?';
-                beforeQueryValues.push(limit, page * limit);
+var navigateTable = function (connection, logger, query, res, next) {
+    if (typeof query.id === 'number' &&
+        typeof query.limit === 'string' &&
+        typeof query.page === 'string' &&
+        typeof query.fprop === 'string' &&
+        typeof query.fval === 'string' &&
+        typeof query.dtable === 'string' &&
+        typeof query.ctable === 'string') {
+        var page = (parseInt(query.page, 10) > 0 ? parseInt(query.page, 10) : 0) || 0, // pagination page number
+        limit = (parseInt(query.limit, 10) > 0 ? parseInt(query.limit, 10) : 100) || 100, // pagination limit (how many rows per page)
+        fieldProperty = query.fprop || '', // the property to filter by
+        fieldValue = query.fval || '', // the value of the property to filter by
+        destinationTable = query.dtable || 'text', // the table we're navigating to
+        currentTable = query.ctable || 'text', // the table we're navigating from
+        beforeQueryValues_1 = [currentTable.toUpperCase(), fieldProperty, fieldValue], afterQueryValues_1 = [destinationTable.toUpperCase()];
+        var beforeQuery_1 = '', afterQuery_1 = 'SELECT * FROM ?? ', countQuery = 'SELECT * FROM ?? ';
+        // Check if fieldProperty and fValue exist
+        if (fieldProperty && fieldValue) {
+            // afterQuery
+            afterQuery_1 += 'WHERE ?? = ? ';
+            afterQueryValues_1.push(fieldProperty, fieldValue);
+            countQuery = afterQuery_1;
+            // Reference Table
+            if (currentTable !== destinationTable) {
+                // if not the same table
+                beforeQuery_1 = 'SELECT * FROM ?? WHERE ?? = ?';
+                if (currentTable === 'morphology' && destinationTable === 'lemmata') {
+                    countQuery = beforeQuery_1;
+                    beforeQuery_1 += ' LIMIT ? OFFSET ?';
+                    beforeQueryValues_1.push(limit, page * limit);
+                }
+            }
+            afterQuery_1 += 'ORDER BY `Sort_ID` ASC';
+        }
+        else {
+            switch (destinationTable) {
+                case 'text':
+                    afterQuery_1 += 'ORDER BY `Sort_ID` ASC';
+                    break;
+                case 'sentences':
+                    afterQuery_1 += 'ORDER BY `Text_ID`, LENGTH(`Text_Unit_ID`), `Text_Unit_ID`, `Sort_ID` ASC';
+                    break;
+                case 'morphology':
+                    afterQuery_1 += 'ORDER BY `Text_ID`, LENGTH(`Text_Unit_ID`), `Text_Unit_ID`, `Sort_ID` ASC';
+                    break;
+                case 'lemmata':
+                    afterQuery_1 += 'ORDER BY `Lemma` COLLATE utf8mb4_unicode_ci, `Sort_ID` ASC';
+                    break;
+                default:
+                    break;
             }
         }
-        afterQuery += 'ORDER BY `Sort_ID` ASC';
-    }
-    else {
-        switch (destinationTable) {
-            case 'text':
-                afterQuery += 'ORDER BY `Sort_ID` ASC';
-                break;
-            case 'sentences':
-                afterQuery += 'ORDER BY `Text_ID`, LENGTH(`Text_Unit_ID`), `Text_Unit_ID`, `Sort_ID` ASC';
-                break;
-            case 'morphology':
-                afterQuery += 'ORDER BY `Text_ID`, LENGTH(`Text_Unit_ID`), `Text_Unit_ID`, `Sort_ID` ASC';
-                break;
-            case 'lemmata':
-                afterQuery += 'ORDER BY `Lemma` COLLATE utf8mb4_unicode_ci, `Sort_ID` ASC';
-                break;
-            default:
-                break;
+        countQuery = countQuery.replace('*', 'COUNT(`ID`) as numRows');
+        if (!(currentTable === 'morphology' && destinationTable === 'lemmata')) {
+            afterQuery_1 += ' LIMIT ? OFFSET ?';
+            afterQueryValues_1.push(limit, page * limit);
         }
-    }
-    countQuery = countQuery.replace('*', 'COUNT(`ID`) as numRows');
-    if (!(currentTable === 'morphology' && destinationTable === 'lemmata')) {
-        afterQuery += ' LIMIT ? OFFSET ?';
-        afterQueryValues.push(limit, page * limit);
-    }
-    console.log('beforeQuery:', beforeQuery);
-    console.log('afterQuery:', afterQuery);
-    console.log('afterQueryValues:', afterQueryValues);
-    console.log(countQuery, currentTable === 'morphology' && destinationTable === 'lemmata' ? beforeQueryValues : afterQueryValues);
-    logger.trace('beforeQuery:', beforeQuery);
-    logger.info('afterQuery:', afterQuery);
-    logger.info('afterQueryValues:', afterQueryValues);
-    var beforeTable = [], afterTable = [];
-    try {
-        connection.query(countQuery, currentTable === 'morphology' && destinationTable === 'lemmata' ? beforeQueryValues : afterQueryValues, function (error, result) {
-            console.log(result);
-            var numRows = result[0].numRows;
-            connection.query(afterQuery, afterQueryValues, function (err, results) {
-                if (err) {
-                    // console.log('Error: ', err);
-                    logger.error('Error: ', err);
-                    next(err);
+        console.log('beforeQuery:', beforeQuery_1);
+        console.log('afterQuery:', afterQuery_1);
+        console.log('afterQueryValues:', afterQueryValues_1);
+        console.log(countQuery, currentTable === 'morphology' && destinationTable === 'lemmata' ? beforeQueryValues_1 : afterQueryValues_1);
+        logger.trace('beforeQuery:', beforeQuery_1);
+        logger.info('afterQuery:', afterQuery_1);
+        logger.info('afterQueryValues:', afterQueryValues_1);
+        try {
+            connection.query(countQuery, currentTable === 'morphology' && destinationTable === 'lemmata' ? beforeQueryValues_1 : afterQueryValues_1, function (error, result) {
+                if (error) {
+                    logger.error('Error: ', error);
+                    next(error);
                 }
-                else {
-                    afterTable = results;
-                }
-                if (beforeQuery !== '') {
-                    connection.query(beforeQuery, beforeQueryValues, function (err, results) {
-                        if (err) {
-                            // console.log('Error: ', err);
-                            logger.error('Error: ', err);
-                            next(err);
-                        }
-                        else {
-                            beforeTable = results;
-                        }
-                        // console.log({ beforeTable, afterTable });
-                        // logger.info(results);
+                console.log(result);
+                var numRows = result[0].numRows;
+                connection.query(afterQuery_1, afterQueryValues_1, function (err, results) {
+                    var beforeTable = [], afterTable = [];
+                    if (err) {
+                        // console.log('Error: ', err);
+                        logger.error('Error: ', err);
+                        next(err);
+                    }
+                    else {
+                        afterTable = results;
+                    }
+                    if (beforeQuery_1 !== '') {
+                        connection.query(beforeQuery_1, beforeQueryValues_1, function (err, results) {
+                            if (err) {
+                                // console.log('Error: ', err);
+                                logger.error('Error: ', err);
+                                next(err);
+                            }
+                            else {
+                                beforeTable = results;
+                            }
+                            // console.log({ beforeTable, afterTable });
+                            // logger.info(results);
+                            res.status(200).send({
+                                data: { beforeTable: beforeTable, afterTable: afterTable, numRows: numRows }
+                            });
+                        });
+                    }
+                    else {
+                        // logger.trace(results);
                         res.status(200).send({
                             data: { beforeTable: beforeTable, afterTable: afterTable, numRows: numRows }
                         });
-                    });
-                }
-                else {
-                    // logger.trace(results);
-                    res.status(200).send({
-                        data: { beforeTable: beforeTable, afterTable: afterTable, numRows: numRows }
-                    });
-                }
+                    }
+                });
             });
-        });
+        }
+        catch (error) {
+            logger.error('Error: ', error);
+        }
     }
-    catch (error) {
-        logger.error('Error: ', error);
+    else {
+        res.status(404);
     }
 };
+exports.navigateTable = navigateTable;
 var getTableColumnRows = function (connection, logger, table, column, filter, res, next) {
     var query = "SELECT ?? FROM ??";
     var queryValues = [column, table];
-    if (filter !== null) {
+    if (typeof filter !== null) {
         query += " WHERE ?? LIKE ?;";
         queryValues = [column, table, column, '%' + filter + '%'];
     }
@@ -398,12 +431,13 @@ var getTableColumnRows = function (connection, logger, table, column, filter, re
             // Extract columns from Rows
             // Remove Unique values with Set
             // Remove null or empty results
-            var filteredResults = __spreadArrays(new Set(results.map(function (data) { return data[column]; }))).filter(function (data) { return data; });
+            var filteredResults = __spread(new Set(results.map(function (data) { return data[column]; }))).filter(function (data) { return data; });
             console.log(filteredResults);
             res.status(200).send(filteredResults);
         }
     });
 };
+exports.getTableColumnRows = getTableColumnRows;
 var getHeaders = function (connection, logger, path, DATABASE, res, next) {
     // console.log(tables[path]);
     logger.trace(path);
@@ -422,10 +456,5 @@ var getHeaders = function (connection, logger, path, DATABASE, res, next) {
         }
     });
 };
-module.exports = Object.assign({
-    searchTable: searchTable,
-    navigateTable: navigateTable,
-    getTableColumnRows: getTableColumnRows,
-    getHeaders: getHeaders
-});
+exports.getHeaders = getHeaders;
 //# sourceMappingURL=tableDataQuery.js.map

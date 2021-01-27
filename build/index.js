@@ -1,31 +1,52 @@
 "use strict";
-var express = require('express');
-var http = require('http');
-var path = require('path');
-var cors = require('cors');
-var bodyParser = require('body-parser');
-var mysql = require('mysql');
-var cookieParser = require('cookie-parser');
-var promisify = require('util').promisify;
-var dotenv = require('dotenv');
-var compression = require('compression');
-var helmet = require('helmet');
-var parse = require('path').parse;
-var log4js = require('log4js');
-var serveStatic = require('serve-static');
-var qs = require('qs');
-var query = require('express').query;
-var throws = require('assert').throws;
-var auth = require('./models/auth.js');
-var commands = require('./models/commands.js');
-var tableDataQuery = require('./models/tableDataQuery.js');
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+var _a, _b, _c, _d, _e, _f;
+Object.defineProperty(exports, "__esModule", { value: true });
+var express_1 = __importStar(require("express"));
+var http_1 = __importDefault(require("http"));
+var path_1 = __importDefault(require("path"));
+var cors_1 = __importDefault(require("cors"));
+var mysql_1 = __importDefault(require("mysql"));
+var cookie_parser_1 = __importDefault(require("cookie-parser"));
+var serve_static_1 = __importDefault(require("serve-static"));
+// import { promisify } from 'util';
+var dotenv_1 = __importDefault(require("dotenv"));
+var compression_1 = __importDefault(require("compression"));
+var helmet_1 = __importDefault(require("helmet"));
+// import { parse } from 'path';
+var log4js_1 = __importDefault(require("log4js"));
+// import { throws } from 'assert';
+var auth_1 = require("./models/auth");
+var commands_1 = require("./models/commands");
+var tableDataQuery_1 = require("./models/tableDataQuery");
 var currentDate = new Date();
 var formattedDate = "-" + String(currentDate.getMonth() + 1).padStart(2, '0') + "-" + currentDate.getFullYear();
-log4js.configure({
+log4js_1.default.configure({
     appenders: { node: { type: 'file', filename: "logs/node" + formattedDate + ".log" } },
     categories: { default: { appenders: ['node'], level: 'info' } }
 });
-var logger = log4js.getLogger('node');
+var logger = log4js_1.default.getLogger('node');
 // Quick Reference for logger:
 // logger.trace('Entering cheese testing');
 // logger.debug('Got cheese.');
@@ -36,26 +57,25 @@ var logger = log4js.getLogger('node');
 // console.log(`pathname ${__filename}`);
 // console.log(`dirname ${path.dirname(__filename)}`);
 logger.trace("pathname " + __filename);
-logger.trace("dirname " + path.dirname(__filename));
+logger.trace("dirname " + path_1.default.dirname(__filename));
 // console.log(__dirname);
 logger.trace(__dirname);
-var result = dotenv.config();
+var result = dotenv_1.default.config();
 if (result.error) {
     console.log(result.error);
     logger.error(result.error);
     throw result.error;
 }
 // Make .env file that has all these variables in the form: KEY=VALUE, e.g. PORT=4000
-var _a = result.parsed, NODE_ENV = _a.NODE_ENV, PORT = _a.PORT, HOST = _a.HOST, USER = _a.USER, PASSWORD = _a.PASSWORD, DATABASE = _a.DATABASE;
-var port = process.env.PORT || PORT;
-var host = process.env.HOST || HOST;
-var password = process.env.PASSWORD || PASSWORD;
-var database = process.env.DATABASE || DATABASE;
-var node_env = process.env.NODE_ENV || NODE_ENV;
-var user = process.env.USER || USER;
+var node_env = process.env.NODE_ENV || ((_a = result.parsed) === null || _a === void 0 ? void 0 : _a.NODE_ENV);
+var port = process.env.PORT || ((_b = result.parsed) === null || _b === void 0 ? void 0 : _b.PORT);
+var host = process.env.HOST || ((_c = result.parsed) === null || _c === void 0 ? void 0 : _c.HOST);
+var user = process.env.USER || ((_d = result.parsed) === null || _d === void 0 ? void 0 : _d.USER);
+var password = process.env.PASSWORD || ((_e = result.parsed) === null || _e === void 0 ? void 0 : _e.PASSWORD);
+var database = process.env.DATABASE || ((_f = result.parsed) === null || _f === void 0 ? void 0 : _f.DATABASE);
 // console.table({ port, host, password, database, node_env, user, jwt_secret, jwt_expires_in, jwt_cookie_expires });
-var app = express();
-var server = http.createServer(app);
+var app = express_1.default();
+var server = http_1.default.createServer(app);
 var tables = {
     text: 'SELECT * FROM `TEXT` ORDER BY `Sort_ID` ASC LIMIT 100',
     lemmata: 'SELECT * FROM `SENTENCES` ORDER BY `Text_ID`, LENGTH(`Text_Unit_ID`), `Text_Unit_ID`, `Sort_ID` ASC LIMIT 100',
@@ -68,13 +88,14 @@ var dbconfig = {
     password: password,
     database: database
 };
-var connection = mysql.createConnection(dbconfig);
+var connection = mysql_1.default.createConnection(dbconfig);
 connection.connect(function (err) {
     if (err) {
         logger.error('Error: ', err);
         console.log(err);
         return err;
     }
+    return;
 });
 // console.log(connection);
 // logger.debug(connection);
@@ -91,94 +112,90 @@ var folderLoc = 'client/dist/';
 // console.log('Static Folder:', path.join(__dirname, folderLoc));
 // const appName = __dirname.split(path.sep).pop();
 var appName = 'chronhibWebsite';
-// console.log('App Name:', appName);
+console.log('App Name:', appName);
 logger.info('App Name:', appName);
-app.use(bodyParser.json({ limit: '50mb' }));
-app.use(bodyParser.urlencoded({ limit: '50mb', extended: true, parameterLimit: 1000 }));
-app.use(cookieParser());
-app.use(compression()); // Compress all routes
-app.use(helmet()); // Protect against well known vulnerabilities
+app.use(express_1.json({ limit: '50mb' }));
+app.use(express_1.urlencoded({ limit: '50mb', extended: true, parameterLimit: 1000 }));
+app.use(cookie_parser_1.default());
+app.use(compression_1.default()); // Compress all routes
+app.use(helmet_1.default()); // Protect against well known vulnerabilities
+console.log("/" + appName + "/" + folderLoc);
+console.log("/" + appName + "/" + (folderLoc + 'assets/'));
 // Serve the static files from the Angular app
-app.use("/" + appName + "/", serveStatic(path.join(__dirname, folderLoc)));
-app.use("/" + appName + "/assets/", serveStatic(path.join(__dirname, folderLoc + 'assets/')));
-app.use(cors()).use(bodyParser.json());
-app.post("/" + appName + "/register", function (req, res, next) {
-    auth.register(logger, connection, req, res, next);
+app.use(serve_static_1.default("/" + appName + "/" + folderLoc));
+app.use(serve_static_1.default("/" + appName + "/" + (folderLoc + 'assets/')));
+app.use(cors_1.default()).use(express_1.default.json());
+app.post("/ " + appName + " / register", function (req, res, next) {
+    var _a = req.body, firstName = _a.firstName, lastName = _a.lastName, email = _a.email, password = _a.password;
+    auth_1.register(logger, connection, firstName, lastName, email, password, res, next);
 });
-app.post("/" + appName + "/login", function (req, res) {
-    auth.login(logger, connection, req, res);
+app.post("/ " + appName + " / login", function (req, res) {
+    var _a = req.body, email = _a.email, password = _a.password;
+    auth_1.login(logger, connection, email, password, res);
 });
-app.post("/" + appName + "/isLoggedIn", function (req, res) {
-    auth.isLoggedIn(logger, connection, req.body.token, res);
+app.post("/ " + appName + " / isLoggedIn", function (req, res) {
+    auth_1.isLoggedIn(logger, connection, req.body.token, res);
 });
-app.patch("/" + appName + "/api/rows/", function (req, res, next) {
+app.patch("/ " + appName + " / api / rows / ", function (req, res, next) {
     console.log('PATCH Variable: ', req.body);
     logger.trace('PATCH Variable: ', req.body);
-    var _a = req.body, table = _a.table, command = _a.command, values = _a.values, user = _a.user, token = _a.token;
-    table = table.toUpperCase();
+    var _a = req.body, command = _a.command, values = _a.values, user = _a.user, token = _a.token;
+    var table = req.body.table.toUpperCase();
     switch (command) {
         case 'moveRow':
-            commands.moveRow(connection, logger, table, values, user, token, res, next);
+            commands_1.moveRow(connection, logger, table, values, user, token, res, next);
             break;
         case 'updateRow':
-            commands.updateRow(connection, logger, table, values, token, res, next);
+            commands_1.updateRow(connection, logger, table, values, token, res, next);
             break;
         default:
             break;
     }
 });
-app.delete("/" + appName + "/api/rows/", function (req, res, next) {
+app.delete("/ " + appName + " / api / rows / ", function (req, res, next) {
     console.log('DELETE Variable: ', req.body);
     logger.trace('DELETE Variable: ', req.body);
-    var _a = req.query, table = _a.table, values = _a.values, token = _a.token;
-    table = table.toUpperCase();
-    commands.removeRow(connection, logger, table, values, token, res, next);
+    var _a = req.query, values = _a.values, token = _a.token;
+    var table = req.body.table.toUpperCase();
+    if (typeof values === 'string' && typeof token === 'string') {
+        commands_1.removeRow(connection, logger, table, values, token, res, next);
+    }
 });
-app.post("/" + appName + "/api/rows/", function (req, res, next) {
+app.post("/ " + appName + " / api / rows / ", function (req, res, next) {
     console.log('POST Variable: ', req.body);
     logger.trace('POST Variable: ', req.body);
-    var _a = req.body, table = _a.table, command = _a.command, values = _a.values, user = _a.user, token = _a.token;
-    table = table.toUpperCase();
-    commands.createRow(connection, logger, table, values, user, token, res, next);
+    var _a = req.body, values = _a.values, user = _a.user, token = _a.token;
+    var table = req.body.table.toUpperCase();
+    commands_1.createRow(connection, logger, table, values, user, token, res, next);
 });
-app.post("/" + appName + "/api/searchQuery/", function (req, res, next) {
+app.post("/ " + appName + " / api / searchQuery / ", function (req, res, next) {
     console.log('POST Variable: ', req.body);
     logger.trace('POST Variable: ', req.body);
     var _a = req.body, query = _a.query, creator = _a.creator;
-    commands.insertSearchQuery(connection, logger, query, creator, res, next);
+    commands_1.insertSearchQuery(connection, logger, query, creator, res, next);
 });
-app.get("/" + appName + "/api/search/", function (req, res, next) {
+app.get("/ " + appName + " / api / search / ", function (req, res, next) {
     console.table(req.query);
     logger.trace(req.query);
-    tableDataQuery.searchTable(connection, logger, req, res, next);
+    if (typeof req.query === 'string') {
+        tableDataQuery_1.searchTable(connection, logger, req.query, res, next);
+    }
 });
 // Handles all the advanced get api table queries
-app.get("/" + appName + "/api/tables/", function (req, res, next) {
+app.get("/ " + appName + " / api / tables / ", function (req, res, next) {
     console.table(req.query);
     logger.trace(req.query);
-    if (typeof req.query.page === 'string' &&
-        typeof req.query.limit === 'string' &&
-        typeof req.query.fprop === 'string' &&
-        typeof req.query.fval === 'string' &&
-        typeof req.query.dtable === 'string' &&
-        typeof req.query.ctable === 'string') {
-        tableDataQuery.navigateTable(connection, logger, req, res, next);
-    }
-    else {
-        console.log(req.query);
-        res.send('Go to:<br/>' +
-            Object.keys(tables)
-                .map(function (path) { return "/" + appName + "/api/" + path + " to see the " + path + " table,"; })
-                .join('<br/>'));
-    }
+    tableDataQuery_1.navigateTable(connection, logger, req.query, res, next);
+    console.log(req.query);
 });
-app.get("/" + appName + "/api/tableColumnRows", function (req, res, next) {
+app.get("/ " + appName + " / api / tableColumnRows", function (req, res, next) {
     console.table(req.query);
     logger.trace(req.query);
     if (typeof req.query.table === 'string' &&
-        typeof req.query.column === 'string') {
+        typeof req.query.column === 'string' &&
+        typeof req.query.filter === 'string') {
         var _a = req.query, table = _a.table, column = _a.column, filter = _a.filter;
-        tableDataQuery.getTableColumnRows(connection, logger, table, column, filter, res, next);
+        tableDataQuery_1.getTableColumnRows(connection, logger, table, column, filter, res, next);
     }
     else {
         res.status(404).send({
@@ -187,11 +204,11 @@ app.get("/" + appName + "/api/tableColumnRows", function (req, res, next) {
     }
 });
 // Gets the table headers / column names
-app.get("/" + appName + "/api/:path/headers", function (req, res, next) {
+app.get("/ " + appName + " / api /: path / headers", function (req, res, next) {
     // console.log(req.params.path);
     var path = req.params.path;
     if (path in tables) {
-        tableDataQuery.getHeaders(connection, logger, path, DATABASE, res, next);
+        tableDataQuery_1.getHeaders(connection, logger, path, database, res, next);
     }
     else {
         res.status(404).send({
@@ -200,7 +217,7 @@ app.get("/" + appName + "/api/:path/headers", function (req, res, next) {
     }
 });
 // Gets the Table Data for the picture tables T,S,M,L
-app.get("/" + appName + "/api/:path", function (req, res, next) {
+app.get("/ " + appName + " / api /: path", function (req, res, next) {
     // console.log(req.params.path);
     var path = req.params.path;
     // console.log(tables[path]);
@@ -222,14 +239,14 @@ app.get("/" + appName + "/api/:path", function (req, res, next) {
     }
     else {
         // Handles any requests that don't match the ones above
-        redirect("/" + appName + "/*"); // redirect back to the homepage
+        res.redirect("/ " + appName + "/*"); // redirect back to the homepage
     }
 });
 // redirect all the routes to the app and lets angular handle the routing
-app.get("/" + appName + "/*", function (req, res) {
-    res.sendFile(path.resolve(__dirname, folderLoc + 'index.html'));
+app.get("/" + appName + "/*", function (_req, res) {
+    res.sendFile(path_1.default.resolve(__dirname, folderLoc + 'index.html'));
 });
-if (node_env.toLowerCase() === 'production') {
+if ((node_env === null || node_env === void 0 ? void 0 : node_env.toLowerCase()) === 'production') {
     server.listen(function () { return console.log("Chronhib server is running at http://chronhib.mucampus.net/" + appName + "/"); });
 }
 else {

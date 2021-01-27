@@ -35,24 +35,28 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var jwt = require('jsonwebtoken');
-var bcrypt = require('bcryptjs');
-var dotenv = require('dotenv');
-var result = dotenv.config();
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+var _a, _b;
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.isLoggedIn = exports.login = exports.register = void 0;
+var jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+var bcryptjs_1 = __importDefault(require("bcryptjs"));
+var dotenv_1 = __importDefault(require("dotenv"));
+var result = dotenv_1.default.config();
 if (result.error) {
     console.log(result.error);
     throw result.error;
 }
-var _a = result.parsed, JWT_SECRET = _a.JWT_SECRET, JWT_EXPIRES_IN = _a.JWT_EXPIRES_IN, JWT_COOKIE_EXPIRES = _a.JWT_COOKIE_EXPIRES, ENVTEST = _a.ENVTEST;
-var jwt_secret = process.env.JWT_SECRET || JWT_SECRET;
-var jwt_expires_in = process.env.JWT_EXPIRES_IN || JWT_EXPIRES_IN;
-var envtest = process.env.ENVTEST || ENVTEST;
-var jwt_cookie_expires = parseInt(process.env.JWT_COOKIE_EXPIRES || JWT_COOKIE_EXPIRES);
+var jwt_secret = process.env.JWT_SECRET || ((_a = result.parsed) === null || _a === void 0 ? void 0 : _a.JWT_SECRET) || '';
+var jwt_expires_in = process.env.JWT_EXPIRES_IN || ((_b = result.parsed) === null || _b === void 0 ? void 0 : _b.JWT_EXPIRES_IN);
+// const envtest = process.env.ENVTEST || ENVTEST;
+// const jwt_cookie_expires = parseInt(process.env.JWT_COOKIE_EXPIRES || JWT_COOKIE_EXPIRES);
 // Creates a new account
-var register = function (logger, connection, req, res, next) {
-    // console.table(req.body);
-    // logger.trace(req.body);
-    var _a = req.body, firstName = _a.firstName, lastName = _a.lastName, email = _a.email, password = _a.password;
+var register = function (logger, connection, firstName, lastName, email, password, res, next) {
+    // console.table(reqBody);
+    // logger.trace(reqBody);
     if (!email) {
         logger.error({
             message: 'Please provide an email to create an account.',
@@ -100,7 +104,7 @@ var register = function (logger, connection, req, res, next) {
                             type: 'error'
                         });
                         return [3 /*break*/, 3];
-                    case 1: return [4 /*yield*/, bcrypt.hash(password, 10)];
+                    case 1: return [4 /*yield*/, bcryptjs_1.default.hash(password, 10)];
                     case 2:
                         hashedPassword = _a.sent();
                         // console.log(hashedPassword);
@@ -110,7 +114,7 @@ var register = function (logger, connection, req, res, next) {
                             Last_Name: lastName,
                             Email: email,
                             Password: hashedPassword
-                        }, function (error, result) {
+                        }, function (error) {
                             if (error) {
                                 // console.log(error);
                                 logger.error(error);
@@ -138,22 +142,23 @@ var register = function (logger, connection, req, res, next) {
         }); });
     }
 };
+exports.register = register;
 // Signs user in
-var login = function (logger, connection, req, res) {
-    console.table(req.body);
-    var _a = req.body, email = _a.email, password = _a.password;
+var login = function (logger, connection, email, password, res) {
+    var reqBody = { email: email, password: password };
+    console.table(reqBody);
     if (!email) {
         logger.error({
             message: 'Please provide an email to login.',
             title: 'No email provided!',
             type: 'error',
-            error: req.body
+            error: reqBody
         });
         res.status(401).send({
             message: 'Please provide an email to login.',
             title: 'No email provided!',
             type: 'error',
-            error: req.body
+            error: reqBody
         });
     }
     else if (!password) {
@@ -169,63 +174,56 @@ var login = function (logger, connection, req, res) {
         });
     }
     else {
-        connection.query('SELECT * FROM `USERS` WHERE `Email` = ?', [email], function (error, result) { return __awaiter(void 0, void 0, void 0, function () {
-            var id, token;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        if (!(!result || (result && result.length === 0))) return [3 /*break*/, 1];
-                        logger.error({
-                            message: 'Please check your email and try again.',
-                            title: 'Email not registered!',
-                            type: 'error'
-                        });
-                        res.status(401).send({
-                            message: 'Please check your email and try again.',
-                            title: 'Email not registered!',
-                            type: 'error'
-                        });
-                        return [3 /*break*/, 3];
-                    case 1: return [4 /*yield*/, bcrypt.compareSync(password, result[0].Password)];
-                    case 2:
-                        if (!(_a.sent())) {
-                            logger.error({
-                                message: 'Please double-check your password.',
-                                title: 'Incorrect password!',
-                                type: 'error'
-                            });
-                            res.status(401).send({
-                                message: 'Please double-check your password.',
-                                title: 'Incorrect password!',
-                                type: 'error'
-                            });
-                        }
-                        else {
-                            id = result[0].User_ID;
-                            token = jwt.sign({ id: id }, jwt_secret, {
-                                expiresIn: jwt_expires_in
-                            });
-                            // console.log('The token is: ' + token);
-                            logger.info({
-                                message: 'You have been successfully logged in.',
-                                title: 'Login successful!',
-                                type: 'success',
-                                token: token
-                            });
-                            res.status(200).send({
-                                message: 'You have been successfully logged in.',
-                                title: 'Login successful!',
-                                type: 'success',
-                                token: token
-                            });
-                        }
-                        _a.label = 3;
-                    case 3: return [2 /*return*/];
-                }
-            });
-        }); });
+        connection.query('SELECT * FROM `USERS` WHERE `Email` = ?', [email], function (_error, result) {
+            // console.log(result);
+            // logger.trace(result);
+            if (!result || (result && result.length === 0)) {
+                logger.error({
+                    message: 'Please check your email and try again.',
+                    title: 'Email not registered!',
+                    type: 'error'
+                });
+                res.status(401).send({
+                    message: 'Please check your email and try again.',
+                    title: 'Email not registered!',
+                    type: 'error'
+                });
+            }
+            else if (!(bcryptjs_1.default.compareSync(password, result[0].Password))) {
+                logger.error({
+                    message: 'Please double-check your password.',
+                    title: 'Incorrect password!',
+                    type: 'error'
+                });
+                res.status(401).send({
+                    message: 'Please double-check your password.',
+                    title: 'Incorrect password!',
+                    type: 'error'
+                });
+            }
+            else {
+                var id = result[0].User_ID;
+                var token = jsonwebtoken_1.default.sign({ id: id }, jwt_secret, {
+                    expiresIn: jwt_expires_in
+                });
+                // console.log('The token is: ' + token);
+                logger.info({
+                    message: 'You have been successfully logged in.',
+                    title: 'Login successful!',
+                    type: 'success',
+                    token: token
+                });
+                res.status(200).send({
+                    message: 'You have been successfully logged in.',
+                    title: 'Login successful!',
+                    type: 'success',
+                    token: token
+                });
+            }
+        });
     }
 };
+exports.login = login;
 // Checks to see if user is logged in
 var isLoggedIn = function (logger, connection, token, res, redirect) {
     if (redirect === void 0) { redirect = false; }
@@ -238,23 +236,20 @@ var isLoggedIn = function (logger, connection, token, res, redirect) {
         });
     }
     else {
-        var decoded = jwt.verify(token, jwt_secret);
+        var decoded = jsonwebtoken_1.default.verify(token, jwt_secret);
         // console.log(decoded);
         if (decoded.exp > 0) {
-            connection.query('SELECT * FROM `USERS` WHERE `User_ID` = ?', [decoded.id], function (error, result) { return __awaiter(void 0, void 0, void 0, function () {
-                var _a, First_Name, Last_Name, Email;
-                return __generator(this, function (_b) {
-                    _a = result[0], First_Name = _a.First_Name, Last_Name = _a.Last_Name, Email = _a.Email;
-                    logger.info({ First_Name: First_Name, Last_Name: Last_Name, Email: Email });
-                    if (redirect) {
-                        return [2 /*return*/];
-                    }
-                    else {
-                        res.status(200).send({ First_Name: First_Name, Last_Name: Last_Name, Email: Email });
-                    }
-                    return [2 /*return*/];
-                });
-            }); });
+            connection.query('SELECT * FROM `USERS` WHERE `User_ID` = ?', [decoded.id], function (_error, result) {
+                // console.log(result[0]);
+                var _a = result[0], First_Name = _a.First_Name, Last_Name = _a.Last_Name, Email = _a.Email;
+                logger.info({ First_Name: First_Name, Last_Name: Last_Name, Email: Email });
+                if (redirect) {
+                    return;
+                }
+                else {
+                    res.status(200).send({ First_Name: First_Name, Last_Name: Last_Name, Email: Email });
+                }
+            });
         }
         else {
             logger.warn('401`- Unauthorized!');
@@ -266,9 +261,5 @@ var isLoggedIn = function (logger, connection, token, res, redirect) {
         }
     }
 };
-module.exports = Object.assign({
-    register: register,
-    login: login,
-    isLoggedIn: isLoggedIn
-});
+exports.isLoggedIn = isLoggedIn;
 //# sourceMappingURL=auth.js.map

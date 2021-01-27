@@ -41,6 +41,9 @@
                         "regexp": "Compiled |Failed to compile."
                     }
                 }
+            },
+            "runOptions": {
+                "reevaluateOnRerun": true
             }
         }
     ]

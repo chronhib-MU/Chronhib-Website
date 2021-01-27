@@ -1,15 +1,30 @@
 "use strict";
-var __spreadArrays = (this && this.__spreadArrays) || function () {
-    for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
-    for (var r = Array(s), k = 0, i = 0; i < il; i++)
-        for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
-            r[k] = a[j];
-    return r;
+var __read = (this && this.__read) || function (o, n) {
+    var m = typeof Symbol === "function" && o[Symbol.iterator];
+    if (!m) return o;
+    var i = m.call(o), r, ar = [], e;
+    try {
+        while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
+    }
+    catch (error) { e = { error: error }; }
+    finally {
+        try {
+            if (r && !r.done && (m = i["return"])) m.call(i);
+        }
+        finally { if (e) throw e.error; }
+    }
+    return ar;
 };
-var auth = require('./auth.js');
+var __spread = (this && this.__spread) || function () {
+    for (var ar = [], i = 0; i < arguments.length; i++) ar = ar.concat(__read(arguments[i]));
+    return ar;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.insertSearchQuery = exports.updateRow = exports.removeRow = exports.createRow = exports.moveRow = void 0;
+var auth_1 = require("./auth");
 // Creates a row if a row is inserted
 var createRow = function (connection, logger, table, values, user, token, res, next) {
-    auth.isLoggedIn(logger, connection, token, res, true);
+    auth_1.isLoggedIn(logger, connection, token, res, true);
     console.log('Row Values: ', values);
     console.log('Row Table: ', table);
     // logger.trace(values);
@@ -112,9 +127,9 @@ var createRow = function (connection, logger, table, values, user, token, res, n
             logger.trace('Success: ', { Results: result, User: user });
             var tableSortID = table + '.Sort_ID';
             var tableID = table + '.ID';
-            var createRowQuery_1 = '';
+            var createRowQuery_1 = [];
             var createRowValues_1 = [];
-            if (values.length) {
+            if (values[0].fprop && values[0].fval) {
                 var tableFProp = table + '.' + values[0].fprop;
                 createRowQuery_1 =
                     ['UPDATE ?? SET ?? = ? WHERE ?? = ?;', 'UPDATE ?? SET ?? = ? WHERE ?? = ?;'];
@@ -160,6 +175,7 @@ var createRow = function (connection, logger, table, values, user, token, res, n
         }
     });
 };
+exports.createRow = createRow;
 // Add Search Query to Database
 var insertSearchQuery = function (connection, logger, query, creator, res, next) {
     connection.query('INSERT INTO `SEARCH` SET ?', { Query: query, Creator: creator }, function (error, result) {
@@ -173,9 +189,10 @@ var insertSearchQuery = function (connection, logger, query, creator, res, next)
         }
     });
 };
+exports.insertSearchQuery = insertSearchQuery;
 // Moves the row if the row is reordered
 var moveRow = function (connection, logger, table, values, user, token, res, next) {
-    auth.isLoggedIn(logger, connection, token, res, true);
+    auth_1.isLoggedIn(logger, connection, token, res, true);
     var updateQueries = [];
     values[0].forEach(function (rowData) {
         var query = 'UPDATE ?? SET `Sort_ID` = ? WHERE `ID` = ?;';
@@ -199,9 +216,10 @@ var moveRow = function (connection, logger, table, values, user, token, res, nex
         });
     });
 };
+exports.moveRow = moveRow;
 // Removes a row, if a row is deleted
 var removeRow = function (connection, logger, table, values, token, res, next) {
-    auth.isLoggedIn(logger, connection, token, res, true);
+    auth_1.isLoggedIn(logger, connection, token, res, true);
     console.log(values);
     var query = 'DELETE FROM ?? WHERE `ID` IN (?);';
     connection.query(query, [table, values], function (err, result) {
@@ -216,17 +234,19 @@ var removeRow = function (connection, logger, table, values, token, res, next) {
         }
     });
 };
+exports.removeRow = removeRow;
 // Updates a row if a row is edited
 var updateRow = function (connection, logger, table, values, token, res, next) {
-    auth.isLoggedIn(logger, connection, token, res, true);
+    auth_1.isLoggedIn(logger, connection, token, res, true);
     values.forEach(function (value) {
         // console.log(value);
-        var id = value.id, fieldProperty = value.fieldProperty, fieldValue = value.fieldValue;
+        var id = value.id, fieldProperty = value.fieldProperty;
+        var fieldValue = value.fieldValue;
         fieldValue = fieldValue === null ? '' : fieldValue;
         console.table({ id: id, fieldProperty: fieldProperty, fieldValue: fieldValue });
         var updateQuery = 'UPDATE ?? SET ?? = ? WHERE `ID` = ?;';
         // console.log('Post Query: ', updateQuery);
-        logger.info('Post Query: ', __spreadArrays([updateQuery], [table, fieldProperty, fieldValue, id]));
+        logger.info('Post Query: ', __spread([updateQuery], [table, fieldProperty, fieldValue, id]));
         connection.query(updateQuery, [table, fieldProperty, fieldValue, id], function (err, results) {
             if (err) {
                 // console.log('Error: ', err);
@@ -241,11 +261,5 @@ var updateRow = function (connection, logger, table, values, token, res, next) {
         });
     });
 };
-module.exports = Object.assign({
-    moveRow: moveRow,
-    createRow: createRow,
-    removeRow: removeRow,
-    updateRow: updateRow,
-    insertSearchQuery: insertSearchQuery
-});
+exports.updateRow = updateRow;
 //# sourceMappingURL=commands.js.map
