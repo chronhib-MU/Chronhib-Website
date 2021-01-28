@@ -37,7 +37,7 @@
           <div class="modal-content">
             <div class="modal-header">
               <h3 class="modal-title"
-                  id="modal-title-default">Search</h3>
+                  id="modal-title-primary">Search</h3>
               <button type="button"
                       class="close hover-danger"
                       data-dismiss="modal"
@@ -106,12 +106,12 @@
                                   <ng-template ng-header-tmp>
                                     <button type="button"
                                             (click)="selectAll(i)"
-                                            class="btn btn-sm btn-default">
+                                            class="btn btn-sm btn-primary">
                                       Select all
                                     </button>
                                     <button type="button"
                                             (click)="unselectAll(i)"
-                                            class="btn btn-sm btn-default">
+                                            class="btn btn-sm btn-primary">
                                       Unselect all
                                     </button>
                                   </ng-template>
@@ -150,9 +150,10 @@
                       <button *ngIf="tableData.searchForm.get('tableColumns')['controls'].length < 4"
                               type="button"
                               class="btn btn-secondary"
-                              value="Add More Tables & Columns"
+                              value="Add Table & Column"
                               (click)="addFormGroup('tableColumns')">
-                        Add More Tables & Columns
+                        <span class="btn-inner--icon"><i class="ni ni-fat-add"></i></span>
+                        <span class="btn-inner--text">Add Table & Column</span>
                       </button>
                       <div class="text-right">
                         <button type="submit"
@@ -229,6 +230,8 @@
                                     </select>
                                   </div>
                                 </div>
+                                <div class="col-md-6"
+                                     *ngIf="i > 0"></div>
                                 <div class="col">
                                   <ng-template #tooltipAccentSensitive>
                                     <b>Accent insensitive</b> conditions <br />
@@ -245,7 +248,7 @@
                                              formControlName="caseSensitive" />
                                       <label class="custom-control-label"
                                              [for]="'caseSensitive' + i">
-                                        Case Sensitive Search?
+                                        Case Sensitive Search
                                       </label>
                                     </div>
                                   </div>
@@ -260,7 +263,7 @@
                                              (change)="updateCaseSensitive(i)" />
                                       <label class="custom-control-label"
                                              [for]="'accentSensitive' + i">
-                                        Accent Sensitive Search?
+                                        Accent Sensitive Search
                                       </label>
                                     </div>
                                   </div>
@@ -404,16 +407,17 @@
                       </ngb-accordion>
                       <button type="button"
                               class="btn btn-secondary mt-4"
-                              value="Add More Conditions"
+                              value="Add Condition"
                               (click)="addFormGroup('conditions', conditionsAcc)">
-                        Add More Conditions
+                        <span class="btn-inner--icon"><i class="ni ni-fat-add"></i></span>
+                        <span class="btn-inner--text">Add Condition</span>
                       </button>
                       <div class="text-right">
                         <button type="submit"
                                 class="btn btn-primary mt-4"
-                                value="No Conditions"
+                                value="Skip Conditions"
                                 (click)="tableData.searchForm.get('options')['controls']['noConditions'].value = true">
-                          No Conditions
+                          Skip Conditions
                         </button>
                         <button type="submit"
                                 class="btn btn-primary mt-4"
@@ -449,7 +453,7 @@
                                        formControlName="noConditions"
                                        #noConditionsInput />
                                 <label class="custom-control-label"
-                                       for="conditionsCheck"> No Conditions? </label>
+                                       for="conditionsCheck"> Ignore Conditions </label>
                               </div>
                             </div>
                           </div>
@@ -464,7 +468,7 @@
                                        (change)="(true)"
                                        formControlName="duplicateRows" />
                                 <label class="custom-control-label"
-                                       for="duplicateCheck"> See duplicate rows? </label>
+                                       for="duplicateCheck"> View Duplicate Rows </label>
                               </div>
                             </div>
                           </div>
@@ -481,7 +485,7 @@
                                        #limitChecker />
                                 <label class="custom-control-label"
                                        for="limitCheck">
-                                  Number of results per page?
+                                  Limit Results per Page
                                 </label>
                                 <input class="form-control"
                                        *ngIf="limitChecker.checked"
@@ -522,6 +526,13 @@
       <li class="nav-item"
           ngbDropdown
           placement="bottom-right">
+        <a (click)="authService.logOut()"
+           class="nav-link pointer"
+           role="button"
+           [hidden]="!authService.authenticated">
+          <i class="ni ni-lock-circle-open text-marigold"></i>
+          <span>Logout</span>
+        </a>
         <!-- <a class="nav-link"
            role="button"
            ngbDropdownToggle>
@@ -531,15 +542,8 @@
                    src="./assets/img/theme/team-4-800x800.jpg" />
             </span>
           </div>
-        </a> -->
-        <a (click)="authService.logOut()"
-           class="nav-link pointer"
-           role="button"
-           [hidden]="!authService.authenticated">
-          <i class="ni ni-lock-circle-open text-marigold"></i>
-          <span>Logout</span>
         </a>
-        <!-- <div class="dropdown-menu-arrow dropdown-menu-right"
+        <div class="dropdown-menu-arrow dropdown-menu-right"
              ngbDropdownMenu>
           <div class="dropdown-header noti-title">
             <h6 class="text-overflow m-0">Welcome!</h6>

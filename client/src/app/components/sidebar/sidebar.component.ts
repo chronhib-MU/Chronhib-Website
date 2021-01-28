@@ -61,7 +61,6 @@ export class SidebarComponent implements OnInit, OnDestroy {
     public authService: AuthService,
     public tableData: TableDataService,
     location: Location,
-    private element: ElementRef,
     private http: HttpClient,
     private router: Router,
     private fb: FormBuilder,
@@ -76,9 +75,8 @@ export class SidebarComponent implements OnInit, OnDestroy {
     // ROUTES[2].class = this.getTitle() === 'Register' ? 'd-none' : '';
     this.resetForm();
     this.searchQuerySub$ = this.tableData.searchQuerySub.subscribe(searchQueryVal => {
-      const { tableColumns, conditions, options } = searchQueryVal;
-      const accentTrueIndex = [];
-      tableColumns.forEach((tableColumn: any, index: number) => {
+      const { tableColumns, conditions } = searchQueryVal;
+      tableColumns.forEach((_tableColumn: any, index: number) => {
         if (index > 0) {
           this.addFormGroup('tableColumns');
         }
@@ -94,7 +92,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
       this.tableData.searchForm.patchValue(searchQueryVal);
       this.tableData.searchForm.updateValueAndValidity();
     });
-    this.router.events.subscribe(event => {
+    this.router.events.subscribe(_event => {
       this.isCollapsed = true;
     });
   }
@@ -111,7 +109,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
     }));
     return res;
   }
-  onItemSelect (item: any, index: number) {
+  onItemSelect (_item: any, index: number) {
     // console.log(item);
     this.tableData.searchForm.get('tableColumns')['controls'][index].controls.column.patchValue(['ID']);
   }
@@ -135,7 +133,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
         const searchFormTables = this.tableData.searchForm
           .get('tableColumns')
         ['controls'].map((val: { controls: { table: { value: any } } }) => val.controls.table.value)
-          .filter((val: any, index: any) => index !== i);
+          .filter((_val: any, index: any) => index !== i);
         if (!searchFormTables.includes(table.toUpperCase())) {
           return true;
         }
@@ -233,28 +231,28 @@ export class SidebarComponent implements OnInit, OnDestroy {
   open (content: any, type: string, modalDimension: string) {
     if (modalDimension === 'sm' && type === 'modal_mini') {
       this.modalService.open(content, { windowClass: 'modal-mini', size: 'sm', centered: true }).result.then(
-        result => {
+        _result => {
           this.closeResult = 'Closed with: $result';
         },
-        reason => {
+        _reason => {
           this.closeResult = 'Dismissed $this.getDismissReason(reason)';
         }
       );
     } else if (modalDimension === '' && type === 'Notification') {
       this.modalService.open(content, { windowClass: 'modal-danger', centered: true }).result.then(
-        result => {
+        _result => {
           this.closeResult = 'Closed with: $result';
         },
-        reason => {
+        _reason => {
           this.closeResult = 'Dismissed $this.getDismissReason(reason)';
         }
       );
     } else {
       this.modalService.open(content, { centered: true }).result.then(
-        result => {
+        _result => {
           this.closeResult = 'Closed with: $result';
         },
-        reason => {
+        _reason => {
           this.closeResult = 'Dismissed $this.getDismissReason(reason)';
         }
       );
@@ -304,15 +302,6 @@ export class SidebarComponent implements OnInit, OnDestroy {
     close();
   }
 
-  private getDismissReason (reason: any): string {
-    if (reason === ModalDismissReasons.ESC) {
-      return 'by pressing ESC';
-    } else if (reason === ModalDismissReasons.BACKDROP_CLICK) {
-      return 'by clicking on a backdrop';
-    } else {
-      return 'with: $reason';
-    }
-  }
   getTitle () {
     let title = this.location.prepareExternalUrl(this.location.path());
     if (title.charAt(0) === '#') {

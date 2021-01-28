@@ -1,4 +1,3 @@
-
 // Custom Theming for Angular Material
 // For more information: https://material.angular.io/guide/theming
 @import '~@angular/material/theming';
@@ -8,25 +7,93 @@
 // have to load a single css file for Angular Material in your app.
 // Be sure that you only ever include this mixin once!
 @include mat-core();
+$primary-color: #9c2329;
+$accent-color: #0a67b2;
 
 // Define the palettes for your theme using the Material Design palettes available in palette.scss
 // (imported above). For each palette, you can optionally specify a default, lighter, and darker
 // hue. Available color palettes: https://material.io/design/color/
-$client-primary: mat-palette($mat-indigo);
-$client-accent: mat-palette($mat-pink, A200, A100, A400);
+$mat-chronhib-red: (
+  50: #f3e5e5,
+  100: #e1bdbf,
+  200: #ce9194,
+  300: #ba6569,
+  400: #ab4449,
+  500: #9c2329,
+  600: #941f24,
+  700: #8a1a1f,
+  800: #801519,
+  900: #6e0c0f,
+  A100: #ffa1a3,
+  A200: #ff6e71,
+  A400: #ff3b3f,
+  A700: #ff2126,
+  contrast: (
+    50: #000,
+    100: #000,
+    200: #000,
+    300: #fff,
+    400: #fff,
+    500: #fff,
+    600: #fff,
+    700: #fff,
+    800: #fff,
+    900: #fff,
+    A100: #000,
+    A200: #000,
+    A400: #fff,
+    A700: #fff
+  )
+);
+$mat-chronhib-blue: (
+  50: #e2edf6,
+  100: #b6d1e8,
+  200: #85b3d9,
+  300: #5495c9,
+  400: #2f7ebe,
+  500: #0a67b2,
+  600: #095fab,
+  700: #0754a2,
+  800: #054a99,
+  900: #03398a,
+  A100: #b6ceff,
+  A200: #83acff,
+  A400: #508aff,
+  A700: #3679ff,
+  contrast: (
+    50: #000,
+    100: #000,
+    200: #000,
+    300: #000,
+    400: #fff,
+    500: #fff,
+    600: #fff,
+    700: #fff,
+    800: #fff,
+    900: #fff,
+    A100: #000,
+    A200: #000,
+    A400: #000,
+    A700: #fff
+  )
+);
+$client-primary: mat-palette($mat-chronhib-blue);
+$client-accent: mat-palette($mat-chronhib-red);
 
 // The warn palette is optional (defaults to red).
 $client-warn: mat-palette($mat-red);
 
 // Create the theme object. A theme consists of configurations for individual
 // theming systems such as "color" or "typography".
-$client-theme: mat-light-theme((
-  color: (
-    primary: $client-primary,
-    accent: $client-accent,
-    warn: $client-warn,
+$client-theme: mat-light-theme(
+  (
+    color: (
+      primary: $client-primary,
+      accent: $client-accent,
+      warn: $client-warn
+    )
   )
-));
+);
 
 // Include theme styles for core and each component used in your app.
 // Alternatively, you can import and @include the theme mixins for each component

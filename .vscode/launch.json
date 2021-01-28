@@ -9,7 +9,6 @@
       "command": "npm run dev",
       "request": "launch",
       "type": "node-terminal",
-      "preLaunchTask": "Kill Server",
       "postDebugTask": "Kill Server"
     },
     {

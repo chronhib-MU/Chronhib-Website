@@ -6,11 +6,7 @@ import { Connection } from 'mysql';
 const searchTable = (
   connection: Connection,
   logger: Logger,
-  query: {
-    id: number,
-    limit: string,
-    page: string
-  },
+  query: Query,
   res: Response,
   next: NextFunction
 ): void => {
@@ -216,73 +212,78 @@ const searchTable = (
             }
           }
         }
-        const limit =
-          parseInt(query.limit) > 0
-            ? parseInt(query.limit)
-            : parseInt(options.limit) > 0
-              ? parseInt(options.limit)
-              : 100;
-        const page = parseInt(query.page) > 0 ? parseInt(query.page) : 0;
-        // console.log(limit, page);
-        let finalQuery =
-          selectStart +
-          selectedTableColumns.join(', ') +
-          fromInnerJoins.join(' ') +
-          (options.noConditions ? '' : whereConditions.join(' ')) +
-          ' LIMIT ' +
-          limit;
-        logger.info('Search Query: ', finalQuery);
-        let countQuery = 'SELECT COUNT(';
-        if (!options.duplicateRows) {
-          countQuery += 'DISTINCT ' + selectedTableColumns.toString() +
-            ') as numRows ';
+        if (
+          typeof query.limit === 'string' &&
+          typeof query.page === 'string'
+        ) {
+          const limit =
+            parseInt(query.limit) > 0
+              ? parseInt(query.limit)
+              : parseInt(options.limit) > 0
+                ? parseInt(options.limit)
+                : 100;
+          const page = parseInt(query.page) > 0 ? parseInt(query.page) : 0;
+          // console.log(limit, page);
+          let finalQuery =
+            selectStart +
+            selectedTableColumns.join(', ') +
+            fromInnerJoins.join(' ') +
+            (options.noConditions ? '' : whereConditions.join(' ')) +
+            ' LIMIT ' +
+            limit;
+          logger.info('Search Query: ', finalQuery);
+          let countQuery = 'SELECT COUNT(';
+          if (!options.duplicateRows) {
+            countQuery += 'DISTINCT ' + selectedTableColumns.toString() +
+              ') as numRows ';
 
-        } else {
-          countQuery += selectedTableColumns[0] +
-            ') as numRows ';
-        }
-        countQuery +=
-          fromInnerJoins.join(' ') +
-          (options.noConditions ? '' : whereConditions.join(' '));
-        try {
-          console.log('Count Query: ', countQuery);
-          connection.query(countQuery, (error, result) => {
-            if (error) {
-              console.log('Error: ', error);
-              logger.info({ id: query.id, searchQuery });
-              logger.error(error);
-              next(error);
-            }
-            else if (result) {
-              const numRows = result[0].numRows;
-              console.log('Offset: ', page * limit);
+          } else {
+            countQuery += selectedTableColumns[0] +
+              ') as numRows ';
+          }
+          countQuery +=
+            fromInnerJoins.join(' ') +
+            (options.noConditions ? '' : whereConditions.join(' '));
+          try {
+            console.log('Count Query: ', countQuery);
+            connection.query(countQuery, (error, result) => {
+              if (error) {
+                console.log('Error: ', error);
+                logger.info({ id: query.id, searchQuery });
+                logger.error(error);
+                next(error);
+              }
+              else if (result) {
+                const numRows = result[0].numRows;
+                console.log('Offset: ', page * limit);
 
-              finalQuery += ' OFFSET ' + page * limit + ';';
-              console.log('Final Query: ', finalQuery);
-              connection.query(finalQuery, (err, results) => {
-                if (err) {
-                  console.log('Error: ', err);
-                  logger.info({ id: query.id, searchQuery });
-                  logger.error(err);
-                  next(err);
-                } else {
-                  res.status(200).send({
-                    data: { beforeTable: searchQuery, afterTable: results, numRows }
-                  });
-                }
-              });
-            } else {
-              res.status(400).send({
-                message: 'Search ID ' + query.id + ' does not exist.',
-                title: 'Invalid Search ID!',
-                type: 'error'
-              });
-            }
-          });
-        } catch (error) {
-          console.log('Error: ', error);
-          logger.info({ id: query.id, searchQuery });
-          logger.error(error);
+                finalQuery += ' OFFSET ' + page * limit + ';';
+                console.log('Final Query: ', finalQuery);
+                connection.query(finalQuery, (err, results) => {
+                  if (err) {
+                    console.log('Error: ', err);
+                    logger.info({ id: query.id, searchQuery });
+                    logger.error(err);
+                    next(err);
+                  } else {
+                    res.status(200).send({
+                      data: { beforeTable: searchQuery, afterTable: results, numRows }
+                    });
+                  }
+                });
+              } else {
+                res.status(400).send({
+                  message: 'Search ID ' + query.id + ' does not exist.',
+                  title: 'Invalid Search ID!',
+                  type: 'error'
+                });
+              }
+            });
+          } catch (error) {
+            console.log('Error: ', error);
+            logger.info({ id: query.id, searchQuery });
+            logger.error(error);
+          }
         }
       } else { // If the Search Query doesn't exist or if no Search ID is provided
         logger.error('Error: Search ID does not exist - ', query.id);

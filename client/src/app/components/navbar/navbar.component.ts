@@ -10,30 +10,28 @@ import { Router } from '@angular/router';
   styleUrls: ['./navbar.component.scss']
 })
 export class NavbarComponent implements OnInit {
-  public focus;
+  public focus: any;
   public listTitles: any[];
   public location: Location;
-  constructor(
+  constructor (
     location: Location,
-    private element: ElementRef,
-    private router: Router,
     public authService: AuthService
   ) {
     this.location = location;
   }
 
-  ngOnInit() {
+  ngOnInit () {
     this.listTitles = ROUTES.filter(listTitle => listTitle);
   }
-  getTitle() {
-    var titlee = this.location.prepareExternalUrl(this.location.path());
-    if (titlee.charAt(0) === '#') {
-      titlee = titlee.slice(1);
+  getTitle () {
+    var title = this.location.prepareExternalUrl(this.location.path());
+    if (title.charAt(0) === '#') {
+      title = title.slice(1);
     }
     // split by '/' and '?'
-    titlee = '/' + titlee.split(/[?\/]+/)[1];
+    title = '/' + title.split(/[?\/]+/)[1];
     for (var item = 0; item < this.listTitles.length; item++) {
-      if (this.listTitles[item].path === titlee) {
+      if (this.listTitles[item].path === title) {
         return this.listTitles[item].title;
       }
     }

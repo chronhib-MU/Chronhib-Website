@@ -167,9 +167,8 @@ app.post(`/${appName}/api/searchQuery/`, (req, res, next) => {
 app.get(`/${appName}/api/search/`, (req, res, next) => {
   console.table(req.query);
   logger.trace(req.query);
-  if (typeof req.query === 'string') {
-    searchTable(connection, logger, req.query, res, next);
-  }
+  searchTable(connection, logger, req.query, res, next);
+
 });
 
 // Handles all the advanced get api table queries

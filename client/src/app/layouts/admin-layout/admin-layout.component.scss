@@ -1,3 +1,6 @@
 .main-content {
   height: max-content;
+  > .container-fluid {
+    background: white;
+  }
 }

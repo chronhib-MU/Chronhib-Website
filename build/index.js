@@ -173,9 +173,7 @@ app.post("/" + appName + "/api/searchQuery/", function (req, res, next) {
 app.get("/" + appName + "/api/search/", function (req, res, next) {
     console.table(req.query);
     logger.trace(req.query);
-    if (typeof req.query === 'string') {
-        tableDataQuery_1.searchTable(connection, logger, req.query, res, next);
-    }
+    tableDataQuery_1.searchTable(connection, logger, req.query, res, next);
 });
 // Handles all the advanced get api table queries
 app.get("/" + appName + "/api/tables/", function (req, res, next) {
