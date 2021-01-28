@@ -11,6 +11,8 @@ import * as jsonexport from 'jsonexport/dist';
 import * as _ from 'lodash';
 import { Validators } from '@angular/forms';
 import { Lemma } from '../../../model/autocompleteOpts.model';
+import { MatPaginator } from '@angular/material/paginator';
+
 declare const $: any;
 @Component({
   selector: 'app-table',
@@ -22,8 +24,10 @@ export class TableComponent implements OnInit {
   @Input() after: string;
   @Input() edit: boolean;
   @ViewChild('appTable') appTable: ElementRef;
+  @ViewChild(MatPaginator, { static: true })
+  paginator: MatPaginator;
   private hotRegisterer = new HotTableRegisterer();
-  wordWrap = true;
+  wordWrap = false;
   sort = false;
   ref = false;
   instance = 'hot';
@@ -64,7 +68,7 @@ export class TableComponent implements OnInit {
       readOnly: true,
       // colWidths: 150,
       multiColumnSorting: false,
-      wordWrap: true
+      wordWrap: false
     },
     {
       startRows: 0,
@@ -83,7 +87,7 @@ export class TableComponent implements OnInit {
       readOnly: false,
       // colWidths: 150,
       multiColumnSorting: false,
-      wordWrap: true
+      wordWrap: false
     }
   ];
   headers: any;
@@ -141,6 +145,7 @@ export class TableComponent implements OnInit {
   }
   ngOnInit (): void {
     const that = this;
+    this.paginator._intl.itemsPerPageLabel = 'Results per page:';
     this.sort = false;
     this.scrollToTableSub$ = this.pagination.scrollToTableSub.subscribe(() => {
       this.scrollToTable();
@@ -384,7 +389,7 @@ export class TableComponent implements OnInit {
     }
     filename += '.csv';
     const tableName = this.before === 'morphology' ? this.before : this.after;
-    jsonexport(this.getTableData(tableName), (err, csv) => {
+    jsonexport(this.getTableData(tableName), (err: any, csv: string | number | boolean) => {
       if (err) {
         return console.error(err);
       }
@@ -403,9 +408,9 @@ export class TableComponent implements OnInit {
       }
     });
   }
-  compareFunctionFactory (sortOrder) {
+  compareFunctionFactory (sortOrder: string) {
     const order = sortOrder === 'asc' ? true : false;
-    return function comparator (a, b) {
+    return function comparator (a: string, b: string) {
       return order
         ? (new Intl.Collator().compare(a, b) as 0 | 1 | -1)
         : (new Intl.Collator().compare(b, a) as 0 | 1 | -1);
@@ -472,21 +477,16 @@ export class TableComponent implements OnInit {
       });
     }
     this.after === 'search'
-      ? await this.searchTable.headers.forEach((header: string) => {
+      ? this.searchTable.headers.forEach((header: string) => {
         return this.columnRendererSettings(header, this.after, 'columns');
       })
       : await this.dataTable['after'].headers.forEach((header: string) => {
         return this.columnRendererSettings(header, this.after, 'columns');
       });
 
-    // this.dataset = [];
-    // this.dataTable['after'].data.forEach((row: any) => {
-    //   this.dataset.push(row);
-    // });
-    // console.log(this.columns, this.dataset);
     const columnFilter = ['Sort_ID'];
     if (this.hotRegisterer.getInstance(this.instance + 'Mini')) {
-      const beforeColWidths = this.dataTable['before'].headers.map((val: any, index: any) =>
+      const beforeColWidths = this.dataTable['before'].headers.map((_val: any, index: any) =>
         this.getColWidths(index, this.before)
       );
       const getBeforeColWidths = (index: string | number) => beforeColWidths[index];
@@ -497,7 +497,7 @@ export class TableComponent implements OnInit {
         colWidths: getBeforeColWidths,
         hiddenColumns: {
           columns: headerArr
-            .map((val, i) => i)
+            .map((_val, i) => i)
             .filter(
               val =>
                 columnFilter.includes(headerArr[val]) || (headerArr[val] === 'Text_ID' && this.before === 'morphology')
@@ -514,8 +514,8 @@ export class TableComponent implements OnInit {
     if (this.hotRegisterer.getInstance(this.instance)) {
       const afterColWidths =
         this.after === 'search'
-          ? this.searchTable.headers.map((val: any, index: any) => this.getColWidths(index, this.after))
-          : this.dataTable['after'].headers.map((val: any, index: any) => this.getColWidths(index, this.after));
+          ? this.searchTable.headers.map((_val: any, index: any) => this.getColWidths(index, this.after))
+          : this.dataTable['after'].headers.map((_val: any, index: any) => this.getColWidths(index, this.after));
       const getAfterColWidths = (index: string | number) => afterColWidths[index];
       const headerArr =
         this.after === 'search' ? [...this.searchTable.headers] : [...this.dataTable['after'].headers];
@@ -523,7 +523,7 @@ export class TableComponent implements OnInit {
         colWidths: getAfterColWidths,
         hiddenColumns: {
           columns: headerArr
-            .map((val, i) => i)
+            .map((_val, i) => i)
             .filter(
               val =>
                 columnFilter.includes(headerArr[val]) || (headerArr[val] === 'Text_ID' && this.after === 'morphology')
@@ -538,7 +538,8 @@ export class TableComponent implements OnInit {
       this.getTableData(this.after);
     }
   }
-  columnRendererSettings (header: any, table, columnType) {
+
+  columnRendererSettings (header: any, table: string, columnType: string) {
     switch (header) {
       case 'Rel':
         return this[columnType].push(
@@ -634,7 +635,6 @@ export class TableComponent implements OnInit {
           _cellProperties: any
         ) {
           // console.log(that);
-
           const escaped = Handsontable.helper.stringify(value);
           // console.log('Renderer Variables: ', { _instance, td, _row, _col, prop, value, _cellProperties });
           // if (escaped.indexOf('http') === 0) {
@@ -855,7 +855,7 @@ export class TableComponent implements OnInit {
   }
   getRows (table: string | number) {
     return table === 'search' || (table === this.before && this.before !== this.after)
-      ? this.searchTable.data.map((row, index) => index + 1)
+      ? this.searchTable.data.map((_row, index) => index + 1)
       : this.dataTable[table === this.after ? 'after' : 'before'].data.map((row: { Sort_ID: any }) => row.Sort_ID);
   }
   undo () {
@@ -944,6 +944,7 @@ export class TableComponent implements OnInit {
           // console.log(fVal);
         }
         urlParams.set('fval', fVal);
+        urlParams.set('page', '0');
         // console.log(urlParams.toString());
         const queryParams = JSON.parse(
           '{"' + decodeURI(urlParams.toString()).replace(/"/g, '\\"').replace(/&/g, '","').replace(/=/g, '":"') + '"}'

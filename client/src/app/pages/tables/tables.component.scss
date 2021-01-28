@@ -1,18 +1,17 @@
-.col,
-.table-card-container {
+.col, .table-card-container {
   // margin-top: 1.5rem;
   .card {
-    width: 10vw;
+    width: 12vw;
     margin: 0 auto;
     .card-body {
-      padding: 0.5rem;
+      padding: .5rem;
 
       text-align: center;
 
       background-color: #fff;
     }
     .selection-row {
-      background-color: rgba(0, 0, 0, 0.075);
+      background-color: rgba(0, 0, 0, .075);
     }
     #img-container {
       position: relative;
@@ -31,48 +30,27 @@
       }
     }
   }
+  a > div.card {
+    &:hover .card-body {
+      background-color: var(--secondary);
+    }
+    &:active .card-body {
+      background-color: darken(#f7fafc, 5);
+    }
+  }
 }
-.main {
-  background: rgba(255, 255, 255, 1);
-  background: -moz-linear-gradient(
-    0deg,
-    rgba(255, 255, 255, 1) 0%,
-    rgba(229, 230, 230, 1) 75%,
-    rgba(220, 221, 222, 1) 100%
-  );
-  background: -webkit-gradient(
-    left bottom,
-    right top,
-    color-stop(0%, rgba(255, 255, 255, 1)),
-    color-stop(75%, rgba(229, 230, 230, 1)),
-    color-stop(100%, rgba(220, 221, 222, 1))
-  );
-  background: -webkit-linear-gradient(
-    0deg,
-    rgba(255, 255, 255, 1) 0%,
-    rgba(229, 230, 230, 1) 75%,
-    rgba(220, 221, 222, 1) 100%
-  );
-  background: -o-linear-gradient(
-    0deg,
-    rgba(255, 255, 255, 1) 0%,
-    rgba(229, 230, 230, 1) 75%,
-    rgba(220, 221, 222, 1) 100%
-  );
-  background: -ms-linear-gradient(
-    0deg,
-    rgba(255, 255, 255, 1) 0%,
-    rgba(229, 230, 230, 1) 75%,
-    rgba(220, 221, 222, 1) 100%
-  );
-  background: linear-gradient(0deg, rgba(255, 255, 255, 1) 0%, rgba(229, 230, 230, 1) 75%, rgba(220, 221, 222, 1) 100%);
-  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#dcddde', GradientType=1 );
-}
-@media (max-width: 767.98px) {
-  .col,
-  .table-card-container {
+
+@media (max-width: 1199px) {
+  .col, .table-card-container {
     .card {
       width: 25vw;
+    }
+  }
+}
+@media (max-width: 575px) {
+  .col, .table-card-container {
+    .card {
+      width: 75vw;
     }
   }
 }

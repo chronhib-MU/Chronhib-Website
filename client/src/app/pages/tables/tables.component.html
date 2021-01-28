@@ -4,10 +4,19 @@
       <ng-container *ngIf="!pagination.table">
         <div class="row">
           <div *ngFor="let table of tableData.tables.names; let key = index"
-               class="col justify-content-around align-content-center table-card-container mb-3 col-6 col-sm-6 col-md-3"
+               class="col justify-content-around align-content-center table-card-container mb-3 col-12 col-sm-6 col-xl-3"
                [id]="'table-card-' + key">
-            <a class="d-md-none"
-               [routerLink]="['/tables/', table]">
+            <a class="d-xl-none"
+               [routerLink]="['/tables/', table]"
+               [queryParams]="{
+                  page: 0,
+                  limit: 100,
+                  fprop: '',
+                  fval: '',
+                  dtable: table,
+                  ctable: '',
+                  search: false
+                }">
               <div class="card">
                 <div class="card-body">
                   <div class="card-title text-uppercase font-weight-bolder text-dark mb-0">
@@ -16,7 +25,7 @@
                 </div>
               </div>
             </a>
-            <div class="card d-none d-md-flex">
+            <div class="card d-none d-xl-flex">
               <div class="card-body">
                 <div class="card-title text-uppercase font-weight-bolder text-dark mb-0">
                   {{ table | titlecase }}
@@ -67,7 +76,7 @@
   </div>
 </div>
 <!-- Page content -->
-<div class="container-fluid mt--7 main">
+<div class="container-fluid mt--7 pb-3 main">
   <!-- Table -->
 
   <ng-container *ngFor="let name of tableData.tables.names">

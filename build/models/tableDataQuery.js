@@ -208,73 +208,76 @@ var searchTable = function (connection, logger, query, res, next) {
                         }
                     }
                 }
-                var limit_1 = parseInt(query.limit) > 0
-                    ? parseInt(query.limit)
-                    : parseInt(options.limit) > 0
-                        ? parseInt(options.limit)
-                        : 100;
-                var page_1 = parseInt(query.page) > 0 ? parseInt(query.page) : 0;
-                // console.log(limit, page);
-                var finalQuery_1 = selectStart +
-                    selectedTableColumns_1.join(', ') +
-                    fromInnerJoins.join(' ') +
-                    (options.noConditions ? '' : whereConditions_1.join(' ')) +
-                    ' LIMIT ' +
-                    limit_1;
-                logger.info('Search Query: ', finalQuery_1);
-                var countQuery = 'SELECT COUNT(';
-                if (!options.duplicateRows) {
-                    countQuery += 'DISTINCT ' + selectedTableColumns_1.toString() +
-                        ') as numRows ';
-                }
-                else {
-                    countQuery += selectedTableColumns_1[0] +
-                        ') as numRows ';
-                }
-                countQuery +=
-                    fromInnerJoins.join(' ') +
-                        (options.noConditions ? '' : whereConditions_1.join(' '));
-                try {
-                    console.log('Count Query: ', countQuery);
-                    connection.query(countQuery, function (error, result) {
-                        if (error) {
-                            console.log('Error: ', error);
-                            logger.info({ id: query.id, searchQuery: searchQuery });
-                            logger.error(error);
-                            next(error);
-                        }
-                        else if (result) {
-                            var numRows_1 = result[0].numRows;
-                            console.log('Offset: ', page_1 * limit_1);
-                            finalQuery_1 += ' OFFSET ' + page_1 * limit_1 + ';';
-                            console.log('Final Query: ', finalQuery_1);
-                            connection.query(finalQuery_1, function (err, results) {
-                                if (err) {
-                                    console.log('Error: ', err);
-                                    logger.info({ id: query.id, searchQuery: searchQuery });
-                                    logger.error(err);
-                                    next(err);
-                                }
-                                else {
-                                    res.status(200).send({
-                                        data: { beforeTable: searchQuery, afterTable: results, numRows: numRows_1 }
-                                    });
-                                }
-                            });
-                        }
-                        else {
-                            res.status(400).send({
-                                message: 'Search ID ' + query.id + ' does not exist.',
-                                title: 'Invalid Search ID!',
-                                type: 'error'
-                            });
-                        }
-                    });
-                }
-                catch (error) {
-                    console.log('Error: ', error);
-                    logger.info({ id: query.id, searchQuery: searchQuery });
-                    logger.error(error);
+                if (typeof query.limit === 'string' &&
+                    typeof query.page === 'string') {
+                    var limit_1 = parseInt(query.limit) > 0
+                        ? parseInt(query.limit)
+                        : parseInt(options.limit) > 0
+                            ? parseInt(options.limit)
+                            : 100;
+                    var page_1 = parseInt(query.page) > 0 ? parseInt(query.page) : 0;
+                    // console.log(limit, page);
+                    var finalQuery_1 = selectStart +
+                        selectedTableColumns_1.join(', ') +
+                        fromInnerJoins.join(' ') +
+                        (options.noConditions ? '' : whereConditions_1.join(' ')) +
+                        ' LIMIT ' +
+                        limit_1;
+                    logger.info('Search Query: ', finalQuery_1);
+                    var countQuery = 'SELECT COUNT(';
+                    if (!options.duplicateRows) {
+                        countQuery += 'DISTINCT ' + selectedTableColumns_1.toString() +
+                            ') as numRows ';
+                    }
+                    else {
+                        countQuery += selectedTableColumns_1[0] +
+                            ') as numRows ';
+                    }
+                    countQuery +=
+                        fromInnerJoins.join(' ') +
+                            (options.noConditions ? '' : whereConditions_1.join(' '));
+                    try {
+                        console.log('Count Query: ', countQuery);
+                        connection.query(countQuery, function (error, result) {
+                            if (error) {
+                                console.log('Error: ', error);
+                                logger.info({ id: query.id, searchQuery: searchQuery });
+                                logger.error(error);
+                                next(error);
+                            }
+                            else if (result) {
+                                var numRows_1 = result[0].numRows;
+                                console.log('Offset: ', page_1 * limit_1);
+                                finalQuery_1 += ' OFFSET ' + page_1 * limit_1 + ';';
+                                console.log('Final Query: ', finalQuery_1);
+                                connection.query(finalQuery_1, function (err, results) {
+                                    if (err) {
+                                        console.log('Error: ', err);
+                                        logger.info({ id: query.id, searchQuery: searchQuery });
+                                        logger.error(err);
+                                        next(err);
+                                    }
+                                    else {
+                                        res.status(200).send({
+                                            data: { beforeTable: searchQuery, afterTable: results, numRows: numRows_1 }
+                                        });
+                                    }
+                                });
+                            }
+                            else {
+                                res.status(400).send({
+                                    message: 'Search ID ' + query.id + ' does not exist.',
+                                    title: 'Invalid Search ID!',
+                                    type: 'error'
+                                });
+                            }
+                        });
+                    }
+                    catch (error) {
+                        console.log('Error: ', error);
+                        logger.info({ id: query.id, searchQuery: searchQuery });
+                        logger.error(error);
+                    }
                 }
             }
             else { // If the Search Query doesn't exist or if no Search ID is provided
