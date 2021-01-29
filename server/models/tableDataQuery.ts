@@ -1,9 +1,41 @@
+import { Query, Response, NextFunction } from 'express-serve-static-core';
+import { Logger } from 'log4js';
+import { Connection } from 'mysql';
+
 // Search Feature
-const searchTable = (connection, logger, req, res, next) => {
-  let searchQuery = {};
+const searchTable = (
+  connection: Connection,
+  logger: Logger,
+  query: Query,
+  res: Response,
+  next: NextFunction
+): void => {
+  let searchQuery: {
+    conditions: {
+      negated: boolean,
+      caseSensitive: boolean,
+      accentSensitive: boolean,
+      table: string,
+      column: string,
+      operator: string,
+      comparator: string,
+      comparatorVal: string
+    }[],
+    options: {
+      noConditions: boolean,
+      duplicateRows: boolean,
+      limit: string
+    },
+    tableColumns: {
+      table: string,
+      column: {
+        [key: string]: string | number
+      }[]
+    }[];
+  };
   try {
     // Check for the Search ID needed
-    if (!req.query.id) {
+    if (!query.id) {
       res.status(404).send({
         message: 'Search ID needed to show search results.',
         title: 'No Search ID found!',
@@ -11,7 +43,7 @@ const searchTable = (connection, logger, req, res, next) => {
       });
     }
     // Look for the Search Query using the Search ID provided
-    connection.query('SELECT `Query` FROM `SEARCH` WHERE `ID`= ?', req.query.id, (error, results) => {
+    connection.query('SELECT `Query` FROM `SEARCH` WHERE `ID`= ?', query.id, (error, results): void => {
       // If there was an error in the Query, log the error
       if (error) {
         // console.log(error);
@@ -24,9 +56,9 @@ const searchTable = (connection, logger, req, res, next) => {
         console.log('Search Query:', searchQuery)
         const { conditions, options, tableColumns } = searchQuery;
         // Select
-        const selectedTableColumns = []; // ['`TEXT`.`Text_ID`', '`SENTENCES`.`Textual_Unit`']
-        const selectStart = options?.duplicateRows ? 'SELECT ' : 'SELECT DISTINCT ';
-        // Stores all the Tables & Columsn that need to be viewed
+        const selectedTableColumns: string[] = []; // ['`TEXT`.`Text_ID`', '`SENTENCES`.`Textual_Unit`']
+        const selectStart = options.duplicateRows ? 'SELECT ' : 'SELECT DISTINCT ';
+        // Stores all the Tables & Columns that need to be viewed
         tableColumns.forEach(obj => {
           Object.values(obj.column).forEach(column => selectedTableColumns.push(obj.table + '.' + column));
         });
@@ -47,7 +79,7 @@ const searchTable = (connection, logger, req, res, next) => {
           if (selectedTables.includes('LEMMATA') && !selectedTables.includes('MORPHOLOGY')) {
             selectedTables.push('MORPHOLOGY');
           }
-          const innerJoinConnections = {
+          const innerJoinConnections: { [key: string]: { [key: string]: string } } = {
             TEXT: {
               SENTENCES: `INNER JOIN SENTENCES ON TEXT.Text_ID = SENTENCES.Text_ID`,
               MORPHOLOGY: `INNER JOIN MORPHOLOGY ON TEXT.Text_ID = MORPHOLOGY.Text_ID`
@@ -66,7 +98,7 @@ const searchTable = (connection, logger, req, res, next) => {
             }
           };
           // This is to stop sql from complaining about non-unique tables/aliases
-          let unique = {
+          const unique: { [key: string]: boolean } = {
             TEXT: true,
             SENTENCES: true,
             MORPHOLOGY: true,
@@ -134,7 +166,7 @@ const searchTable = (connection, logger, req, res, next) => {
                 break;
             }
             let conditionTableColumn = condition.table + '.' + condition.column;
-            let conditionComparator = comparator;
+            const conditionComparator = comparator;
             let conditionComparatorVal = comparatorVal;
             const excludeCollation = ['ID', 'Sort_ID', 'Timestamp', 'Text_Unit_ID', 'Text_ID'];
             // Accent and Case Sensitivity should not affect the above columns
@@ -180,79 +212,84 @@ const searchTable = (connection, logger, req, res, next) => {
             }
           }
         }
-        const limit =
-          parseInt(req.query.limit) > 0
-            ? parseInt(req.query.limit)
-            : parseInt(options.limit) > 0
-              ? parseInt(options.limit)
-              : 100;
-        const page = parseInt(req.query.page) > 0 ? parseInt(req.query.page) : 0;
-        // console.log(limit, page);
-        let finalQuery =
-          selectStart +
-          selectedTableColumns.join(', ') +
-          fromInnerJoins.join(' ') +
-          (options.noConditions ? '' : whereConditions.join(' ')) +
-          ' LIMIT ' +
-          limit;
-        logger.info('Search Query: ', finalQuery);
-        let countQuery = 'SELECT COUNT(';
-        if (!options.duplicateRows) {
-          countQuery += 'DISTINCT ' + selectedTableColumns.toString() +
-            ') as numRows ';
+        if (
+          typeof query.limit === 'string' &&
+          typeof query.page === 'string'
+        ) {
+          const limit =
+            parseInt(query.limit) > 0
+              ? parseInt(query.limit)
+              : parseInt(options.limit) > 0
+                ? parseInt(options.limit)
+                : 100;
+          const page = parseInt(query.page) > 0 ? parseInt(query.page) : 0;
+          // console.log(limit, page);
+          let finalQuery =
+            selectStart +
+            selectedTableColumns.join(', ') +
+            fromInnerJoins.join(' ') +
+            (options.noConditions ? '' : whereConditions.join(' ')) +
+            ' LIMIT ' +
+            limit;
+          logger.info('Search Query: ', finalQuery);
+          let countQuery = 'SELECT COUNT(';
+          if (!options.duplicateRows) {
+            countQuery += 'DISTINCT ' + selectedTableColumns.toString() +
+              ') as numRows ';
 
-        } else {
-          countQuery += selectedTableColumns[0] +
-            ') as numRows ';
-        }
-        countQuery +=
-          fromInnerJoins.join(' ') +
-          (options.noConditions ? '' : whereConditions.join(' '));
-        try {
-          console.log('Count Query: ', countQuery);
-          connection.query(countQuery, (error, result) => {
-            if (error) {
-              console.log('Error: ', error);
-              logger.info({ id: req.query.id, searchQuery });
-              logger.error(error);
-              next(err);
-            }
-            else if (result) {
-              const numRows = result[0].numRows;
-              console.log('Offset: ', page * limit);
+          } else {
+            countQuery += selectedTableColumns[0] +
+              ') as numRows ';
+          }
+          countQuery +=
+            fromInnerJoins.join(' ') +
+            (options.noConditions ? '' : whereConditions.join(' '));
+          try {
+            console.log('Count Query: ', countQuery);
+            connection.query(countQuery, (error, result) => {
+              if (error) {
+                console.log('Error: ', error);
+                logger.info({ id: query.id, searchQuery });
+                logger.error(error);
+                next(error);
+              }
+              else if (result) {
+                const numRows = result[0].numRows;
+                console.log('Offset: ', page * limit);
 
-              finalQuery += ' OFFSET ' + page * limit + ';';
-              console.log('Final Query: ', finalQuery);
-              connection.query(finalQuery, (err, results) => {
-                if (err) {
-                  console.log('Error: ', err);
-                  logger.info({ id: req.query.id, searchQuery });
-                  logger.error(err);
-                  next(err);
-                } else {
-                  res.status(200).send({
-                    data: { beforeTable: searchQuery, afterTable: results, numRows }
-                  });
-                }
-              });
-            } else {
-              res.status(400).send({
-                message: 'Search ID ' + req.query.id + ' does not exist.',
-                title: 'Invalid Search ID!',
-                type: 'error'
-              });
-            }
-          });
-        } catch (error) {
-          console.log('Error: ', error);
-          logger.info({ id: req.query.id, searchQuery });
-          logger.error(error);
+                finalQuery += ' OFFSET ' + page * limit + ';';
+                console.log('Final Query: ', finalQuery);
+                connection.query(finalQuery, (err, results) => {
+                  if (err) {
+                    console.log('Error: ', err);
+                    logger.info({ id: query.id, searchQuery });
+                    logger.error(err);
+                    next(err);
+                  } else {
+                    res.status(200).send({
+                      data: { beforeTable: searchQuery, afterTable: results, numRows }
+                    });
+                  }
+                });
+              } else {
+                res.status(400).send({
+                  message: 'Search ID ' + query.id + ' does not exist.',
+                  title: 'Invalid Search ID!',
+                  type: 'error'
+                });
+              }
+            });
+          } catch (error) {
+            console.log('Error: ', error);
+            logger.info({ id: query.id, searchQuery });
+            logger.error(error);
+          }
         }
       } else { // If the Search Query doesn't exist or if no Search ID is provided
-        logger.error('Error: Search ID does not exist - ', req.query.id);
+        logger.error('Error: Search ID does not exist - ', query.id);
         res.status(404).send({
-          message: req.query.id ? 'Search ID ' + req.query.id + ' does not exist.' : 'Search ID needed to show query.',
-          title: req.query.id ? 'Invalid Search ID!' : 'No Search ID found!',
+          message: query.id ? 'Search ID ' + query.id + ' does not exist.' : 'Search ID needed to show query.',
+          title: query.id ? 'Invalid Search ID!' : 'No Search ID found!',
           type: 'error'
         });
       }
@@ -264,120 +301,140 @@ const searchTable = (connection, logger, req, res, next) => {
 }
 
 // Gets the Table Data from the pages navigated to, on the main table
-const navigateTable = (connection, logger, req, res, next) => {
-  let page = (parseInt(req.query.page, 10) > 0 ? parseInt(req.query.page, 10) : 0) || 0, // pagination page number
-    limit = (parseInt(req.query.limit, 10) > 0 ? parseInt(req.query.limit, 10) : 100) || 100, // pagination limit (how many rows per page)
-    fieldProperty = req.query.fprop || '', // the property to filter by
-    fieldValue = req.query.fval || '', // the value of the property to filter by
-    destinationTable = req.query.dtable || 'text', // the table we're navigating to
-    currentTable = req.query.ctable || 'text', // the table we're navigating from
-    beforeQueryValues = [currentTable.toUpperCase(), fieldProperty, fieldValue],
-    afterQueryValues = [destinationTable.toUpperCase()],
-    beforeQuery = '',
-    afterQuery = 'SELECT * FROM ?? ',
-    countQuery = 'SELECT * FROM ?? ';
+const navigateTable = (
+  connection: Connection,
+  logger: Logger,
+  query: Query,
+  res: Response, next: NextFunction): void => {
+  if (
+    typeof query.limit === 'string' &&
+    typeof query.page === 'string' &&
+    (typeof query.fprop === 'string' || !query.fprop) &&
+    (typeof query.fval === 'string' || !query.fval) &&
+    typeof query.dtable === 'string' &&
+    typeof query.ctable === 'string') {
+    const page: number = (parseInt(query.page, 10) > 0 ? parseInt(query.page, 10) : 0) || 0, // pagination page number
+      limit: number = (parseInt(query.limit, 10) > 0 ? parseInt(query.limit, 10) : 100) || 100, // pagination limit (how many rows per page)
+      fieldProperty = query.fprop || '', // the property to filter by
+      fieldValue: (string | number) = query.fval || '', // the value of the property to filter by
+      destinationTable: string = query.dtable || 'text', // the table we're navigating to
+      currentTable: string = query.ctable || 'text', // the table we're navigating from
+      beforeQueryValues: (string | number)[] = [currentTable.toUpperCase(), fieldProperty, fieldValue],
+      afterQueryValues: (string | number)[] = [destinationTable.toUpperCase()];
 
-  // Check if fieldProperty and fValue exist
-  if (fieldProperty && fieldValue) {
-    // afterQuery
-    afterQuery += 'WHERE ?? = ? ';
-    afterQueryValues.push(fieldProperty, fieldValue);
-    countQuery = afterQuery;
-    // Reference Table
-    if (currentTable !== destinationTable) {
-      // if not the same table
-      beforeQuery = 'SELECT * FROM ?? WHERE ?? = ?';
-      if (currentTable === 'morphology' && destinationTable === 'lemmata') {
-        countQuery = beforeQuery;
-        beforeQuery += ' LIMIT ? OFFSET ?';
-        beforeQueryValues.push(limit, page * limit);
+    let beforeQuery = '',
+      afterQuery = 'SELECT * FROM ?? ',
+      countQuery = 'SELECT * FROM ?? ';
+
+    // Check if fieldProperty and fValue exist
+    if (fieldProperty && fieldValue) {
+      // afterQuery
+      afterQuery += 'WHERE ?? = ? ';
+      afterQueryValues.push(fieldProperty, fieldValue);
+      countQuery = afterQuery;
+      // Reference Table
+      if (currentTable !== destinationTable) {
+        // if not the same table
+        beforeQuery = 'SELECT * FROM ?? WHERE ?? = ?';
+        if (currentTable === 'morphology' && destinationTable === 'lemmata') {
+          countQuery = beforeQuery;
+          beforeQuery += ' LIMIT ? OFFSET ?';
+          beforeQueryValues.push(limit, page * limit);
+        }
+      }
+      afterQuery += 'ORDER BY `Sort_ID` ASC';
+    } else {
+      switch (destinationTable) {
+        case 'text':
+          afterQuery += 'ORDER BY `Sort_ID` ASC';
+          break;
+        case 'sentences':
+          afterQuery += 'ORDER BY `Text_ID`, LENGTH(`Text_Unit_ID`), `Text_Unit_ID`, `Sort_ID` ASC';
+          break;
+        case 'morphology':
+          afterQuery += 'ORDER BY `Text_ID`, LENGTH(`Text_Unit_ID`), `Text_Unit_ID`, `Sort_ID` ASC';
+          break;
+        case 'lemmata':
+          afterQuery += 'ORDER BY `Lemma` COLLATE utf8mb4_unicode_ci, `Sort_ID` ASC';
+          break;
+        default:
+          break;
       }
     }
-    afterQuery += 'ORDER BY `Sort_ID` ASC';
-  } else {
-    switch (destinationTable) {
-      case 'text':
-        afterQuery += 'ORDER BY `Sort_ID` ASC';
-        break;
-      case 'sentences':
-        afterQuery += 'ORDER BY `Text_ID`, LENGTH(`Text_Unit_ID`), `Text_Unit_ID`, `Sort_ID` ASC';
-        break;
-      case 'morphology':
-        afterQuery += 'ORDER BY `Text_ID`, LENGTH(`Text_Unit_ID`), `Text_Unit_ID`, `Sort_ID` ASC';
-        break;
-      case 'lemmata':
-        afterQuery += 'ORDER BY `Lemma` COLLATE utf8mb4_unicode_ci, `Sort_ID` ASC';
-        break;
-      default:
-        break;
-    }
-  }
-  countQuery = countQuery.replace('*', 'COUNT(`ID`) as numRows');
+    countQuery = countQuery.replace('*', 'COUNT(`ID`) as numRows');
 
-  if (!(currentTable === 'morphology' && destinationTable === 'lemmata')) {
-    afterQuery += ' LIMIT ? OFFSET ?';
-    afterQueryValues.push(limit, page * limit);
-  }
-  console.log('beforeQuery:', beforeQuery);
-  console.log('afterQuery:', afterQuery);
-  console.log('afterQueryValues:', afterQueryValues);
-  console.log(
-    countQuery,
-    currentTable === 'morphology' && destinationTable === 'lemmata' ? beforeQueryValues : afterQueryValues
-  );
-  logger.trace('beforeQuery:', beforeQuery);
-  logger.info('afterQuery:', afterQuery);
-  logger.info('afterQueryValues:', afterQueryValues);
-  let beforeTable = [],
-    afterTable = [];
-  try {
-    connection.query(
+    if (!(currentTable === 'morphology' && destinationTable === 'lemmata')) {
+      afterQuery += ' LIMIT ? OFFSET ?';
+      afterQueryValues.push(limit, page * limit);
+    }
+    console.log('beforeQuery:', beforeQuery);
+    console.log('afterQuery:', afterQuery);
+    console.log('afterQueryValues:', afterQueryValues);
+    console.log(
       countQuery,
-      currentTable === 'morphology' && destinationTable === 'lemmata' ? beforeQueryValues : afterQueryValues,
-      (error, result) => {
-        console.log(result);
-        const numRows = result[0].numRows;
-        connection.query(afterQuery, afterQueryValues, (err, results) => {
-          if (err) {
-            // console.log('Error: ', err);
-            logger.error('Error: ', err);
-            next(err);
-          } else {
-            afterTable = results;
+      currentTable === 'morphology' && destinationTable === 'lemmata' ? beforeQueryValues : afterQueryValues
+    );
+    logger.trace('beforeQuery:', beforeQuery);
+    logger.info('afterQuery:', afterQuery);
+    logger.info('afterQueryValues:', afterQueryValues);
+    try {
+      connection.query(
+        countQuery,
+        currentTable === 'morphology' && destinationTable === 'lemmata' ? beforeQueryValues : afterQueryValues,
+        (error, result) => {
+          if (error) {
+            logger.error('Error: ', error)
+            next(error);
           }
-          if (beforeQuery !== '') {
-            connection.query(beforeQuery, beforeQueryValues, (err, results) => {
-              if (err) {
-                // console.log('Error: ', err);
-                logger.error('Error: ', err);
-                next(err);
-              } else {
-                beforeTable = results;
-              }
-              // console.log({ beforeTable, afterTable });
-              // logger.info(results);
+          console.log(result);
+          const numRows = result[0].numRows;
+          connection.query(afterQuery, afterQueryValues, (err, results) => {
+            let beforeTable: string[] = [],
+              afterTable: string[] = [];
+            if (err) {
+              // console.log('Error: ', err);
+              logger.error('Error: ', err);
+              next(err);
+            } else {
+              afterTable = results;
+            }
+            if (beforeQuery !== '') {
+              connection.query(beforeQuery, beforeQueryValues, (err, results) => {
+                if (err) {
+                  // console.log('Error: ', err);
+                  logger.error('Error: ', err);
+                  next(err);
+                } else {
+                  beforeTable = results;
+                }
+                // console.log({ beforeTable, afterTable });
+                // logger.info(results);
+                res.status(200).send({
+                  data: { beforeTable, afterTable, numRows }
+                });
+              });
+            } else {
+              // logger.trace(results);
               res.status(200).send({
                 data: { beforeTable, afterTable, numRows }
               });
-            });
-          } else {
-            // logger.trace(results);
-            res.status(200).send({
-              data: { beforeTable, afterTable, numRows }
-            });
-          }
-        });
-      }
-    );
-  } catch (error) {
-    logger.error('Error: ', error);
+            }
+          });
+        }
+      );
+    } catch (error) {
+      logger.error('Error: ', error);
+    }
+  } else {
+    console.log('Error Occurred:', query);
+    res.status(404);
   }
 }
 
-const getTableColumnRows = (connection, logger, table, column, filter, res, next) => {
+const getTableColumnRows = (connection: Connection, logger: Logger, table: string, column: string, filter: string, res: Response, next: NextFunction): void => {
   let query = `SELECT ?? FROM ??`;
   let queryValues = [column, table];
-  if (filter !== null) {
+  if (typeof filter !== null) {
     query += ` WHERE ?? LIKE ?;`;
     queryValues = [column, table, column, '%' + filter + '%'];
   }
@@ -393,14 +450,14 @@ const getTableColumnRows = (connection, logger, table, column, filter, res, next
       // Extract columns from Rows
       // Remove Unique values with Set
       // Remove null or empty results
-      const filteredResults = [...new Set(results.map(data => data[column]))].filter(data => data);
+      const filteredResults = [...new Set(results.map((data: { [key: string]: (string | number); }) => data[column]))].filter(data => data);
       console.log(filteredResults);
       res.status(200).send(filteredResults);
     }
   });
 }
 
-const getHeaders = (connection, logger, path, DATABASE, res, next) => {
+const getHeaders = (connection: Connection, logger: Logger, path: string, DATABASE: string | undefined, res: Response, next: NextFunction): void => {
   // console.log(tables[path]);
   logger.trace(path);
   const headerQuery = 'SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = N?';
@@ -412,15 +469,15 @@ const getHeaders = (connection, logger, path, DATABASE, res, next) => {
       // console.log(results);
       logger.trace(results);
       res.status(200).send({
-        data: results.map(result => result.COLUMN_NAME)
+        data: results.map((result: { COLUMN_NAME: string; }) => result.COLUMN_NAME)
       });
     }
   });
 }
 
-module.exports = Object.assign({
+export {
   searchTable,
   navigateTable,
   getTableColumnRows,
   getHeaders
-});
+};

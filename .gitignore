@@ -22,7 +22,6 @@ package-lock.json
 
 # VSCode
 .history
-.vscode
 
 # Coveralls
 coverage

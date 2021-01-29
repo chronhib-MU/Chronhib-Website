@@ -1,15 +1,24 @@
 {
-  "name": "chronhibWebsite",
+  "name": "chronhib-website",
   "repository": {
     "type": "git",
     "url": "https://github.com/chronhib-MU/Chronhib-Website.git"
   },
-  "version": "1.0.0",
+  "version": "2.0.0",
+  "engines": {
+    "node": ">=14.x"
+  },
   "description": "The Chronologicon Hibernicum Website | ChronHib",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Success! Test worked.\" && exit 0",
-    "start": "nodemon index.js"
+    "start": "node ./build/index.js",
+    "build": "cd client && npm run build && cd .. && \\rm -i -rf ./build/* && tsc",
+    "start:dev": "nodemon build/index.js",
+    "build:dev": "tsc --watch --preserveWatchOutput",
+    "dev": "concurrently \"npm run build:dev\" \"npm run start:dev\"",
+    "lint": "eslint --ignore-path .eslintignore",
+    "validate": "npm run lint && npm run build",
+    "setup": "cd client && npm i && cd .. && npm i && npm run validate"
   },
   "keywords": [],
   "author": "",
@@ -20,20 +29,38 @@
     "cookie-parser": "^1.4.5",
     "cors": "^2.8.5",
     "dotenv": "^8.2.0",
-    "es-module-shims": "^0.7.1",
+    "es-module-shims": "^0.4.6",
     "express": "^4.17.1",
-    "helmet": "^4.4.1",
+    "express-async-errors": "^3.1.1",
+    "helmet": "3.23.3",
     "http": "0.0.1-security",
     "jsonwebtoken": "^8.5.1",
     "log4js": "^6.3.0",
-    "moment": "^2.29.1",
+    "moment": "^2.29.0",
     "mysql": "^2.18.1",
-    "nodemon": "^2.0.7",
     "path": "0.12.7",
-    "qs": "^6.9.6",
     "serve-static": "^1.14.1"
   },
   "devDependencies": {
-    "@types/node": "^14.14.22"
+    "@babel/cli": "^7.10.4",
+    "@babel/core": "^7.10.4",
+    "@babel/preset-env": "^7.10.4",
+    "@babel/register": "^7.10.4",
+    "@types/bcryptjs": "^2.4.2",
+    "@types/compression": "^1.7.0",
+    "@types/cookie-parser": "^1.4.2",
+    "@types/cors": "^2.8.9",
+    "@types/express": "^4.17.7",
+    "@types/express-serve-static-core": "^4.17.18",
+    "@types/jsonwebtoken": "^8.5.0",
+    "@types/mysql": "^2.15.17",
+    "@types/node": "^14.6.0",
+    "@typescript-eslint/eslint-plugin": "^3.6.1",
+    "@typescript-eslint/parser": "^3.6.1",
+    "concurrently": "^5.2.0",
+    "eslint": "^7.5.0",
+    "jest": "^26.1.0",
+    "nodemon": "^2.0.4",
+    "typescript": "^3.9.6"
   }
 }
