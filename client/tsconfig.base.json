@@ -1,7 +1,6 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
-    "incremental": true, /* Enable incremental compilation */
     "baseUrl": "./",
     "outDir": "./dist/out-tsc",
     "sourceMap": true,
