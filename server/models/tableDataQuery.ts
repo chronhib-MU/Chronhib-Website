@@ -426,7 +426,7 @@ const navigateTable = (
       logger.error('Error: ', error);
     }
   } else {
-    console.log('Error Occured:', query);
+    console.log('Error Occurred:', query);
     res.status(404);
   }
 }
