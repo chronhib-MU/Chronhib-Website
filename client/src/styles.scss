@@ -191,6 +191,17 @@ select {
   filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#dcddde', GradientType=1 );
 }
 
+.bg-secondary {
+  background-color: rgba(247, 250, 252, .9) !important;
+
+  backdrop-filter: blur(10px);
+  &:hover {
+    background-color: rgba(247, 250, 252, .7) !important;
+
+    transition: background-color .3s ease-in-out;
+  }
+}
+
 .table {
   color: #222;
 }

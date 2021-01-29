@@ -135,7 +135,7 @@ export class TableDataService {
   }
 
   //
-  async dynamicAutoComplete (query, table, column) {
+  async dynamicAutoComplete (query: string | Fuse.Expression, table: string, column: string) {
     const options = {
       threshold: 0.1,
       includeScore: true,
@@ -166,7 +166,7 @@ export class TableDataService {
       };
       if (filteredApiBody.command === 'moveRow') {
         // filteredApiBody.values.push(apiBody.values[0]);
-        const tableData = this.tables[filteredApiBody.table === 'morphology' ? 'before' : 'after'].data;
+        const tableData = this.tables['after'].data;
         const newData = apiBody.values[0];
         for (let i = 0; i < tableData.length; i++) {
           const row = tableData[i];

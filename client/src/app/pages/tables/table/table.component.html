@@ -10,12 +10,12 @@
             <div class="row ">
               <div class="col">
                 <span *ngIf="before && after !== before"
-                      class="h4 mb-0 font-weight-bold text-muted">
+                      class="h3 mb-0 font-weight-bold text-muted">
                   {{ before | titlecase }}
                 </span>
                 <span *ngIf="before && after !== before"
-                      class="h4 mb-0 font-weight-bold text-dark">&nbsp;>&nbsp;</span>
-                <span class="h4 mb-0 font-weight-bolder text-dark">
+                      class="h3 mb-0 font-weight-bold text-dark">&nbsp;>&nbsp;</span>
+                <span class="h3 mb-0 font-weight-bolder text-dark">
                   {{ after | titlecase }}
                   <span *ngIf="after === 'search'">
                     {{ ' Results ' }}

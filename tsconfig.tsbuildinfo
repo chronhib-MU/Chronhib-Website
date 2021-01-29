@@ -482,17 +482,17 @@
         "affectsGlobalScope": false
       },
       "./server/models/auth.ts": {
-        "version": "f41651a7dfb5d1bd9133b6a5d7871c8178a988e53b1130dbcd34516b5d43f3c2",
+        "version": "f4c383f2c38abad0a164b6d7582e43081bd91fc5ea8c9afcbee2caf5ef8f55e0",
         "signature": "f3e0a4b05bb2271e19cdf5c849e2f12a63d424bc0658272c0159a6cc579226d3",
         "affectsGlobalScope": false
       },
       "./server/models/commands.ts": {
-        "version": "c664b4423762d154fde0d9b42033158bbf3cb932fac47f1dc5bf30cc681294aa",
+        "version": "cdfb14a8bb4bc8045ecc9e5cc9ccb652c50ee3c84427b3683080e4072d725919",
         "signature": "fb38a6752512551e398d9bdeaae0ba216af583dcb01fdfcf702085aa2d4369fd",
         "affectsGlobalScope": false
       },
       "./server/models/tableDataQuery.ts": {
-        "version": "d687f936276bfc5a4ce460d9c9c8ee7653913a33b2359427a754e0f844e3ba3c",
+        "version": "6ecc2ae8efe7361484ee2d7ea351002bfe2d876f8ffa8ad7b8642fb4f247c3ba",
         "signature": "aacc7271807fa50d5069e64b473079ada27979c99aaa6c8040336cdda80438a8",
         "affectsGlobalScope": false
       },
