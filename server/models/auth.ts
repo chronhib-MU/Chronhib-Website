@@ -17,7 +17,7 @@ const jwt_expires_in = process.env.JWT_EXPIRES_IN || result.parsed?.JWT_EXPIRES_
 // const envtest = process.env.ENVTEST || ENVTEST;
 // const jwt_cookie_expires = parseInt(process.env.JWT_COOKIE_EXPIRES || JWT_COOKIE_EXPIRES);
 // Creates a new account
-const register = (logger: Logger, connection: Connection, firstName: string, lastName: string, email: string, password: string, res: Response, next: NextFunction):void => {
+const register = (logger: Logger, connection: Connection, firstName: string, lastName: string, email: string, password: string, res: Response, next: NextFunction): void => {
   // console.table(reqBody);
   // logger.trace(reqBody);
   if (!email) {

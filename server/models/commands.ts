@@ -4,21 +4,21 @@ import { Connection } from 'mysql';
 import { isLoggedIn } from './auth';
 
 // Creates a row if a row is inserted
-const createRow = (
+function createRow (
   connection: Connection,
   logger: Logger,
   table: string,
-  values: { fprop: string | undefined, fval: string | undefined }[],
-  user: { First_Name: string, Last_Name: string, Email: string },
+  values: { fprop: string | undefined; fval: string | undefined; }[],
+  user: { First_Name: string; Last_Name: string; Email: string; },
   token: string,
   res: Response,
   next: NextFunction
-): void => {
+): void {
   isLoggedIn(logger, connection, token, res, true);
-  console.log('Row Values: ', values);
-  console.log('Row Table: ', table);
+  // console.log('Row Values: ', values);
+  // console.log('Row Table: ', table);
   // logger.trace(values);
-  const tableStructures: { [key: string]: { [key: string]: string | null } } = {
+  const tableStructures: { [key: string]: { [key: string]: string | null; }; } = {
     TEXT: {
       'ID': null,
       'Text_ID': '',
@@ -118,7 +118,7 @@ const createRow = (
       const tableID = table + '.ID';
       let createRowQuery: Array<string> = [];
       let createRowValues: Array<string | number>[] = [];
-      if (values[0].fprop && values[0].fval) {
+      if (values.length && values[0].fprop && values[0].fval) {
         const tableFProp = table + '.' + values[0].fprop;
         createRowQuery =
           ['UPDATE ?? SET ?? = ? WHERE ?? = ?;', 'UPDATE ?? SET ?? = ? WHERE ?? = ?;'];
@@ -130,7 +130,8 @@ const createRow = (
       }
       console.log('Create Row Query: ', createRowQuery);
       console.log('Create Row Values: ', createRowValues);
-      console.log('Connection Query 0: ', query.sql)
+      console.log('Connection Query 0: ', query.sql);
+      // Updates Sort ID
       query = connection.query(createRowQuery[0], createRowValues[0], (err, result) => {
         if (err) {
           console.log('Error: ', { Error: err, User: user });
@@ -141,6 +142,7 @@ const createRow = (
           console.log('Connection Query 1: ', query.sql);
           console.log('createRowQuery Length: ', createRowQuery, createRowQuery.length);
           if (createRowQuery.length > 1) {
+            // Updates FProps and FVals if added
             query = connection.query(createRowQuery[1], createRowValues[1], (err, result) => {
               if (err) {
                 console.log('Error: ', { Error: err, User: user });
@@ -162,7 +164,7 @@ const createRow = (
 }
 
 // Add Search Query to Database
-const insertSearchQuery = (connection: Connection, logger: Logger, query: string, creator: string, res: Response, next: NextFunction): void => {
+function insertSearchQuery (connection: Connection, logger: Logger, query: string, creator: string, res: Response, next: NextFunction): void {
   connection.query(
     'INSERT INTO `SEARCH` SET ?',
     { Query: query, Creator: creator },
@@ -179,18 +181,16 @@ const insertSearchQuery = (connection: Connection, logger: Logger, query: string
 }
 
 // Moves the row if the row is reordered
-const moveRow = (
-  connection: Connection,
+function moveRow (connection: Connection,
   logger: Logger,
   table: string,
-  values: { Sort_ID: number, ID: number }[][],
-  user: { First_Name: string, Last_Name: string, Email: string },
+  values: { Sort_ID: number; ID: number; }[][],
+  user: { First_Name: string; Last_Name: string; Email: string; },
   token: string,
   res: Response,
-  next: NextFunction
-): void => {
+  next: NextFunction): void {
   isLoggedIn(logger, connection, token, res, true);
-  const updateQueries: { query: string; values: [string, number, number] }[] = [];
+  const updateQueries: { query: string; values: [string, number, number]; }[] = [];
   values[0].forEach(rowData => {
     const query = 'UPDATE ?? SET `Sort_ID` = ? WHERE `ID` = ?;';
     updateQueries.push({ query, values: [table, rowData.Sort_ID, rowData.ID] });
@@ -214,24 +214,24 @@ const moveRow = (
 }
 
 // Removes a row, if a row is deleted
-const removeRow = (connection: Connection, logger: Logger, table: string, values: string, token: string, res: Response, next: NextFunction): void => {
+function removeRow (connection: Connection, logger: Logger, table: string, values: string[], token: string, res: Response, next: NextFunction): void {
   isLoggedIn(logger, connection, token, res, true);
-  console.log(values);
-  const query = 'DELETE FROM ?? WHERE `ID` IN (?);'
+  console.log('Remove Row: ', values);
+  const query = 'DELETE FROM ?? WHERE `ID` IN (?);';
   connection.query(query, [table, values], (err, result) => {
     if (err) {
       // console.log('Error: ', err);
       logger.error('Error: ', err);
       next(err);
     } else {
-      console.log(result);
+      console.log('Remove result: ', result);
       res.status(200).end();
     }
-  })
+  });
 }
 
 // Updates a row if a row is edited
-const updateRow = (connection: Connection, logger: Logger, table: string, values: { id: number, fieldProperty: string, fieldValue: string | number }[], token: string, res: Response, next: NextFunction): void => {
+function updateRow (connection: Connection, logger: Logger, table: string, values: { id: number; fieldProperty: string; fieldValue: string | number; }[], token: string, res: Response, next: NextFunction): void {
   isLoggedIn(logger, connection, token, res, true);
   values.forEach(value => {
     // console.log(value);
@@ -256,10 +256,11 @@ const updateRow = (connection: Connection, logger: Logger, table: string, values
   });
 }
 
+
 export {
   moveRow,
   createRow,
   removeRow,
   updateRow,
-  insertSearchQuery
+  insertSearchQuery,
 };
