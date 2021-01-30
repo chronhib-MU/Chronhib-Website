@@ -4,14 +4,10 @@ import path from 'path';
 import cors from 'cors';
 import mysql from 'mysql';
 import cookieParser from 'cookie-parser';
-import serveStatic from 'serve-static'
-// import { promisify } from 'util';
 import dotenv from 'dotenv';
 import compression from 'compression';
 import helmet from 'helmet';
-// import { parse } from 'path';
 import log4js from 'log4js';
-// import { throws } from 'assert';
 import { register, login, isLoggedIn } from './models/auth';
 import { createRow, insertSearchQuery, moveRow, removeRow, updateRow } from './models/commands';
 import { getHeaders, getTableColumnRows, navigateTable, searchTable } from './models/tableDataQuery';
@@ -99,7 +95,6 @@ app.use(urlencoded({ limit: '50mb', extended: true, parameterLimit: 1000 }));
 app.use(cookieParser());
 app.use(compression()); // Compress all routes
 app.use(helmet()); // Protect against well known vulnerabilities
-
 // Serve the static files from the Angular app
 app.use(`/${appName}/`, express.static(path.join(__dirname, folderLoc)));
 app.use(`/${appName}/assets/`, express.static(path.join(__dirname, folderLoc + 'assets/')));
@@ -122,7 +117,7 @@ app.post(`/${appName}/isLoggedIn`, (req, res): void => {
 
 app.patch(`/${appName}/api/rows/`, (req, res, next) => {
   console.log('PATCH Variable: ', req.body);
-  logger.trace('PATCH Variable: ', req.body);
+  logger.info('PATCH Variable: ', req.body);
   const { command, values, user, token } = req.body;
   const table = req.body.table.toUpperCase();
   switch (command) {
@@ -138,18 +133,23 @@ app.patch(`/${appName}/api/rows/`, (req, res, next) => {
 });
 
 app.delete(`/${appName}/api/rows/`, (req, res, next) => {
-  console.log('DELETE Variable: ', req.body);
-  logger.trace('DELETE Variable: ', req.body);
-  const { values, token } = req.query;
-  const table = req.body.table.toUpperCase();
-  if (typeof values === 'string' && typeof token === 'string') {
+  console.log('DELETE Variable: ', req.query);
+  logger.info('DELETE Variable: ', req.query);
+
+  const { values, token } = req.query as { [key: string]: string | string[] };
+
+  if (Array.isArray(values) && typeof req.query.table === 'string' && typeof token === 'string') {
+    const table = req.query.table.toUpperCase();
     removeRow(connection, logger, table, values, token, res, next);
+  } else {
+    logger.error({ Message: "Table expected for deletion.", Object: req.query.table, User: req.query.user })
+    res.send({ Message: "Table expected for deletion.", Object: req.query.table, User: req.query.user })
   }
 });
 
 app.post(`/${appName}/api/rows/`, (req, res, next) => {
   console.log('POST Variable: ', req.body);
-  logger.trace('POST Variable: ', req.body);
+  logger.info('POST Variable: ', req.body);
   const { values, user, token } = req.body;
   const table = req.body.table.toUpperCase();
 
@@ -158,7 +158,7 @@ app.post(`/${appName}/api/rows/`, (req, res, next) => {
 
 app.post(`/${appName}/api/searchQuery/`, (req, res, next) => {
   console.log('POST Variable: ', req.body);
-  logger.trace('POST Variable: ', req.body);
+  logger.info('POST Variable: ', req.body);
   const { query, creator } = req.body
   insertSearchQuery(connection, logger, query, creator, res, next);
 });
@@ -168,7 +168,6 @@ app.get(`/${appName}/api/search/`, (req, res, next) => {
   console.table(req.query);
   logger.trace(req.query);
   searchTable(connection, logger, req.query, res, next);
-
 });
 
 // Handles all the advanced get api table queries
@@ -185,6 +184,7 @@ app.get(`/${appName}/api/tableColumnRows`, (req, res, next) => {
     typeof req.query.table === 'string' &&
     typeof req.query.column === 'string' &&
     typeof req.query.filter === 'string'
+
   ) {
     const { table, column, filter } = req.query;
     getTableColumnRows(connection, logger, table, column, filter, res, next);

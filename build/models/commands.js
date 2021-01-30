@@ -23,10 +23,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.insertSearchQuery = exports.updateRow = exports.removeRow = exports.createRow = exports.moveRow = void 0;
 var auth_1 = require("./auth");
 // Creates a row if a row is inserted
-var createRow = function (connection, logger, table, values, user, token, res, next) {
+function createRow(connection, logger, table, values, user, token, res, next) {
     auth_1.isLoggedIn(logger, connection, token, res, true);
-    console.log('Row Values: ', values);
-    console.log('Row Table: ', table);
+    // console.log('Row Values: ', values);
+    // console.log('Row Table: ', table);
     // logger.trace(values);
     var tableStructures = {
         TEXT: {
@@ -129,7 +129,7 @@ var createRow = function (connection, logger, table, values, user, token, res, n
             var tableID = table + '.ID';
             var createRowQuery_1 = [];
             var createRowValues_1 = [];
-            if (values[0].fprop && values[0].fval) {
+            if (values.length && values[0].fprop && values[0].fval) {
                 var tableFProp = table + '.' + values[0].fprop;
                 createRowQuery_1 =
                     ['UPDATE ?? SET ?? = ? WHERE ?? = ?;', 'UPDATE ?? SET ?? = ? WHERE ?? = ?;'];
@@ -143,6 +143,7 @@ var createRow = function (connection, logger, table, values, user, token, res, n
             console.log('Create Row Query: ', createRowQuery_1);
             console.log('Create Row Values: ', createRowValues_1);
             console.log('Connection Query 0: ', query.sql);
+            // Updates Sort ID
             query = connection.query(createRowQuery_1[0], createRowValues_1[0], function (err, result) {
                 if (err) {
                     console.log('Error: ', { Error: err, User: user });
@@ -154,6 +155,7 @@ var createRow = function (connection, logger, table, values, user, token, res, n
                     console.log('Connection Query 1: ', query.sql);
                     console.log('createRowQuery Length: ', createRowQuery_1, createRowQuery_1.length);
                     if (createRowQuery_1.length > 1) {
+                        // Updates FProps and FVals if added
                         query = connection.query(createRowQuery_1[1], createRowValues_1[1], function (err, result) {
                             if (err) {
                                 console.log('Error: ', { Error: err, User: user });
@@ -174,10 +176,10 @@ var createRow = function (connection, logger, table, values, user, token, res, n
             });
         }
     });
-};
+}
 exports.createRow = createRow;
 // Add Search Query to Database
-var insertSearchQuery = function (connection, logger, query, creator, res, next) {
+function insertSearchQuery(connection, logger, query, creator, res, next) {
     connection.query('INSERT INTO `SEARCH` SET ?', { Query: query, Creator: creator }, function (error, result) {
         if (error) {
             // console.log(error);
@@ -188,10 +190,10 @@ var insertSearchQuery = function (connection, logger, query, creator, res, next)
             res.status(200).end(result.insertId.toString());
         }
     });
-};
+}
 exports.insertSearchQuery = insertSearchQuery;
 // Moves the row if the row is reordered
-var moveRow = function (connection, logger, table, values, user, token, res, next) {
+function moveRow(connection, logger, table, values, user, token, res, next) {
     auth_1.isLoggedIn(logger, connection, token, res, true);
     var updateQueries = [];
     values[0].forEach(function (rowData) {
@@ -215,12 +217,12 @@ var moveRow = function (connection, logger, table, values, user, token, res, nex
             // console.log({ beforeTable, afterTable });
         });
     });
-};
+}
 exports.moveRow = moveRow;
 // Removes a row, if a row is deleted
-var removeRow = function (connection, logger, table, values, token, res, next) {
+function removeRow(connection, logger, table, values, token, res, next) {
     auth_1.isLoggedIn(logger, connection, token, res, true);
-    console.log(values);
+    console.log('Remove Row: ', values);
     var query = 'DELETE FROM ?? WHERE `ID` IN (?);';
     connection.query(query, [table, values], function (err, result) {
         if (err) {
@@ -229,14 +231,14 @@ var removeRow = function (connection, logger, table, values, token, res, next) {
             next(err);
         }
         else {
-            console.log(result);
+            console.log('Remove result: ', result);
             res.status(200).end();
         }
     });
-};
+}
 exports.removeRow = removeRow;
 // Updates a row if a row is edited
-var updateRow = function (connection, logger, table, values, token, res, next) {
+function updateRow(connection, logger, table, values, token, res, next) {
     auth_1.isLoggedIn(logger, connection, token, res, true);
     values.forEach(function (value) {
         // console.log(value);
@@ -260,6 +262,6 @@ var updateRow = function (connection, logger, table, values, token, res, next) {
             // console.log({ beforeTable, afterTable });
         });
     });
-};
+}
 exports.updateRow = updateRow;
 //# sourceMappingURL=commands.js.map

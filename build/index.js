@@ -29,13 +29,10 @@ var path_1 = __importDefault(require("path"));
 var cors_1 = __importDefault(require("cors"));
 var mysql_1 = __importDefault(require("mysql"));
 var cookie_parser_1 = __importDefault(require("cookie-parser"));
-// import { promisify } from 'util';
 var dotenv_1 = __importDefault(require("dotenv"));
 var compression_1 = __importDefault(require("compression"));
 var helmet_1 = __importDefault(require("helmet"));
-// import { parse } from 'path';
 var log4js_1 = __importDefault(require("log4js"));
-// import { throws } from 'assert';
 var auth_1 = require("./models/auth");
 var commands_1 = require("./models/commands");
 var tableDataQuery_1 = require("./models/tableDataQuery");
@@ -134,7 +131,7 @@ app.post("/" + appName + "/isLoggedIn", function (req, res) {
 });
 app.patch("/" + appName + "/api/rows/", function (req, res, next) {
     console.log('PATCH Variable: ', req.body);
-    logger.trace('PATCH Variable: ', req.body);
+    logger.info('PATCH Variable: ', req.body);
     var _a = req.body, command = _a.command, values = _a.values, user = _a.user, token = _a.token;
     var table = req.body.table.toUpperCase();
     switch (command) {
@@ -149,24 +146,28 @@ app.patch("/" + appName + "/api/rows/", function (req, res, next) {
     }
 });
 app.delete("/" + appName + "/api/rows/", function (req, res, next) {
-    console.log('DELETE Variable: ', req.body);
-    logger.trace('DELETE Variable: ', req.body);
+    console.log('DELETE Variable: ', req.query);
+    logger.info('DELETE Variable: ', req.query);
     var _a = req.query, values = _a.values, token = _a.token;
-    var table = req.body.table.toUpperCase();
-    if (typeof values === 'string' && typeof token === 'string') {
+    if (Array.isArray(values) && typeof req.query.table === 'string' && typeof token === 'string') {
+        var table = req.query.table.toUpperCase();
         commands_1.removeRow(connection, logger, table, values, token, res, next);
+    }
+    else {
+        logger.error({ Message: "Table expected for deletion.", Object: req.query.table, User: req.query.user });
+        res.send({ Message: "Table expected for deletion.", Object: req.query.table, User: req.query.user });
     }
 });
 app.post("/" + appName + "/api/rows/", function (req, res, next) {
     console.log('POST Variable: ', req.body);
-    logger.trace('POST Variable: ', req.body);
+    logger.info('POST Variable: ', req.body);
     var _a = req.body, values = _a.values, user = _a.user, token = _a.token;
     var table = req.body.table.toUpperCase();
     commands_1.createRow(connection, logger, table, values, user, token, res, next);
 });
 app.post("/" + appName + "/api/searchQuery/", function (req, res, next) {
     console.log('POST Variable: ', req.body);
-    logger.trace('POST Variable: ', req.body);
+    logger.info('POST Variable: ', req.body);
     var _a = req.body, query = _a.query, creator = _a.creator;
     commands_1.insertSearchQuery(connection, logger, query, creator, res, next);
 });
