@@ -28,7 +28,7 @@ export class PaginationService {
     this.tableData.page = 1;
     return this.tableData.page;
   }
-  gotoPage (e?: any) {
+  async gotoPage (e?: any) {
     console.log(e);
     // If e is undefined
     if (!e) {
@@ -57,18 +57,18 @@ export class PaginationService {
       }
       if (this.table) {
         this.hotRegisterer.getInstance('hot').scrollViewportTo(0, 0);
-        return this.tableData.router
+        await this.tableData.router
           .navigate(['/tables', this.table], {
             queryParams
-          })
-          .then(() => this.scrollToTableSub.next());
+          });
+        return this.scrollToTableSub.next();
       } else {
         this.hotRegisterer.getInstance('hot').scrollViewportTo(0, 0);
-        return this.tableData.router
+        await this.tableData.router
           .navigate(['/tables'], {
             queryParams
-          })
-          .then(() => this.scrollToTableSub.next());
+          });
+        return this.scrollToTableSub.next();
       }
     }
   }

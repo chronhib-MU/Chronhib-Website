@@ -9,7 +9,7 @@
       "command": "npm run dev",
       "request": "launch",
       "type": "node-terminal",
-      "postDebugTask": "Kill Server"
+      "preLaunchTask": "Kill Server"
     },
     {
       "name": "Launch Firefox",

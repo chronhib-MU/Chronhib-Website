@@ -219,7 +219,7 @@ export class TableComponent implements OnInit {
                 that.tableData.updateTable(res).then(() => {
                   that.history.push(res);
                   // console.log('History: ', that.history);
-                  // that.refresh();
+                  that.refresh();
                 });
               }
             } else if (that.searchTable.headers.includes('ID')) {
@@ -260,7 +260,7 @@ export class TableComponent implements OnInit {
             that.tableData.updateTable(res).then(() => {
               that.history.push(res);
               // console.log('History: ', that.history);
-              // that.refresh();
+              that.refresh();
             });
           }
         };
@@ -354,7 +354,7 @@ export class TableComponent implements OnInit {
               that.tableData.updateTable(res).then(() => {
                 that.history.push(res);
                 // console.log('History: ', that.history);
-                // that.refresh();
+                that.refresh();
               });
             }
           } else if (that.searchTable.headers.includes('ID')) {

@@ -1,7 +1,7 @@
 import { AuthService } from './auth.service';
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, Subject, SubscribableOrPromise, Subscription, throwError } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { ApiGetQuery } from '../interfaces/api-get-query';
 import { ApiPostBody } from '../interfaces/api-post-body';
