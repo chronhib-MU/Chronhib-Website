@@ -829,6 +829,8 @@ export class TableComponent implements OnInit {
         return 200;
       case 'SpecialCharacter':
         return 175;
+      case 'Syntactic_Context':
+        return 175;
       case 'Syntactic_Unit_Translation':
         return 250;
       case 'Text_ID':
@@ -846,7 +848,7 @@ export class TableComponent implements OnInit {
       case 'Variant_Readings':
         return 200;
       default:
-        return 150;
+        return 175;
     }
   }
 

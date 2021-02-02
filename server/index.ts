@@ -52,12 +52,20 @@ const database = process.env.DATABASE || result.parsed?.DATABASE;
 const app = express();
 const server = http.createServer(app);
 
+const tableNames = [
+  'TEXT',
+  'SENTENCES',
+  'MORPHOLOGY',
+  'LEMMATA'
+]
+
 const tables: { [key: string]: string } = {
   text: 'SELECT * FROM `TEXT` ORDER BY `Sort_ID` ASC LIMIT 100',
   lemmata: 'SELECT * FROM `SENTENCES` ORDER BY `Text_ID`, LENGTH(`Text_Unit_ID`), `Text_Unit_ID`, `Sort_ID` ASC LIMIT 100',
   morphology: 'SELECT * FROM `MORPHOLOGY` ORDER BY `Text_ID`, LENGTH(`Text_Unit_ID`), `Text_Unit_ID`, `Sort_ID`, `ID` ASC LIMIT 100',
   sentences: 'SELECT * FROM `LEMMATA` ORDER BY `Lemma` COLLATE utf8mb4_unicode_ci , `Sort_ID` ASC LIMIT 100'
 };
+
 const dbconfig = {
   host,
   user,
@@ -70,9 +78,28 @@ connection.connect((err) => {
   if (err) {
     logger.error('Error: ', err);
     console.log(err);
-    return err;
-  } return;
+
+  }
 });
+
+const tableStructures: { [key: string]: { [key: string]: string | null; }; } = {};
+tableNames.forEach(name => {
+  tableStructures[name] = {};
+  connection.query('SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?', [database, name], (err, results) => {
+    if (err) {
+      logger.error(err);
+      return err;
+    } else {
+      // console.log('Table Column Structure', results);
+      const nullColumns = ['ID', 'Sort_ID'];
+      const columns = results.map((result: { COLUMN_NAME: string; }) => result.COLUMN_NAME);
+      columns.forEach((column: string) => {
+        tableStructures[name][column] = nullColumns.includes(column) ? null : '';
+      })
+      return;
+    }
+  });
+})
 // console.log(connection);
 // logger.debug(connection);
 // connection.query('SELECT `First_Name`,`Last_Name`,`Email`,`Password` FROM `USERS`', (err, results) => {
@@ -153,7 +180,7 @@ app.post(`/${appName}/api/rows/`, (req, res, next) => {
   const { values, user, token } = req.body;
   const table = req.body.table.toUpperCase();
 
-  createRow(connection, logger, table, values, user, token, res, next);
+  createRow(connection, logger, table, tableStructures, values, user, token, res, next);
 });
 
 app.post(`/${appName}/api/searchQuery/`, (req, res, next) => {

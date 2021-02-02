@@ -40,7 +40,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 var _a, _b;
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.isLoggedIn = exports.login = exports.register = void 0;
 var jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 var bcryptjs_1 = __importDefault(require("bcryptjs"));
 var dotenv_1 = __importDefault(require("dotenv"));
