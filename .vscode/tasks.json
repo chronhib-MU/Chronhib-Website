@@ -17,7 +17,7 @@
             "isBackground": true,
             "presentation": {
                 "focus": true,
-                "panel": "dedicated"
+                "panel": "shared"
             },
             "group": {
                 "kind": "build",

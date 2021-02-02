@@ -23,98 +23,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.insertSearchQuery = exports.updateRow = exports.removeRow = exports.createRow = exports.moveRow = void 0;
 var auth_1 = require("./auth");
 // Creates a row if a row is inserted
-function createRow(connection, logger, table, values, user, token, res, next) {
+function createRow(connection, logger, table, tableStructures, values, user, token, res, next) {
     auth_1.isLoggedIn(logger, connection, token, res, true);
     // console.log('Row Values: ', values);
     // console.log('Row Table: ', table);
     // logger.trace(values);
-    var tableStructures = {
-        TEXT: {
-            'ID': null,
-            'Text_ID': '',
-            'Title': '',
-            'Date': '',
-            'Dating_Criteria': '',
-            'Edition': '',
-            'MSS': '',
-            'Digital_MSS': '',
-            'Thes': '',
-            'Contributor': '',
-            'Created_Date': '',
-            'MS_Checked': '',
-            'Reason_Of_MS_Choice_And_Editorial_Policy': '',
-            'Sort_ID': null
-        },
-        SENTENCES: {
-            'ID': null,
-            'Text_ID': '',
-            'Text_Unit_ID': '',
-            'Locus1': '',
-            'Locus2': '',
-            'Locus3': '',
-            'Textual_Unit': '',
-            'Translation': '',
-            'Textual_Notes': '',
-            'Translation_Notes': '',
-            'Latin_Text': '',
-            'Translation_From_Latin': '',
-            'Variant_Readings': '',
-            'Subunit': '',
-            'Sort_ID': null
-        },
-        MORPHOLOGY: {
-            'ID': null,
-            'Text_Unit_ID': '',
-            'Stressed_Unit': '',
-            'Morph': '',
-            'Expected_Morph': '',
-            'Lemma': '',
-            'Secondary_Meaning': '',
-            'Analysis': '',
-            'Comments': '',
-            'Augm': '',
-            'Rel': '',
-            'Trans': '',
-            'Depend': '',
-            'Depon': '',
-            'Contr': '',
-            'Hiat': '',
-            'Mut': '',
-            'Causing_Mut': '',
-            'Hybrid_form': '',
-            'Problematic_Form': '',
-            'Onomastic_Complex': '',
-            'Onomastic_Usage': '',
-            'SpecialCharacter': '',
-            'Syntactic_ID': '',
-            'Phrase_structure_tree': '',
-            'Syntactic_Unit': '',
-            'Phrase_type': '',
-            'Phrase': '',
-            'Syntactic_Unit_Translation': '',
-            'id_of_change': '',
-            'Var_Status_1': '',
-            'Var_Status_2': '',
-            'Var_Status_3': '',
-            'Var_Status_4': '',
-            'Var_Status_5': '',
-            'Text_ID': '',
-            'Sort_ID': null
-        },
-        LEMMATA: {
-            'ID': null,
-            'Lemma': '',
-            'Meaning': '',
-            'DIL_Headword': '',
-            'Part_Of_Speech': '',
-            'Class': '',
-            'Gender': '',
-            'Etymology': '',
-            'Comments': '',
-            'Lang': '',
-            'Sort_ID': null
-        }
-    };
+    console.log('Table Structures: ', tableStructures);
     console.log([table, Object.keys(tableStructures[table]), Object.values(tableStructures[table])]);
     var query = connection.query('INSERT INTO ?? (??) VALUES (?);', [table, Object.keys(tableStructures[table]), Object.values(tableStructures[table])], function (error, result) {
         if (error) {
@@ -144,7 +58,7 @@ function createRow(connection, logger, table, values, user, token, res, next) {
             console.log('Create Row Values: ', createRowValues_1);
             console.log('Connection Query 0: ', query.sql);
             // Updates Sort ID
-            query = connection.query(createRowQuery_1[0], createRowValues_1[0], function (err, result) {
+            query = connection.query(createRowQuery_1[1], createRowValues_1[1], function (err, result) {
                 if (err) {
                     console.log('Error: ', { Error: err, User: user });
                     logger.error('Error: ', { Error: err, User: user });
