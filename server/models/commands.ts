@@ -47,7 +47,7 @@ function createRow (
       console.log('Create Row Values: ', createRowValues);
       console.log('Connection Query 0: ', query.sql);
       // Updates Sort ID
-      query = connection.query(createRowQuery[1], createRowValues[1], (err: unknown, result: unknown) => {
+      query = connection.query(createRowQuery[0], createRowValues[0], (err: unknown, result: unknown) => {
         if (err) {
           console.log('Error: ', { Error: err, User: user });
           logger.error('Error: ', { Error: err, User: user });
@@ -58,7 +58,7 @@ function createRow (
           console.log('createRowQuery Length: ', createRowQuery, createRowQuery.length);
           if (createRowQuery.length > 1) {
             // Updates FProps and FVals if added
-            query = connection.query(createRowQuery[1], createRowValues[1], (err, result) => {
+            query = connection.query(createRowQuery[1], createRowValues[1], (err: unknown, result: unknown) => {
               if (err) {
                 console.log('Error: ', { Error: err, User: user });
                 logger.error('Error: ', { Error: err, User: user });
