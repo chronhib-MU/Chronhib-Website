@@ -72,6 +72,12 @@ var database = process.env.DATABASE || ((_f = result.parsed) === null || _f === 
 // console.table({ port, host, password, database, node_env, user, jwt_secret, jwt_expires_in, jwt_cookie_expires });
 var app = express_1.default();
 var server = http_1.default.createServer(app);
+var tableNames = [
+    'TEXT',
+    'SENTENCES',
+    'MORPHOLOGY',
+    'LEMMATA'
+];
 var tables = {
     text: 'SELECT * FROM `TEXT` ORDER BY `Sort_ID` ASC LIMIT 100',
     lemmata: 'SELECT * FROM `SENTENCES` ORDER BY `Text_ID`, LENGTH(`Text_Unit_ID`), `Text_Unit_ID`, `Sort_ID` ASC LIMIT 100',
@@ -89,9 +95,26 @@ connection.connect(function (err) {
     if (err) {
         logger.error('Error: ', err);
         console.log(err);
-        return err;
     }
-    return;
+});
+var tableStructures = {};
+tableNames.forEach(function (name) {
+    tableStructures[name] = {};
+    connection.query('SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?', [database, name], function (err, results) {
+        if (err) {
+            logger.error(err);
+            return err;
+        }
+        else {
+            // console.log('Table Column Structure', results);
+            var nullColumns_1 = ['ID', 'Sort_ID'];
+            var columns = results.map(function (result) { return result.COLUMN_NAME; });
+            columns.forEach(function (column) {
+                tableStructures[name][column] = nullColumns_1.includes(column) ? null : '';
+            });
+            return;
+        }
+    });
 });
 // console.log(connection);
 // logger.debug(connection);
@@ -163,7 +186,7 @@ app.post("/" + appName + "/api/rows/", function (req, res, next) {
     logger.info('POST Variable: ', req.body);
     var _a = req.body, values = _a.values, user = _a.user, token = _a.token;
     var table = req.body.table.toUpperCase();
-    commands_1.createRow(connection, logger, table, values, user, token, res, next);
+    commands_1.createRow(connection, logger, table, tableStructures, values, user, token, res, next);
 });
 app.post("/" + appName + "/api/searchQuery/", function (req, res, next) {
     console.log('POST Variable: ', req.body);
