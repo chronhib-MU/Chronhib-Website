@@ -20,6 +20,7 @@ var __spread = (this && this.__spread) || function () {
     return ar;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.insertSearchQuery = exports.updateRow = exports.removeRow = exports.createRow = exports.moveRow = void 0;
 var auth_1 = require("./auth");
 // Creates a row if a row is inserted
 function createRow(connection, logger, table, tableStructures, values, user, token, res, next) {
@@ -57,7 +58,7 @@ function createRow(connection, logger, table, tableStructures, values, user, tok
             console.log('Create Row Values: ', createRowValues_1);
             console.log('Connection Query 0: ', query.sql);
             // Updates Sort ID
-            query = connection.query(createRowQuery_1[1], createRowValues_1[1], function (err, result) {
+            query = connection.query(createRowQuery_1[0], createRowValues_1[0], function (err, result) {
                 if (err) {
                     console.log('Error: ', { Error: err, User: user });
                     logger.error('Error: ', { Error: err, User: user });

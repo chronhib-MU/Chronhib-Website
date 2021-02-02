@@ -20,6 +20,7 @@ var __spread = (this && this.__spread) || function () {
     return ar;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.getHeaders = exports.getTableColumnRows = exports.navigateTable = exports.searchTable = void 0;
 // Search Feature
 var searchTable = function (connection, logger, query, res, next) {
     var searchQuery;
