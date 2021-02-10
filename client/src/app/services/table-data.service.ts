@@ -27,7 +27,7 @@ export class TableDataService {
   allHeaders = { text: [], sentences: [], morphology: [], lemmata: [] };
   fetchedTable: Observable<{ data: { afterTable: []; beforeTable: []; numRows?: number } }>;
   currentApiQuery: any;
-  searchTable = { headers: [], data: [] };
+  searchTable: any = { headers: [], data: [] };
   searchForm: FormGroup;
   searchQuerySub: Subject<any> = new Subject<FormGroup>();
   fetchedTableColumnRows: Observable<any>;

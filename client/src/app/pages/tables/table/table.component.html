@@ -108,6 +108,17 @@
                     </button>
                     <button type="button"
                             class="btn btn-sm btn-outline-default"
+                            (click)="toggleMode('filter')">
+                      Filter
+                      <span class="custom-toggle">
+                        <input type="checkbox"
+                               [checked]="filter"
+                               (click)="filter = !filter">
+                        <span class="custom-toggle-slider rounded-circle"></span>
+                      </span>
+                    </button>
+                    <button type="button"
+                            class="btn btn-sm btn-outline-default"
                             (click)="toggleMode('wordWrap')">
                       Word-Wrap
                       <span class="custom-toggle">

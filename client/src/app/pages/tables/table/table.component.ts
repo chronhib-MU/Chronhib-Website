@@ -9,11 +9,10 @@ import { HotTableRegisterer } from '@handsontable/angular';
 import { ApiPostBody } from '../../../interfaces/api-post-body';
 import * as jsonexport from 'jsonexport/dist';
 import * as _ from 'lodash';
+import * as $ from 'jquery';
 import { Validators } from '@angular/forms';
-import { Lemma } from '../../../model/autocompleteOpts.model';
 import { MatPaginator } from '@angular/material/paginator';
 
-declare const $: any;
 @Component({
   selector: 'app-table',
   templateUrl: './table.component.html',
@@ -28,9 +27,73 @@ export class TableComponent implements OnInit {
   paginator: MatPaginator;
   private hotRegisterer = new HotTableRegisterer();
   wordWrap = false;
+  filter = false;
   sort = false;
   ref = false;
   instance = 'hot';
+
+  // Event for `keydown` event. Add condition after delay of 200 ms which is counted from time of last pressed key.
+  debounce = (colIndex, event) => {
+    return Handsontable.helper.debounce(() => {
+      const filtersPlugin = this.hotRegisterer.getInstance(this.instance).getPlugin('filters');
+      // console.log((<HTMLInputElement> event.target).value);
+      filtersPlugin.removeConditions(colIndex);
+      filtersPlugin.addCondition(colIndex, 'contains', [(<HTMLInputElement> event.target).value]);
+      filtersPlugin.filter();
+    }, 200)();
+  }
+  addEventListeners = (input: HTMLInputElement, colIndex: any) => {
+    input.addEventListener('keyup', (event) => {
+      this.debounce(colIndex, event);
+    });
+  };
+
+  // Add elements to header on `afterGetColHeader` hook.
+  addInput = (col: number, TH: HTMLTableHeaderCellElement) => {
+    // Hooks can return value other than number (for example `columnSorting` plugin use this).
+    if (typeof col !== 'number') {
+      return col;
+    }
+
+    if (col >= 0 && TH.childElementCount < 2) {
+      TH.appendChild(this.getInitializedElements(col));
+    } else if (TH.childElementCount < 2) {
+      const div = document.createElement('div');
+      div.className = 'filterHeader';
+      TH.appendChild(div);
+    }
+  };
+
+  // Remove added elements to header on `afterGetColHeader` hook.
+  removeInput = (col: number, TH: HTMLTableHeaderCellElement) => {
+    if (typeof col !== 'number') {
+      return col;
+    }
+    if (TH.childElementCount >= 2) {
+      TH.removeChild(TH.lastChild);
+    }
+  }
+
+  // Deselect column after click on input.
+  doNotSelectColumn = function (event: MouseEvent, coords: Handsontable.wot.CellCoords) {
+    if (coords.row === -1 && (<HTMLInputElement> event.target).nodeName === 'INPUT') {
+      event.stopImmediatePropagation();
+      this.deselectCell();
+    }
+  };
+
+  // Build elements which will be displayed in header.
+  getInitializedElements = (colIndex: number) => {
+    const div = document.createElement('div');
+    const input = document.createElement('input');
+    div.className = 'filterHeader';
+
+    this.addEventListeners(input, colIndex);
+
+    div.appendChild(input);
+
+    return div;
+  };
   contextMenu: Handsontable.contextMenu.Settings =
     {
       items:
@@ -51,7 +114,7 @@ export class TableComponent implements OnInit {
     };
   // index 0 if edit mode false OR index 1 if edit mode true
   hotSettings: Handsontable.GridSettings[] = [
-    {
+    { // Edit Off
       startRows: 0,
       startCols: 0,
       stretchH: 'all',
@@ -67,10 +130,14 @@ export class TableComponent implements OnInit {
       contextMenu: false,
       readOnly: true,
       // colWidths: 150,
+      columnSorting: false,
       multiColumnSorting: false,
-      wordWrap: false
+      wordWrap: false,
+      filters: false,
+      afterGetColHeader: this.removeInput,
+      beforeOnCellMouseDown: undefined,
     },
-    {
+    {// Edit On
       startRows: 0,
       startCols: 0,
       stretchH: 'all',
@@ -86,8 +153,12 @@ export class TableComponent implements OnInit {
       contextMenu: this.contextMenu,
       readOnly: false,
       // colWidths: 150,
+      columnSorting: false,
       multiColumnSorting: false,
-      wordWrap: false
+      wordWrap: false,
+      filters: false,
+      afterGetColHeader: this.removeInput,
+      beforeOnCellMouseDown: undefined,
     }
   ];
   headers: any;
@@ -101,7 +172,10 @@ export class TableComponent implements OnInit {
       data: []
     }
   };
-  searchTable = { headers: [], data: [] };
+  searchTable: any = {
+    headers: [],
+    data: []
+  };
 
   dataset: any[] = [];
 
@@ -143,28 +217,32 @@ export class TableComponent implements OnInit {
     //   });
     // });
   }
+
   ngOnInit (): void {
     const that = this;
     this.paginator._intl.itemsPerPageLabel = 'Results per page:';
     this.sort = false;
+    this.filter = false;
     this.scrollToTableSub$ = this.pagination.scrollToTableSub.subscribe(() => {
       this.scrollToTable();
     });
     this.routeQueryParams = this.route.queryParamMap.subscribe(async _paramMap => {
       this.sort = false;
+      this.filter = false;
       this.refresh();
       // console.log('updated');
     });
-    // need this to push the dataset
+    // Need this to push the dataset
     const hooks = Handsontable.hooks.getRegistered();
     hooks.forEach(hook => {
-      // focuses on the results after changes cause they have before and after data
+      // Focuses on the results after changes cause they have before and after data
       let table = that.after;
       if (hook === 'afterChange') {
         this.hotSettings[that.edit ? 1 : 0][hook] = function () {
           // console.log('tableColumn length:', that.tableData.searchForm.get('tableColumns')['controls'].length);
           table = that.after;
           if (arguments[1] !== 'loadData') {
+            // Check that this is not a multi-table search
             if (
               that.after !== 'search' ||
               (that.tableData.searchForm.get('tableColumns')['controls'].length === 1 &&
@@ -181,11 +259,11 @@ export class TableComponent implements OnInit {
               // console.log('ids', ids);
               const values = [];
               arguments[0].forEach((value: any[]) => {
-                // console.log('value:', value);
+                console.log('value:', value);
                 const rowNumber = value[0];
                 const columnName = value[1];
                 const beforeValue = value[2];
-                const afterValue = value[3];
+                const afterValue = value[3] || '';
                 // Makes sure the edit is not an irrelevant one
                 if (beforeValue !== afterValue && ids.length) {
                   const fieldProperty = columnName;
@@ -199,8 +277,9 @@ export class TableComponent implements OnInit {
                   };
                   if (table === 'search') {
                     table = that.tableData.searchForm.get('tableColumns')['controls'][0].value.table;
+                  } else if (this.rootElement.id === 'hotMini') {
+                    table = that.before;
                   }
-
                   values.push(result);
                 }
               });
@@ -211,15 +290,13 @@ export class TableComponent implements OnInit {
                 user: that.authService.user
               };
               // Checks for which table we're making changes on
-              if (this.rootElement.id === 'hotMini') {
-                res.table = that.before;
-              }
+
               // console.log('Result:', res);
               if (that.edit && res.command !== 'loadData') {
                 that.tableData.updateTable(res).then(() => {
                   that.history.push(res);
                   // console.log('History: ', that.history);
-                  that.refresh();
+                  // that.refresh();
                 });
               }
             } else if (that.searchTable.headers.includes('ID')) {
@@ -236,7 +313,11 @@ export class TableComponent implements OnInit {
       } else if (hook === 'afterRowMove' && this.after !== 'search') {
         // TODO: refactor this
         this.hotSettings[that.edit ? 1 : 0][hook] = function () {
-          table = that.after
+          if (this.rootElement.id === 'hotMini') {
+            table = that.before;
+          } else {
+            table = that.after
+          }
           // console.log(this);
           const tableData = this.getData();
           const newValues = tableData.map((row: { [x: string]: any }, i: number) => {
@@ -245,16 +326,14 @@ export class TableComponent implements OnInit {
           });
 
           const res: ApiPostBody = {
-            table: that.after,
+            table,
             command: 'moveRow',
             values: [newValues],
             user: that.authService.user
           };
           // console.log('Result:', res);
           // Checks for which table we're making changes on
-          if (this.rootElement.id === 'hotMini') {
-            res.table = that.before;
-          }
+
           // console.log('Result:', res);
           if (that.edit) {
             that.tableData.updateTable(res).then(() => {
@@ -271,9 +350,6 @@ export class TableComponent implements OnInit {
         this.hotSettings[that.edit ? 1 : 0][hook] = function () {
           console.log("Arguments: ", arguments);
           table = that.after
-          const location = arguments[2].split('.')[1];
-          const tableData = this.getData();
-          // console.log(tableData);
           const values = [];
           // console.log('Current API Query: ', that.tableData.currentApiQuery);
           // If there are fields properties and values to automatically insert into the new row
@@ -285,6 +361,8 @@ export class TableComponent implements OnInit {
           } else if (that.after === 'search') {
             console.log(that.tableData.searchForm.get('tableColumns')['controls'][0].value.table);
             table = that.tableData.searchForm.get('tableColumns')['controls'][0].value.table;
+          } else if (this.rootElement.id === 'hotMini') {
+            table = that.before;
           }
           console.log("Values: ", values);
           const res: ApiPostBody = {
@@ -294,9 +372,7 @@ export class TableComponent implements OnInit {
             user: that.authService.user
           };
           // Checks for which table we're making changes on
-          if (this.rootElement.id === 'hotMini') {
-            res.table = that.before;
-          }
+
           console.log('Result:', res);
           if (that.edit) {
             that.refresh();
@@ -308,9 +384,10 @@ export class TableComponent implements OnInit {
           }
         };
       }
-      else if (hook === 'beforeRemoveRow' && (that.after !== 'search' || that.tableData.searchForm.get('tableColumns')['controls'].length === 1)) {
+      else if (hook === 'beforeRemoveRow' && (that.after !== 'search' || that.tableData.searchForm.get('tableColumns')['controls'].length)) {
         this.hotSettings[that.edit ? 1 : 0][hook] = function () {
           table = that.after;
+          // Check that this is not a multi-table search
           if (
             that.after !== 'search' ||
             (that.tableData.searchForm.get('tableColumns')['controls'].length === 1 &&
@@ -372,13 +449,15 @@ export class TableComponent implements OnInit {
 
     // $hooksList = $('#hooksList');
   }
+
   copyToClipboard () {
     $('body').append('<input id="copyURL" type="text" value="" />');
-    $('#copyURL').val(window.location.href).select();
+    $('#copyURL').val(window.location.href).trigger('select');
     document.execCommand('copy');
     $('#copyURL').remove();
     this.authService.showToaster('', 'Search Link Copied to Clipboard!', 'info');
   }
+
   exportToCSV () {
     let filename =
       this.after === 'search'
@@ -408,34 +487,34 @@ export class TableComponent implements OnInit {
       }
     });
   }
+
   compareFunctionFactory (sortOrder: string) {
     const order = sortOrder === 'asc' ? true : false;
-    return function comparator (a: string, b: string) {
-      return order
-        ? (new Intl.Collator().compare(a, b) as 0 | 1 | -1)
-        : (new Intl.Collator().compare(b, a) as 0 | 1 | -1);
-    };
+    return function comparator (a: string | number, b: string | number) {
+      // console.log(typeof a);
+      // console.log(typeof b);
+      if (typeof a === 'number' && typeof b === 'number') {
+        if (b === a) {
+          return 0;
+        }
+        else {
+          if (order) {
+            return b - a > 0 ? 1 : -1;
+          } else {
+            return b - a > 0 ? -1 : 1;
+          }
+        }
+      } else if (typeof a === 'string' && typeof b === 'string') {
+        return order
+          ? (new Intl.Collator().compare(a, b) as 0 | 1 | -1)
+          : (new Intl.Collator().compare(b, a) as 0 | 1 | -1);
+      } else {
+        return 0;
+      }
+    }
   }
 
   async fetchedTable () {
-    if (this.hotRegisterer.getInstance(this.instance + 'Mini')) {
-      this.hotRegisterer.getInstance(this.instance + 'Mini').updateSettings({
-        multiColumnSorting: this.sort
-          ? {
-            compareFunctionFactory: this.compareFunctionFactory
-          }
-          : false
-      });
-    }
-    if (this.hotRegisterer.getInstance(this.instance)) {
-      this.hotRegisterer.getInstance(this.instance).updateSettings({
-        multiColumnSorting: this.sort
-          ? {
-            compareFunctionFactory: this.compareFunctionFactory
-          }
-          : false
-      });
-    }
     try {
       const { data } = await this.tableData.fetchedTable.toPromise();
       this.updatePageForm();
@@ -465,7 +544,7 @@ export class TableComponent implements OnInit {
       }
     } catch (error) {
       console.error(error);
-      // TODO: Should redirect Search Query not found page
+      // TODO: Should redirect Search Query to not found page
       return error;
     }
     this.columns = [];
@@ -477,7 +556,7 @@ export class TableComponent implements OnInit {
       });
     }
     this.after === 'search'
-      ? this.searchTable.headers.forEach((header: string) => {
+      ? await this.searchTable.headers.forEach((header: string) => {
         return this.columnRendererSettings(header, this.after, 'columns');
       })
       : await this.dataTable['after'].headers.forEach((header: string) => {
@@ -506,8 +585,14 @@ export class TableComponent implements OnInit {
         multiColumnSorting: this.sort
           ? {
             compareFunctionFactory: this.compareFunctionFactory
-          }
-          : false
+          } : false,
+        columnSorting: this.sort
+          ? {
+            compareFunctionFactory: this.compareFunctionFactory
+          } : false,
+        filters: this.filter && this.before === 'morphology' ? true : false,
+        afterGetColHeader: this.filter && this.before === 'morphology' ? this.addInput : this.removeInput,
+        beforeOnCellMouseDown: this.filter && this.before === 'morphology' ? this.doNotSelectColumn : undefined
       });
       this.getTableData(this.before);
     }
@@ -532,8 +617,14 @@ export class TableComponent implements OnInit {
         multiColumnSorting: this.sort
           ? {
             compareFunctionFactory: this.compareFunctionFactory
-          }
-          : false
+          } : false,
+        columnSorting: this.sort
+          ? {
+            compareFunctionFactory: this.compareFunctionFactory
+          } : false,
+        filters: this.filter ? true : false,
+        afterGetColHeader: this.filter && this.before !== 'morphology' ? this.addInput : this.removeInput,
+        beforeOnCellMouseDown: this.filter && this.before !== 'morphology' ? this.doNotSelectColumn : undefined
       });
       this.getTableData(this.after);
     }
@@ -543,7 +634,10 @@ export class TableComponent implements OnInit {
     switch (header) {
       case 'Rel':
         return this[columnType].push(
-          this.columnSettings(this, table, header, 'dropdown', ['', 'Yes', 'No', 'Maybe'], 'autocomplete')
+          this.columnSettings(this, table, header, 'autocomplete',
+            async (query, process) => {
+              process(await this.tableData.dynamicAutoComplete(query, table, header));
+            })
         );
       case 'Trans':
         return this[columnType].push(
@@ -551,30 +645,46 @@ export class TableComponent implements OnInit {
             this,
             table,
             header,
-            'dropdown',
-            ['', 'trans.', 'intrans.', 'pass.', 'unclear'],
-            'autocomplete'
+            'autocomplete',
+            async (query, process) => {
+              process(await this.tableData.dynamicAutoComplete(query, table, header));
+            }
           )
         );
       case 'Depend':
         return this[columnType].push(
-          this.columnSettings(this, table, header, 'dropdown', ['', 'abs.', 'conj.', 'deut.', 'prot.'], 'autocomplete')
+          this.columnSettings(this, table, header, 'autocomplete',
+            async (query, process) => {
+              process(await this.tableData.dynamicAutoComplete(query, table, header));
+            })
         );
       case 'Depon':
         return this[columnType].push(
-          this.columnSettings(this, table, header, 'dropdown', ['', 'Yes', 'No', 'Maybe'], 'autocomplete')
+          this.columnSettings(this, table, header, 'autocomplete',
+            async (query, process) => {
+              process(await this.tableData.dynamicAutoComplete(query, table, header));
+            })
         );
       case 'Contr':
         return this[columnType].push(
-          this.columnSettings(this, table, header, 'dropdown', ['', 'Yes', 'No', 'Maybe'], 'autocomplete')
+          this.columnSettings(this, table, header, 'autocomplete',
+            async (query, process) => {
+              process(await this.tableData.dynamicAutoComplete(query, table, header));
+            })
         );
       case 'Augm':
         return this[columnType].push(
-          this.columnSettings(this, table, header, 'dropdown', ['', 'Yes', 'No', 'Maybe'], 'autocomplete')
+          this.columnSettings(this, table, header, 'autocomplete',
+            async (query, process) => {
+              process(await this.tableData.dynamicAutoComplete(query, table, header));
+            })
         );
       case 'Hiat':
         return this[columnType].push(
-          this.columnSettings(this, table, header, 'dropdown', ['', 'Yes', 'No', 'Maybe'], 'autocomplete')
+          this.columnSettings(this, table, header, 'autocomplete',
+            async (query, process) => {
+              process(await this.tableData.dynamicAutoComplete(query, table, header));
+            })
         );
       case 'Mut':
         return this[columnType].push(
@@ -582,9 +692,10 @@ export class TableComponent implements OnInit {
             this,
             table,
             header,
-            'dropdown',
-            ['', '+ Nas.', '- Nas.', '+ Len.', '- Len.', '+ Gem.', '- Gem.'],
-            'autocomplete'
+            'autocomplete',
+            async (query, process) => {
+              process(await this.tableData.dynamicAutoComplete(query, table, header));
+            }
           )
         );
       case 'Causing_Mut':
@@ -593,9 +704,10 @@ export class TableComponent implements OnInit {
             this,
             table,
             header,
-            'dropdown',
-            ['', '+ Nas.', '- Nas.', '+ Len.', '- Len.', '+ Gem.', '- Gem.'],
-            'autocomplete'
+            'autocomplete',
+            async (query, process) => {
+              process(await this.tableData.dynamicAutoComplete(query, table, header));
+            }
           )
         );
       case 'Lemma':
@@ -610,6 +722,12 @@ export class TableComponent implements OnInit {
             }
           )
         );
+      case 'ID':
+        return this[columnType].push(this.columnSettings(this, table, header, 'numeric'));
+      case 'Sort_ID':
+        return this[columnType].push(this.columnSettings(this, table, header, 'numeric'));
+      case 'Text_ID':
+        return this[columnType].push(this.columnSettings(this, table, header, 'numeric'));
       default:
         return this[columnType].push(this.columnSettings(this, table, header, 'text'));
     }
@@ -771,6 +889,7 @@ export class TableComponent implements OnInit {
 
     return settingsObj;
   }
+
   getColWidths (index: number, table: string) {
     // console.log('Index: ', index + ' ' + that.dataTable['after'].headers[index]);
     const indexTitle = table === 'search' ? this.searchTable.headers[index] : this.dataTable[table === this.after ? 'after' : 'before'].headers[index];
@@ -855,23 +974,27 @@ export class TableComponent implements OnInit {
   getTableData (table: string) {
     return table === 'search' ? this.searchTable.data : this.dataTable[table === this.after ? 'after' : 'before'].data;
   }
+
   getRows (table: string | number) {
     return table === 'search' || (table === this.before && this.before !== this.after)
-      ? this.searchTable.data.map((_row, index) => index + 1)
+      ? this.searchTable.data.map((_row: any, index: number) => index + 1)
       : this.dataTable[table === this.after ? 'after' : 'before'].data.map((row: { Sort_ID: any }) => row.Sort_ID);
   }
+
   undo () {
     this.hotInstance = this.hotRegisterer.getInstance(this.instance);
     if ((this.hotInstance as any).isUndoAvailable()) {
       (this.hotInstance as any).undo();
     }
   }
+
   redo () {
     this.hotInstance = this.hotRegisterer.getInstance(this.instance);
     if ((this.hotInstance as any).isRedoAvailable()) {
       (this.hotInstance as any).redo();
     }
   }
+
   async refresh () {
     await this.fetchedTable();
 
@@ -879,48 +1002,64 @@ export class TableComponent implements OnInit {
     this.hotInstance.loadData(this.getTableData(this.after));
     this.hotInstance.render();
   }
+
   toggleMode (variable: string) {
-    if (variable === 'edit') {
-      this.edit = !this.edit;
-      this.hotInstance = this.hotRegisterer.getInstance(this.instance);
-      this.hotInstance.updateSettings({
-        manualRowMove: this.edit && !!this.before,
-        manualColumnFreeze: this.edit,
-        contextMenu: this.edit ? this.contextMenu : this.edit,
-        readOnly: !this.edit,
-        disableVisualSelection: !this.edit
-      });
-      this.columns.forEach(column => {
-        column.readOnly = !this.edit;
-      });
-      this.columnsMini.forEach(column => {
-        column.readOnly = !this.edit;
-      });
-      if (this.hotRegisterer.getInstance(this.instance + 'Mini')) {
-        this.hotRegisterer.getInstance(this.instance + 'Mini').updateSettings({
+    switch (variable) {
+      case 'edit':
+        this.edit = !this.edit;
+        this.hotInstance = this.hotRegisterer.getInstance(this.instance);
+        this.hotInstance.updateSettings({
+          manualRowMove: this.edit && !!this.before,
           manualColumnFreeze: this.edit,
           contextMenu: this.edit ? this.contextMenu : this.edit,
           readOnly: !this.edit,
           disableVisualSelection: !this.edit
         });
-      }
-    } else if (variable === 'sort') {
-      // console.log(variable, this.wordWrap);
-      this.sort = !this.sort;
-      this.hotInstance = this.hotRegisterer.getInstance(this.instance);
-      this.hotInstance.updateSettings({
-        manualRowMove: !this.sort && this.edit && !!this.before
-      });
-      this.fetchedTable();
-    } else if (variable === 'ref') {
-      this.ref = !this.ref;
-      this.fetchedTable();
-    } else {
-      // console.log(variable, this.wordWrap);
-      this.wordWrap = !this.wordWrap;
-      this.fetchedTable();
+        this.columns.forEach(column => {
+          column.readOnly = !this.edit;
+        });
+        this.columnsMini.forEach(column => {
+          column.readOnly = !this.edit;
+        });
+        if (this.hotRegisterer.getInstance(this.instance + 'Mini')) {
+          this.hotRegisterer.getInstance(this.instance + 'Mini').updateSettings({
+            manualColumnFreeze: this.edit,
+            contextMenu: this.edit ? this.contextMenu : this.edit,
+            readOnly: !this.edit,
+            disableVisualSelection: !this.edit
+          });
+        }
+        break;
+      case 'sort':
+        this.sort = !this.sort;
+        this.hotInstance = this.hotRegisterer.getInstance(this.instance);
+        this.hotInstance.updateSettings({
+          manualRowMove: !this.filter && !this.sort && this.edit && !!this.before
+        });
+        this.fetchedTable();
+        break;
+      case 'ref':
+        this.ref = !this.ref;
+        this.fetchedTable();
+        break;
+      case 'filter':
+        this.filter = !this.filter;
+        this.hotInstance = this.hotRegisterer.getInstance(this.instance);
+        this.hotInstance.updateSettings({
+          manualRowMove: !this.filter && !this.sort && this.edit && !!this.before,
+        });
+        this.fetchedTable();
+        break;
+      case 'wordWrap':
+        this.wordWrap = !this.wordWrap;
+        this.fetchedTable();
+        break;
+      default:
+        break;
     }
+    // console.log(variable, this[variable]);
   }
+
   changeID (direction: string) {
     const urlParams = new URLSearchParams(window.location.search);
     // console.log(urlParams.toString());
@@ -956,9 +1095,11 @@ export class TableComponent implements OnInit {
       }
     }
   }
+
   goBack () {
     this.location.back();
   }
+
   goForward () {
     this.location.forward();
   }
@@ -972,6 +1113,7 @@ export class TableComponent implements OnInit {
 
     this.pagination.pageForm.controls.page.updateValueAndValidity();
   }
+
   scrollToTable () {
     // console.log('App Table Height: ', this.appTable.nativeElement.scrollHeight);
     // window.scrollTo({ top: this.appTable.nativeElement.scrollHeight, behavior: 'smooth' })

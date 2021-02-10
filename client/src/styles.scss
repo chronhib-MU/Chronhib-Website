@@ -291,7 +291,44 @@ select {
 
 .mat-paginator, .mat-paginator-page-size .mat-select-trigger {
   color: rgba(109, 110, 113, 1);
+  font-size: .8125rem;
 }
+
+thead > tr th {
+  height: 24px !important;
+  > .filterHeader {
+    height: 24px !important;
+  }
+}
+
+.filterHeader > input {
+  box-sizing: border-box;
+  width: 100%;
+
+  color: #222;
+  text-align: center;
+  text-overflow: ellipsis;
+
+  border: none;
+  border-bottom: thin solid rgba(0, 153, 153, .5);
+  border-radius: 0;
+
+  transition: border ease-in-out .3s, color ease-in-out .3s, background-color ease-in-out .3s;
+
+  &:hover {
+    border-bottom: thin solid rgba(0, 153, 153, 1);
+  }
+  &:focus {
+    box-sizing: border-box;
+
+    color: rgba(255, 255, 255, 1);
+
+    background-color: rgba(239, 174, 30, 1);
+    border-bottom: thin solid rgba(10, 102, 178, 1);
+    outline: none;
+  }
+}
+
 .handsontable th {
   color: rgba(255, 255, 255, 1);
 
