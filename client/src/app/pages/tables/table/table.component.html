@@ -74,8 +74,24 @@
                     <button type="button"
                             class="btn btn-outline-primary btn-sm"
                             (click)="exportToCSV()">
-                      <i class="fa fa-download"></i>
-                      Export Table Data to CSV File
+                      <span [hidden]="!(exporting === 'idle' || exporting === 'pending')">
+                        <i class="fa fa-download"></i>
+                      </span>
+                      <span [hidden]="!(exporting === 'success')">
+                        <i class="fa fa-check text-success"></i>
+                      </span>
+                      <span [hidden]="!(exporting === 'failed')">
+                        <i class="fa fa-times text-danger"></i>
+                      </span>
+                      <span [hidden]="(exporting === 'pending')">
+                        Export Table Data to CSV File
+                      </span>
+                      <span [hidden]="!(exporting === 'pending')">
+                        Exporting...
+                        <div class="spinner-border">
+                          <span class="sr-only">Loading...</span>
+                        </div>
+                      </span>
                     </button>
                   </div>
                 </div>

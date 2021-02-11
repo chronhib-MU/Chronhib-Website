@@ -59,16 +59,25 @@ export class TableDataService {
   };
 
   // Fetches table data from the API
-  fetchTable = async (apiQuery: ApiGetQuery | string) => {
+  fetchTable = async (apiQuery: ApiGetQuery | string, toBeExported = false) => {
+    if (toBeExported) {
+      const search = apiQuery.search === 'true' ? true : false;
+      const queryString = qs.stringify(apiQuery);
+      const { data } = await (this.http.get(`${environment.apiUrl}${search ? 'search/' : 'tables/'}?${queryString}`) as Observable<{
+        data: { afterTable: []; beforeTable: []; numRows?: number };
+      }>).toPromise();
+      return data.afterTable;
+    }
     this.currentApiQuery = apiQuery;
 
     this.page = this.currentApiQuery?.page ? this.currentApiQuery?.page : 0;
 
     // }
     // console.log(window.location.origin);
-    // console.log('apiQuery:', apiQuery);
+    console.log('apiQuery:', apiQuery);
     // console.log(environment.apiUrl);
     try {
+
       // Checks if the query was a table name e.g. 'text', 'sentences' etc. else it has to be an API query object
       if (this.tables.names.indexOf(apiQuery) > -1 && typeof apiQuery === 'string') {
         this.fetchedTable = this.http.get(`${environment.apiUrl}${apiQuery}`) as Observable<{
@@ -83,7 +92,6 @@ export class TableDataService {
         // Object.keys(apiQuery)
         //   .map(key => key + '=' + apiQuery[key])
         //   .join('&');
-        console.log(apiQuery);
         const search = apiQuery.search === 'true' ? true : false;
         const queryString = qs.stringify(apiQuery);
         this.fetchedTable = this.http.get(`${environment.apiUrl}${search ? 'search/' : 'tables/'}?${queryString}`) as Observable<{

@@ -33,7 +33,7 @@ export class TableComponent implements OnInit {
   instance = 'hot';
 
   // Event for `keydown` event. Add condition after delay of 200 ms which is counted from time of last pressed key.
-  debounce = (colIndex, event) => {
+  debounce = (colIndex: number, event: KeyboardEvent) => {
     return Handsontable.helper.debounce(() => {
       const filtersPlugin = this.hotRegisterer.getInstance(this.instance).getPlugin('filters');
       // console.log((<HTMLInputElement> event.target).value);
@@ -94,24 +94,42 @@ export class TableComponent implements OnInit {
 
     return div;
   };
-  contextMenu: Handsontable.contextMenu.Settings =
-    {
-      items:
+  contextMenu: Handsontable.contextMenu.Settings[] =
+    [
       {
-        'row_below': { name: 'Insert Row' },
-        'remove_row': {},
-        'freeze_column': {},
-        'unfreeze_column': {},
-        'sp1': { name: '---------' },
-        'undo': {},
-        'redo': {},
-        'sp2': { name: '---------' },
-        'cut': {},
-        'copy': {},
-        'sp3': { name: '---------' },
-        'alignment': {},
-      }
-    };
+        callback: function (key, selection, clickEvent) {
+          // Common callback for all options
+          console.log(key, selection, clickEvent);
+        },
+        items: {
+          'copy': {},
+          'alignment': {}
+        }
+      },
+      {
+        callback: function (key, selection, clickEvent) {
+          // Common callback for all options
+          console.log(key, selection, clickEvent);
+        },
+        items:
+        {
+          'row_below': { name: 'Insert Row' },
+          'remove_row': {},
+          'sp0': { name: '---------' },
+          'hidden_columns_show': {},
+          'hidden_columns_hide': {},
+          'freeze_column': {},
+          'unfreeze_column': {},
+          'sp1': { name: '---------' },
+          'undo': {},
+          'redo': {},
+          'sp2': { name: '---------' },
+          'cut': {},
+          'copy': {},
+          'sp3': { name: '---------' },
+          'alignment': {},
+        }
+      }];
   // index 0 if edit mode false OR index 1 if edit mode true
   hotSettings: Handsontable.GridSettings[] = [
     { // Edit Off
@@ -127,7 +145,7 @@ export class TableComponent implements OnInit {
       manualRowMove: false,
       manualColumnMove: true,
       manualColumnFreeze: false,
-      contextMenu: false,
+      contextMenu: this.contextMenu[0],
       readOnly: true,
       // colWidths: 150,
       columnSorting: false,
@@ -150,7 +168,7 @@ export class TableComponent implements OnInit {
       manualRowMove: true,
       manualColumnMove: true,
       manualColumnFreeze: true,
-      contextMenu: this.contextMenu,
+      contextMenu: this.contextMenu[1],
       readOnly: false,
       // colWidths: 150,
       columnSorting: false,
@@ -187,6 +205,7 @@ export class TableComponent implements OnInit {
   routeParams: any;
   routeQueryParams: any;
   scrollToTableSub$: any;
+  exporting = 'idle';
 
   constructor (
     public tableData: TableDataService,
@@ -458,7 +477,8 @@ export class TableComponent implements OnInit {
     this.authService.showToaster('', 'Search Link Copied to Clipboard!', 'info');
   }
 
-  exportToCSV () {
+  async exportToCSV () {
+    this.exporting = 'pending';
     let filename =
       this.after === 'search'
         ? 'ChronHib_Search-' + this.tableData.currentApiQuery.id
@@ -468,9 +488,22 @@ export class TableComponent implements OnInit {
     }
     filename += '.csv';
     const tableName = this.before === 'morphology' ? this.before : this.after;
-    jsonexport(this.getTableData(tableName), (err: any, csv: string | number | boolean) => {
+    const apiQuery = Object.assign({ ...this.tableData.currentApiQuery });
+    apiQuery.limit = '9999999999999999999';
+    console.log(apiQuery);
+    jsonexport(await this.tableData.fetchTable(apiQuery, true), (err: any, csv: string | number | boolean) => {
+      this.exporting = 'idle';
       if (err) {
+        this.exporting = 'failed';
+        setTimeout(() => {
+          this.exporting = 'idle';
+        }, 10000);
         return console.error(err);
+      } else {
+        this.exporting = 'success';
+        setTimeout(() => {
+          this.exporting = 'idle';
+        }, 10000);
       }
       // console.log(csv);
       // Creates the download link button
@@ -631,97 +664,16 @@ export class TableComponent implements OnInit {
   }
 
   columnRendererSettings (header: any, table: string, columnType: string) {
+    const columns = ['Rel', 'Trans', 'Depend', 'Depon', 'Contr', 'Augm', 'Hiat', 'Mut', 'Causing_Mut', 'Lemma', 'Analysis', 'Part_Of_Speech'];
+    if (columns.includes(header)) {
+      return this[columnType].push(
+        this.columnSettings(this, table, header, 'autocomplete',
+          async (query, process) => {
+            process(await this.tableData.dynamicAutoComplete(query, table, header));
+          })
+      );
+    }
     switch (header) {
-      case 'Rel':
-        return this[columnType].push(
-          this.columnSettings(this, table, header, 'autocomplete',
-            async (query, process) => {
-              process(await this.tableData.dynamicAutoComplete(query, table, header));
-            })
-        );
-      case 'Trans':
-        return this[columnType].push(
-          this.columnSettings(
-            this,
-            table,
-            header,
-            'autocomplete',
-            async (query, process) => {
-              process(await this.tableData.dynamicAutoComplete(query, table, header));
-            }
-          )
-        );
-      case 'Depend':
-        return this[columnType].push(
-          this.columnSettings(this, table, header, 'autocomplete',
-            async (query, process) => {
-              process(await this.tableData.dynamicAutoComplete(query, table, header));
-            })
-        );
-      case 'Depon':
-        return this[columnType].push(
-          this.columnSettings(this, table, header, 'autocomplete',
-            async (query, process) => {
-              process(await this.tableData.dynamicAutoComplete(query, table, header));
-            })
-        );
-      case 'Contr':
-        return this[columnType].push(
-          this.columnSettings(this, table, header, 'autocomplete',
-            async (query, process) => {
-              process(await this.tableData.dynamicAutoComplete(query, table, header));
-            })
-        );
-      case 'Augm':
-        return this[columnType].push(
-          this.columnSettings(this, table, header, 'autocomplete',
-            async (query, process) => {
-              process(await this.tableData.dynamicAutoComplete(query, table, header));
-            })
-        );
-      case 'Hiat':
-        return this[columnType].push(
-          this.columnSettings(this, table, header, 'autocomplete',
-            async (query, process) => {
-              process(await this.tableData.dynamicAutoComplete(query, table, header));
-            })
-        );
-      case 'Mut':
-        return this[columnType].push(
-          this.columnSettings(
-            this,
-            table,
-            header,
-            'autocomplete',
-            async (query, process) => {
-              process(await this.tableData.dynamicAutoComplete(query, table, header));
-            }
-          )
-        );
-      case 'Causing_Mut':
-        return this[columnType].push(
-          this.columnSettings(
-            this,
-            table,
-            header,
-            'autocomplete',
-            async (query, process) => {
-              process(await this.tableData.dynamicAutoComplete(query, table, header));
-            }
-          )
-        );
-      case 'Lemma':
-        return this[columnType].push(
-          this.columnSettings(
-            this,
-            table,
-            header,
-            'autocomplete',
-            async (query, process) => {
-              process(await this.tableData.dynamicAutoComplete(query, table, header));
-            }
-          )
-        );
       case 'ID':
         return this[columnType].push(this.columnSettings(this, table, header, 'numeric'));
       case 'Sort_ID':
@@ -1011,7 +963,7 @@ export class TableComponent implements OnInit {
         this.hotInstance.updateSettings({
           manualRowMove: this.edit && !!this.before,
           manualColumnFreeze: this.edit,
-          contextMenu: this.edit ? this.contextMenu : this.edit,
+          contextMenu: this.edit ? this.contextMenu[1] : this.contextMenu[0],
           readOnly: !this.edit,
           disableVisualSelection: !this.edit
         });
@@ -1024,7 +976,7 @@ export class TableComponent implements OnInit {
         if (this.hotRegisterer.getInstance(this.instance + 'Mini')) {
           this.hotRegisterer.getInstance(this.instance + 'Mini').updateSettings({
             manualColumnFreeze: this.edit,
-            contextMenu: this.edit ? this.contextMenu : this.edit,
+            contextMenu: this.edit ? this.contextMenu[1] : this.contextMenu[0],
             readOnly: !this.edit,
             disableVisualSelection: !this.edit
           });
