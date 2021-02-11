@@ -205,16 +205,17 @@ app.get("/" + appName + "/api/tables/", function (req, res, next) {
     logger.trace(req.query);
     tableDataQuery_1.navigateTable(connection, logger, req.query, res, next);
 });
-app.get("/" + appName + "/api/tableColumnRows", function (req, res, next) {
+app.get("/" + appName + "/api/tableColumnRows/", function (req, res, next) {
     console.table(req.query);
     logger.trace(req.query);
     if (typeof req.query.table === 'string' &&
         typeof req.query.column === 'string' &&
-        typeof req.query.filter === 'string') {
+        (typeof req.query.filter === 'string' || req.query.filter === null)) {
         var _a = req.query, table = _a.table, column = _a.column, filter = _a.filter;
         tableDataQuery_1.getTableColumnRows(connection, logger, table, column, filter, res, next);
     }
     else {
+        logger.error('Error: ', req.query);
         res.status(404).send({
             data: []
         });

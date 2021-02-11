@@ -41,6 +41,9 @@ const searchTable = (
         title: 'No Search ID found!',
         type: 'error'
       });
+    } else {
+      console.log('Search ID: ' + query.id);
+      logger.info('Search ID: ' + query.id);
     }
     // Look for the Search Query using the Search ID provided
     connection.query('SELECT `Query` FROM `SEARCH` WHERE `ID`= ?', query.id, (error, results): void => {
@@ -431,12 +434,14 @@ const navigateTable = (
   }
 }
 
-const getTableColumnRows = (connection: Connection, logger: Logger, table: string, column: string, filter: string, res: Response, next: NextFunction): void => {
+const getTableColumnRows = (connection: Connection, logger: Logger, table: string, column: string, filter: string | null, res: Response, next: NextFunction): void => {
   let query = `SELECT ?? FROM ??`;
   let queryValues = [column, table];
   if (typeof filter !== null) {
     query += ` WHERE ?? LIKE ?;`;
     queryValues = [column, table, column, '%' + filter + '%'];
+  } else {
+    query += ';';
   }
   console.log(query);
   console.log(queryValues);

@@ -33,6 +33,10 @@ var searchTable = function (connection, logger, query, res, next) {
                 type: 'error'
             });
         }
+        else {
+            console.log('Search ID: ' + query.id);
+            logger.info('Search ID: ' + query.id);
+        }
         // Look for the Search Query using the Search ID provided
         connection.query('SELECT `Query` FROM `SEARCH` WHERE `ID`= ?', query.id, function (error, results) {
             var _a;
@@ -420,6 +424,9 @@ var getTableColumnRows = function (connection, logger, table, column, filter, re
     if (typeof filter !== null) {
         query += " WHERE ?? LIKE ?;";
         queryValues = [column, table, column, '%' + filter + '%'];
+    }
+    else {
+        query += ';';
     }
     console.log(query);
     console.log(queryValues);
