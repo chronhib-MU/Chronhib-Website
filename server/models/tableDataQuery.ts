@@ -219,12 +219,14 @@ const searchTable = (
           typeof query.limit === 'string' &&
           typeof query.page === 'string'
         ) {
+          // Handles Limit value based on limit specified
           const limit =
             parseInt(query.limit) > 0
               ? parseInt(query.limit)
               : parseInt(options.limit) > 0
                 ? parseInt(options.limit)
                 : 100;
+          // Handles Offset value based on page specified
           const page = parseInt(query.page) > 0 ? parseInt(query.page) : 0;
           // console.log(limit, page);
           let finalQuery =
@@ -365,7 +367,6 @@ const navigateTable = (
       }
     }
     countQuery = countQuery.replace('*', 'COUNT(`ID`) as numRows');
-
     if (!(currentTable === 'morphology' && destinationTable === 'lemmata')) {
       afterQuery += ' LIMIT ? OFFSET ?';
       afterQueryValues.push(limit, page * limit);
@@ -377,6 +378,7 @@ const navigateTable = (
       countQuery,
       currentTable === 'morphology' && destinationTable === 'lemmata' ? beforeQueryValues : afterQueryValues
     );
+
     logger.trace('beforeQuery:', beforeQuery);
     logger.info('afterQuery:', afterQuery);
     logger.info('afterQueryValues:', afterQueryValues);

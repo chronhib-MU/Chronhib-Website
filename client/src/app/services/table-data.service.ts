@@ -9,6 +9,7 @@ import { FormGroup } from '@angular/forms';
 import { Router } from '@angular/router';
 import * as qs from 'qs';
 import Fuse from 'fuse.js';
+import { last, shareReplay } from 'rxjs/operators';
 @Injectable({
   providedIn: 'root'
 })
@@ -26,7 +27,7 @@ export class TableDataService {
   };
   allHeaders = { text: [], sentences: [], morphology: [], lemmata: [] };
   fetchedTable: Observable<{ data: { afterTable: []; beforeTable: []; numRows?: number } }>;
-  currentApiQuery: any;
+  currentApiQuery: ApiGetQuery;
   searchTable: any = { headers: [], data: [] };
   searchForm: FormGroup;
   searchQuerySub: Subject<any> = new Subject<FormGroup>();
@@ -38,11 +39,12 @@ export class TableDataService {
   constructor (public router: Router, private http: HttpClient, private authService: AuthService) {
   }
 
-  // Fetches the headers for each table
+  // Fetches the headers for each table (mainly for search)
   fetchHeaders = async () => {
     try {
       await this.tables.names.forEach(async (name: string) => {
         // console.log(name);
+        // console.log('apiQuery:', `${environment.apiUrl}${name}/headers`);
         const fetchedHeaders: Observable<any> = this.http.get<any>(
           `${environment.apiUrl}${name}/headers`
         ) as Observable<any>;
@@ -59,34 +61,39 @@ export class TableDataService {
   };
 
   // Fetches table data from the API
-  fetchTable = async (apiQuery: ApiGetQuery | string, toBeExported = false) => {
+  fetchTable = async (apiQuery: ApiGetQuery, toBeExported = false) => {
+    console.log('Fetching from table data service:');
+    console.log(apiQuery);
     if (toBeExported) {
       const search = apiQuery.search === 'true' ? true : false;
       const queryString = qs.stringify(apiQuery);
+      console.log('apiQuery:', `${environment.apiUrl}${search ? 'search/' : 'tables/'}?${queryString}`);
       const { data } = await (this.http.get(`${environment.apiUrl}${search ? 'search/' : 'tables/'}?${queryString}`) as Observable<{
         data: { afterTable: []; beforeTable: []; numRows?: number };
       }>).toPromise();
+      console.log('To be exported: ', data.afterTable);
       return data.afterTable;
     }
     this.currentApiQuery = apiQuery;
 
-    this.page = this.currentApiQuery?.page ? this.currentApiQuery?.page : 0;
+    this.page = this.currentApiQuery?.page ? parseInt(this.currentApiQuery?.page, 10) : 0;
 
     // }
     // console.log(window.location.origin);
-    console.log('apiQuery:', apiQuery);
     // console.log(environment.apiUrl);
     try {
-
       // Checks if the query was a table name e.g. 'text', 'sentences' etc. else it has to be an API query object
       if (this.tables.names.indexOf(apiQuery) > -1 && typeof apiQuery === 'string') {
-        this.fetchedTable = this.http.get(`${environment.apiUrl}${apiQuery}`) as Observable<{
+        console.log('apiQuery:', `${environment.apiUrl}${apiQuery}`);
+        this.fetchedTable = (this.http.get(`${environment.apiUrl}${apiQuery}`) as Observable<{
           data: { afterTable: []; beforeTable: []; numRows?: number };
-        }>;
+        }>);
         const { data } = await this.fetchedTable.toPromise();
         // console.log(`${apiQuery}: `, data.afterTable);
         this.tables['after'].data = data.afterTable;
         this.tables['after'].headers = Object.keys(this.tables['after'].data[0]);
+        // Moves Sort_ID to first while remove it from last in the before table
+        this.tables['after'].headers.splice(0, 0, this.tables['after'].headers.pop());
         // console.log(this.tables[apiQuery].headers);
       } else if (typeof apiQuery !== 'string') {
         // Object.keys(apiQuery)
@@ -94,6 +101,7 @@ export class TableDataService {
         //   .join('&');
         const search = apiQuery.search === 'true' ? true : false;
         const queryString = qs.stringify(apiQuery);
+        // console.log('apiQuery:', `${environment.apiUrl}${search ? 'search/' : 'tables/'}?${queryString}`);
         this.fetchedTable = this.http.get(`${environment.apiUrl}${search ? 'search/' : 'tables/'}?${queryString}`) as Observable<{
           data: { afterTable: []; beforeTable: []; numRows?: number };
         }>;
@@ -114,15 +122,17 @@ export class TableDataService {
           if (apiQuery.dtable !== apiQuery.ctable && apiQuery.ctable) {
             this.tables['before'].data = data.beforeTable;
             this.tables['before'].headers = Object.keys(this.tables['before'].data[0]);
+            this.tables['before'].headers.splice(0, 0, this.tables['before'].headers.pop());
           }
           this.tables['after'].data = data.afterTable;
           this.tables['after'].headers = Object.keys(this.tables['after'].data[0]);
+          this.tables['after'].headers.splice(0, 0, this.tables['after'].headers.pop());
           // console.log(this.tables['after'].headers);
           // console.log(this.tables['after'].data);
         }
-        // console.log(this.tables['after']);
       }
     } catch (error) {
+      console.log('Error Fetching Table:');
       console.log(error);
       console.log('Invalid request made!');
       const { message, title, type } = error;
@@ -136,13 +146,13 @@ export class TableDataService {
     // console.log('Table-Column', table + '-' + column);
     table = table.toUpperCase();
     const queryString = qs.stringify({ table, column, filter });
+    console.log('apiQuery:', `${environment.apiUrl}tableColumnRows/?${queryString}`);
     this.fetchedTableColumnRows = this.http.get<any>(
       `${environment.apiUrl}tableColumnRows/?${queryString}`
     ) as Observable<any>;
     return this.fetchedTableColumnRows;
   }
 
-  //
   async dynamicAutoComplete (query: string | Fuse.Expression, table: string, column: string) {
     const options = {
       threshold: 0.1,
@@ -194,6 +204,8 @@ export class TableDataService {
         let postedTable: Observable<ApiPostBody>;
         switch (filteredApiBody.command) {
           case 'createRow':
+            console.log('ApiQuery: ', `${environment.apiUrl}rows/?`,
+              JSON.stringify(filteredApiBody));
             postedTable = this.http.post<ApiPostBody>(
               `${environment.apiUrl}rows/?`,
               JSON.stringify(filteredApiBody),
@@ -201,6 +213,8 @@ export class TableDataService {
             ) as Observable<ApiPostBody>;
             break;
           case 'moveRow':
+            console.log('ApiQuery: ', `${environment.apiUrl}rows/?`,
+              JSON.stringify(filteredApiBody));
             postedTable = this.http.patch<ApiPostBody>(
               `${environment.apiUrl}rows/?`,
               JSON.stringify(filteredApiBody),
@@ -208,13 +222,17 @@ export class TableDataService {
             ) as Observable<ApiPostBody>;
             break;
           case 'removeRow':
-            console.log("Delete: ", filteredApiBody)
+            console.log('Delete: ', filteredApiBody);
             const queryString = qs.stringify(filteredApiBody);
+            console.log('ApiQuery: ', `${environment.apiUrl}rows/?`,
+              JSON.stringify(filteredApiBody));
             postedTable = this.http.delete<ApiPostBody>(
               `${environment.apiUrl}rows/?${queryString}`,
             ) as Observable<ApiPostBody>;
             break;
           case 'updateRow':
+            console.log('ApiQuery: ', `${environment.apiUrl}rows/?`,
+              JSON.stringify(filteredApiBody));
             postedTable = this.http.patch<ApiPostBody>(
               `${environment.apiUrl}rows/?`,
               JSON.stringify(filteredApiBody),

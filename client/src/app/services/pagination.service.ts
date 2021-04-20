@@ -9,11 +9,12 @@ declare const $: any;
   providedIn: 'root'
 })
 export class PaginationService {
-  private hotRegisterer = new HotTableRegisterer();
+  hotRegisterer = new HotTableRegisterer();
   pageForm = new FormGroup({});
   scrollToTableSub: Subject<any> = new Subject<void>();
   table: string;
   constructor (private tableData: TableDataService, private fb: FormBuilder) {
+    console.log('I started!');
     this.pageForm = fb.group({
       page: [
         0,
@@ -21,6 +22,7 @@ export class PaginationService {
       ]
     });
   }
+  // This was used to test pagination
   setPage () {
     console.log('Page: ', this.tableData.page);
     console.log('Limit: ', this.getCurrentLimit());
@@ -29,7 +31,7 @@ export class PaginationService {
     return this.tableData.page;
   }
   async gotoPage (e?: any) {
-    console.log(e);
+    console.log('gotoPage', e);
     // If e is undefined
     if (!e) {
       console.log(this.pageForm.value.page);
@@ -40,6 +42,7 @@ export class PaginationService {
     }
     const { pageIndex, pageSize } = e;
     console.log(pageIndex);
+    console.log("current api query:", this.tableData.currentApiQuery);
     if (pageIndex >= 0 && pageIndex <= this.tableData.tableLength / this.getCurrentLimit()) {
       this.tableData.page = pageIndex;
       const { fprop, fval, dtable, ctable, search } = this.tableData.currentApiQuery;
@@ -55,6 +58,7 @@ export class PaginationService {
       if (this.tableData.currentApiQuery.id) {
         queryParams['id'] = this.tableData.currentApiQuery.id;
       }
+      console.log('queryParams', queryParams);
       if (this.table) {
         this.hotRegisterer.getInstance('hot').scrollViewportTo(0, 0);
         await this.tableData.router
@@ -64,6 +68,7 @@ export class PaginationService {
         return this.scrollToTableSub.next();
       } else {
         this.hotRegisterer.getInstance('hot').scrollViewportTo(0, 0);
+
         await this.tableData.router
           .navigate(['/tables'], {
             queryParams

@@ -8,5 +8,5 @@ import { AuthService } from './services/auth.service';
 })
 export class AppComponent {
   title = 'ChronhibWebsite';
-  constructor(private tableData: TableDataService, private authService: AuthService) {}
+  constructor (private tableData: TableDataService, private authService: AuthService) { }
 }

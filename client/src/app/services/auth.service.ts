@@ -155,7 +155,7 @@ export class AuthService {
       // console.log(userData);
       this.user = { firstName: First_Name, lastName: Last_Name, email: Email };
       this.authenticated = true;
-      console.log('Authenticated Status: ', this.authenticated);
+      // console.log('Authenticated Status: ', this.authenticated);
     } catch (error) {
       // console.error(error);
       // const { message, title, type } = error.error;

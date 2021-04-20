@@ -214,11 +214,13 @@ var searchTable = function (connection, logger, query, res, next) {
                 }
                 if (typeof query.limit === 'string' &&
                     typeof query.page === 'string') {
+                    // Handles Limit value based on limit specified
                     var limit_1 = parseInt(query.limit) > 0
                         ? parseInt(query.limit)
                         : parseInt(options.limit) > 0
                             ? parseInt(options.limit)
                             : 100;
+                    // Handles Offset value based on page specified
                     var page_1 = parseInt(query.page) > 0 ? parseInt(query.page) : 0;
                     // console.log(limit, page);
                     var finalQuery_1 = selectStart +

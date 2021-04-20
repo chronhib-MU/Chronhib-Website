@@ -1,8 +1,8 @@
 import { PaginationService } from './../../../services/pagination.service';
 import { AuthService } from './../../../services/auth.service';
-import { Component, OnInit, Input, ElementRef, ViewChild, NgZone } from '@angular/core';
+import { Component, OnInit, Input, ElementRef, ViewChild, NgZone, OnDestroy } from '@angular/core';
 import { Location } from '@angular/common';
-import { Router, ActivatedRoute } from '@angular/router';
+import { Router, ActivatedRoute, NavigationEnd } from '@angular/router';
 import { TableDataService } from '../../../services/table-data.service';
 import Handsontable from 'handsontable';
 import { HotTableRegisterer } from '@handsontable/angular';
@@ -12,30 +12,46 @@ import * as _ from 'lodash';
 import * as $ from 'jquery';
 import { Validators } from '@angular/forms';
 import { MatPaginator } from '@angular/material/paginator';
+import { Subscription } from 'rxjs';
+import { shareReplay, last, first } from 'rxjs/operators';
 
 @Component({
   selector: 'app-table',
   templateUrl: './table.component.html',
   styleUrls: ['./table.component.scss']
 })
-export class TableComponent implements OnInit {
+export class TableComponent implements OnInit, OnDestroy {
   @Input() before: string;
   @Input() after: string;
   @Input() edit: boolean;
   @ViewChild('appTable') appTable: ElementRef;
-  @ViewChild(MatPaginator, { static: true })
-  paginator: MatPaginator;
-  private hotRegisterer = new HotTableRegisterer();
+  @ViewChild(MatPaginator, { static: true }) paginator: MatPaginator;
   wordWrap = false;
   filter = false;
   sort = false;
   ref = false;
   instance = 'hot';
 
+  headers: any;
+  searchTable: any = {
+    headers: [],
+    data: []
+  };
+
+  dataset: any[] = [];
+
+  columns: Handsontable.ColumnSettings[] = [];
+  columnsMini: Handsontable.ColumnSettings[] = [];
+  hotInstance = this.pagination.hotRegisterer.getInstance(this.instance);
+  history = [];
+  routeQueryParams: Subscription;
+  scrollToTableSub$: any;
+  exporting = 'idle';
+
   // Event for `keydown` event. Add condition after delay of 200 ms which is counted from time of last pressed key.
   debounce = (colIndex: number, event: KeyboardEvent) => {
     return Handsontable.helper.debounce(() => {
-      const filtersPlugin = this.hotRegisterer.getInstance(this.instance).getPlugin('filters');
+      const filtersPlugin = this.pagination.hotRegisterer.getInstance(this.instance).getPlugin('filters');
       // console.log((<HTMLInputElement> event.target).value);
       filtersPlugin.removeConditions(colIndex);
       filtersPlugin.addCondition(colIndex, 'contains', [(<HTMLInputElement> event.target).value]);
@@ -50,7 +66,6 @@ export class TableComponent implements OnInit {
 
   // Add elements to header on `afterGetColHeader` hook.
   addInput = (col: number, TH: HTMLTableHeaderCellElement) => {
-    // Hooks can return value other than number (for example `columnSorting` plugin use this).
     if (typeof col !== 'number') {
       return col;
     }
@@ -94,6 +109,7 @@ export class TableComponent implements OnInit {
 
     return div;
   };
+  // tslint:disable-next-line: member-ordering
   contextMenu: Handsontable.contextMenu.Settings[] =
     [
       {
@@ -131,6 +147,7 @@ export class TableComponent implements OnInit {
         }
       }];
   // index 0 if edit mode false OR index 1 if edit mode true
+  // tslint:disable-next-line: member-ordering
   hotSettings: Handsontable.GridSettings[] = [
     { // Edit Off
       startRows: 0,
@@ -148,7 +165,6 @@ export class TableComponent implements OnInit {
       contextMenu: this.contextMenu[0],
       readOnly: true,
       // colWidths: 150,
-      columnSorting: false,
       multiColumnSorting: false,
       wordWrap: false,
       filters: false,
@@ -171,7 +187,6 @@ export class TableComponent implements OnInit {
       contextMenu: this.contextMenu[1],
       readOnly: false,
       // colWidths: 150,
-      columnSorting: false,
       multiColumnSorting: false,
       wordWrap: false,
       filters: false,
@@ -179,33 +194,7 @@ export class TableComponent implements OnInit {
       beforeOnCellMouseDown: undefined,
     }
   ];
-  headers: any;
-  dataTable: any = {
-    before: {
-      headers: [],
-      data: []
-    },
-    after: {
-      headers: [],
-      data: []
-    }
-  };
-  searchTable: any = {
-    headers: [],
-    data: []
-  };
 
-  dataset: any[] = [];
-
-  columns: Handsontable.ColumnSettings[] = [];
-  columnsMini: Handsontable.ColumnSettings[] = [];
-  hotInstance = this.hotRegisterer.getInstance(this.instance);
-  history = [];
-  tableQuery: any;
-  routeParams: any;
-  routeQueryParams: any;
-  scrollToTableSub$: any;
-  exporting = 'idle';
 
   constructor (
     public tableData: TableDataService,
@@ -216,16 +205,11 @@ export class TableComponent implements OnInit {
     private location: Location,
     private ngZone: NgZone
   ) {
-    this.dataTable = {
-      before: this.tableData.tables.before,
-      after: this.tableData.tables.after,
-    };
-    this.searchTable = this.tableData.searchTable;
-
     Handsontable.hooks.add('afterInit', () => {
       $('.htCore').addClass('table');
-      if (this.hotRegisterer.getInstance(this.instance + 'Mini')) {
-        this.hotRegisterer.getInstance(this.instance + 'Mini').updateSettings({
+
+      if (this.pagination.hotRegisterer.getInstance(this.instance + 'Mini')) {
+        this.pagination.hotRegisterer.getInstance(this.instance + 'Mini').updateSettings({
           manualRowMove: false
         });
       }
@@ -236,8 +220,40 @@ export class TableComponent implements OnInit {
     //   });
     // });
   }
+  ngAfterViewInit (): void {
+    //Called after ngAfterContentInit when the component's view has been initialized. Applies to components only.
+    //Add 'implements AfterViewInit' to the class.
+    console.log('hot table');
+    this.hotInstance = this.pagination.hotRegisterer.getInstance(this.instance);
+    console.log(this.hotInstance);
+  }
+  ngOnDestroy (): void {
+    console.log('destroying');
+    this.routeQueryParams.unsubscribe();
+    this.scrollToTableSub$.unsubscribe();
+    console.log('destroyed');
+  }
 
   ngOnInit (): void {
+    console.log('Initializing');
+    this.routeQueryParams = this.route.queryParamMap.subscribe(async paramMap => {
+      console.log('RouteQueryParams Subscription ran!');
+      console.log('CurrentApiQuery Dtable:', this.tableData.currentApiQuery.dtable);
+      console.log('After:', this.after);
+      console.log('ParamMap Dtable:', paramMap.get('dtable'));
+      /** Check for duplicate loops on:
+       * 1. default linked table
+       * 2. main named tables (at top) with query parameters
+       * 3. main named tables (at top) without query parameters
+       */
+      // if ((this.tableData.currentApiQuery.dtable && this.tableData.currentApiQuery.ctable) ||
+      // (this.tableData.currentApiQuery.dtable === this.after) ||
+      // (paramMap.get('dtable') === null)) {
+      await this.refresh();
+      // } else {
+      //   console.log('Cancelled Old Redundant Iteration!');
+      // }
+    });
     const that = this;
     this.paginator._intl.itemsPerPageLabel = 'Results per page:';
     this.sort = false;
@@ -245,12 +261,7 @@ export class TableComponent implements OnInit {
     this.scrollToTableSub$ = this.pagination.scrollToTableSub.subscribe(() => {
       this.scrollToTable();
     });
-    this.routeQueryParams = this.route.queryParamMap.subscribe(async _paramMap => {
-      this.sort = false;
-      this.filter = false;
-      this.refresh();
-      // console.log('updated');
-    });
+
     // Need this to push the dataset
     const hooks = Handsontable.hooks.getRegistered();
     hooks.forEach(hook => {
@@ -335,7 +346,7 @@ export class TableComponent implements OnInit {
           if (this.rootElement.id === 'hotMini') {
             table = that.before;
           } else {
-            table = that.after
+            table = that.after;
           }
           // console.log(this);
           const tableData = this.getData();
@@ -367,8 +378,8 @@ export class TableComponent implements OnInit {
         (that.after !== 'search' || that.tableData.searchForm.get('tableColumns')['controls'].length === 1)
       ) {
         this.hotSettings[that.edit ? 1 : 0][hook] = function () {
-          console.log("Arguments: ", arguments);
-          table = that.after
+          console.log('Arguments: ', arguments);
+          table = that.after;
           const values = [];
           // console.log('Current API Query: ', that.tableData.currentApiQuery);
           // If there are fields properties and values to automatically insert into the new row
@@ -383,7 +394,7 @@ export class TableComponent implements OnInit {
           } else if (this.rootElement.id === 'hotMini') {
             table = that.before;
           }
-          console.log("Values: ", values);
+          console.log('Values: ', values);
           const res: ApiPostBody = {
             table,
             command: 'createRow',
@@ -402,8 +413,8 @@ export class TableComponent implements OnInit {
             });
           }
         };
-      }
-      else if (hook === 'beforeRemoveRow' && (that.after !== 'search' || that.tableData.searchForm.get('tableColumns')['controls'].length)) {
+      } else if (hook === 'beforeRemoveRow'
+        && (that.after !== 'search' || that.tableData.searchForm.get('tableColumns')['controls'].length)) {
         this.hotSettings[that.edit ? 1 : 0][hook] = function () {
           table = that.after;
           // Check that this is not a multi-table search
@@ -462,11 +473,11 @@ export class TableComponent implements OnInit {
           } else {
             that.authService.showToaster('No ID column found on search table.', 'Invalid Edit!', 'error');
           }
-        }
+        };
       }
     });
-
     // $hooksList = $('#hooksList');
+    console.log('Initialized');
   }
 
   copyToClipboard () {
@@ -529,8 +540,7 @@ export class TableComponent implements OnInit {
       if (typeof a === 'number' && typeof b === 'number') {
         if (b === a) {
           return 0;
-        }
-        else {
+        } else {
           if (order) {
             return b - a > 0 ? 1 : -1;
           } else {
@@ -544,129 +554,145 @@ export class TableComponent implements OnInit {
       } else {
         return 0;
       }
-    }
+    };
   }
 
   async fetchedTable () {
     try {
-      const { data } = await this.tableData.fetchedTable.toPromise();
-      this.updatePageForm();
-      // console.table('After: ' + this.after);
-      // console.table('Before: ' + this.before);
-      // console.log(`Datatable[${this.after}]: `, data.afterTable);
+      console.log('Fetching from table component:');
+      console.log(this.tableData.currentApiQuery);
+      console.log(this.after);
+      const fetchedTableSub = this.tableData.fetchedTable.pipe(shareReplay(), last());
+      const fetchedTableSub$ = fetchedTableSub.subscribe(async data => {
 
-      // If this is a scenario where there is a before table
-      if (this.before && this.before !== this.after) {
-        this.dataTable['before'].data = data.beforeTable;
-        this.dataTable['before'].headers = Object.keys(this.dataTable['before'].data[0]);
-        // Moves Sort_ID to first while remove it from last in the before table
-        this.dataTable['before'].headers.splice(0, 0, this.dataTable['before'].headers.pop());
-      }
-      if (this.after === 'search') {
-        this.searchTable.data = data.afterTable;
-        if (this.searchTable.data[0]) {
-          this.searchTable.headers = Object.keys(this.searchTable.data[0]);
-          // console.table(this.searchTable);
+        this.updatePageForm();
+        // console.table('After: ' + this.after);
+        // console.table('Before: ' + this.before);
+        console.log(`Datatable[${this.after}]: `);
+        console.log(this.tableData.tables);
+        // If this is a case where there is meant to be reference table
+        if (this.before && this.before !== this.after) {
+          this.tableData.tables['before'].headers = Object.keys(this.tableData.tables['before'].data[0]);
+          // Moves Sort_ID to first while remove it from last in the before table
+          this.tableData.tables['before'].headers.splice(0, 0, this.tableData.tables['before'].headers.pop());
         }
-      } else {
-        this.dataTable['after'].data = data.afterTable;
-        this.dataTable['after'].headers = Object.keys(this.dataTable['after'].data[0]);
-        // Moves Sort_ID to first while remove it from last in the after table
-        this.dataTable['after'].headers.splice(0, 0, this.dataTable['after'].headers.pop());
-        // console.table(this.dataTable);
-      }
+        // If this is a case where we're on the search table
+        if (this.after === 'search') {
+          // checks if there are results before adding the headers
+          if (this.tableData.searchTable.data[0]) {
+            this.tableData.searchTable.headers = Object.keys(this.tableData.searchTable.data[0]);
+            // console.table(this.tableData.searchTable);
+          }
+        } else {
+          this.tableData.tables['after'].headers = Object.keys(this.tableData.tables['after'].data[0]);
+          // Moves Sort_ID to first while remove it from last in the after table
+          this.tableData.tables['after'].headers.splice(0, 0, this.tableData.tables['after'].headers.pop());
+          // console.table(this.tableData.tables);
+        }
+
+        this.columns = [];
+        this.columnsMini = [];
+        // If this is a case where there is meant to be reference table
+        if (this.before && this.before !== this.after) {
+          await this.tableData.tables['before'].headers.forEach((header: string) => {
+            return this.columnRendererSettings(header, this.before, 'columnsMini');
+          });
+        }
+        this.after === 'search'
+          ? await this.tableData.searchTable.headers.forEach((header: string) => {
+            return this.columnRendererSettings(header, this.after, 'columns');
+          })
+          : await this.tableData.tables['after'].headers.forEach((header: string) => {
+            return this.columnRendererSettings(header, this.after, 'columns');
+          });
+
+        const columnFilter = ['Sort_ID'];
+        if (this.pagination.hotRegisterer.getInstance(this.instance + 'Mini')) {
+          const beforeColWidths = this.tableData.tables['before'].headers.map((_val: any, index: any) =>
+            this.getColWidths(index, 'before')
+          );
+          const getBeforeColWidths = (index: string | number) => beforeColWidths[index];
+          const headerArr =
+            this.after === 'search' ? [...this.tableData.searchTable.headers] : [...this.tableData.tables['before'].headers];
+
+          this.pagination.hotRegisterer.getInstance(this.instance + 'Mini').updateSettings({
+            colWidths: getBeforeColWidths,
+            hiddenColumns: {
+              columns: headerArr
+                .map((_val, i) => i)
+                .filter(
+                  val =>
+                    columnFilter.includes(headerArr[val]) || (headerArr[val] === 'Text_ID' && this.before === 'morphology')
+                )
+            },
+            multiColumnSorting: this.sort
+              ? {
+                compareFunctionFactory: this.compareFunctionFactory
+              } : false,
+            filters: this.filter && this.before === 'morphology' ? true : false,
+            afterGetColHeader: this.filter && this.before === 'morphology' ? this.addInput : this.removeInput,
+            beforeOnCellMouseDown: this.filter && this.before === 'morphology' ? this.doNotSelectColumn : undefined
+          });
+          this.getTableData(this.before);
+        }
+        if (this.pagination.hotRegisterer.getInstance(this.instance)) {
+          const afterColWidths =
+            this.after === 'search'
+              ? this.tableData.searchTable.headers.map((_val: any, index: any) => this.getColWidths(index, 'search'))
+              : this.tableData.tables['after'].headers.map((_val: any, index: any) => this.getColWidths(index, 'after'));
+          const getAfterColWidths = (index: string | number) => afterColWidths[index];
+          const headerArr =
+            this.after === 'search' ? [...this.tableData.searchTable.headers] : [...this.tableData.tables['after'].headers];
+          this.pagination.hotRegisterer.getInstance(this.instance).updateSettings({
+            colWidths: getAfterColWidths,
+            hiddenColumns: {
+              columns: headerArr
+                .map((_val, i) => i)
+                .filter(
+                  val =>
+                    // hides the Text_ID on the Morphology table
+                    columnFilter.includes(headerArr[val]) || (headerArr[val] === 'Text_ID' && this.after === 'morphology')
+                )
+            },
+            multiColumnSorting: this.sort
+              ? {
+                compareFunctionFactory: this.compareFunctionFactory
+              } : false,
+            filters: this.filter ? true : false,
+            afterGetColHeader: this.filter && this.before !== 'morphology' ? this.addInput : this.removeInput,
+            beforeOnCellMouseDown: this.filter && this.before !== 'morphology' ? this.doNotSelectColumn : undefined
+          });
+          await this.getTableData(this.after);
+        } else {
+          // console.log('No Instance!', this.instance);
+        }
+        // console.log('I have finished!')
+        fetchedTableSub$.unsubscribe();
+      });
     } catch (error) {
       console.error(error);
       // TODO: Should redirect Search Query to not found page
       return error;
     }
-    this.columns = [];
-    this.columnsMini = [];
-
-    if (this.before && this.before !== this.after) {
-      await this.dataTable['before'].headers.forEach((header: string) => {
-        return this.columnRendererSettings(header, this.before, 'columnsMini');
-      });
-    }
-    this.after === 'search'
-      ? await this.searchTable.headers.forEach((header: string) => {
-        return this.columnRendererSettings(header, this.after, 'columns');
-      })
-      : await this.dataTable['after'].headers.forEach((header: string) => {
-        return this.columnRendererSettings(header, this.after, 'columns');
-      });
-
-    const columnFilter = ['Sort_ID'];
-    if (this.hotRegisterer.getInstance(this.instance + 'Mini')) {
-      const beforeColWidths = this.dataTable['before'].headers.map((_val: any, index: any) =>
-        this.getColWidths(index, this.before)
-      );
-      const getBeforeColWidths = (index: string | number) => beforeColWidths[index];
-      const headerArr =
-        this.after === 'search' ? [...this.searchTable.headers] : [...this.dataTable['before'].headers];
-
-      this.hotRegisterer.getInstance(this.instance + 'Mini').updateSettings({
-        colWidths: getBeforeColWidths,
-        hiddenColumns: {
-          columns: headerArr
-            .map((_val, i) => i)
-            .filter(
-              val =>
-                columnFilter.includes(headerArr[val]) || (headerArr[val] === 'Text_ID' && this.before === 'morphology')
-            )
-        },
-        multiColumnSorting: this.sort
-          ? {
-            compareFunctionFactory: this.compareFunctionFactory
-          } : false,
-        columnSorting: this.sort
-          ? {
-            compareFunctionFactory: this.compareFunctionFactory
-          } : false,
-        filters: this.filter && this.before === 'morphology' ? true : false,
-        afterGetColHeader: this.filter && this.before === 'morphology' ? this.addInput : this.removeInput,
-        beforeOnCellMouseDown: this.filter && this.before === 'morphology' ? this.doNotSelectColumn : undefined
-      });
-      this.getTableData(this.before);
-    }
-    if (this.hotRegisterer.getInstance(this.instance)) {
-      const afterColWidths =
-        this.after === 'search'
-          ? this.searchTable.headers.map((_val: any, index: any) => this.getColWidths(index, this.after))
-          : this.dataTable['after'].headers.map((_val: any, index: any) => this.getColWidths(index, this.after));
-      const getAfterColWidths = (index: string | number) => afterColWidths[index];
-      const headerArr =
-        this.after === 'search' ? [...this.searchTable.headers] : [...this.dataTable['after'].headers];
-      this.hotRegisterer.getInstance(this.instance).updateSettings({
-        colWidths: getAfterColWidths,
-        hiddenColumns: {
-          columns: headerArr
-            .map((_val, i) => i)
-            .filter(
-              val =>
-                columnFilter.includes(headerArr[val]) || (headerArr[val] === 'Text_ID' && this.after === 'morphology')
-            )
-        },
-        multiColumnSorting: this.sort
-          ? {
-            compareFunctionFactory: this.compareFunctionFactory
-          } : false,
-        columnSorting: this.sort
-          ? {
-            compareFunctionFactory: this.compareFunctionFactory
-          } : false,
-        filters: this.filter ? true : false,
-        afterGetColHeader: this.filter && this.before !== 'morphology' ? this.addInput : this.removeInput,
-        beforeOnCellMouseDown: this.filter && this.before !== 'morphology' ? this.doNotSelectColumn : undefined
-      });
-      this.getTableData(this.after);
-    }
   }
 
-  columnRendererSettings (header: any, table: string, columnType: string) {
-    const columns = ['Rel', 'Trans', 'Depend', 'Depon', 'Contr', 'Augm', 'Hiat', 'Mut', 'Causing_Mut', 'Lemma', 'Analysis', 'Part_Of_Speech'];
+  columnRendererSettings (header: any, table: string, columnTableType: string) {
+    const columns = [
+      'Rel',
+      'Trans',
+      'Depend',
+      'Depon',
+      'Contr',
+      'Augm',
+      'Hiat',
+      'Mut',
+      'Causing_Mut',
+      'Lemma',
+      'Analysis',
+      'Part_Of_Speech'
+    ];
     if (columns.includes(header)) {
-      return this[columnType].push(
+      return this[columnTableType].push(
         this.columnSettings(this, table, header, 'autocomplete',
           async (query, process) => {
             process(await this.tableData.dynamicAutoComplete(query, table, header));
@@ -675,18 +701,17 @@ export class TableComponent implements OnInit {
     }
     switch (header) {
       case 'ID':
-        return this[columnType].push(this.columnSettings(this, table, header, 'numeric'));
+        return this[columnTableType].push(this.columnSettings(this, table, header, 'numeric'));
       case 'Sort_ID':
-        return this[columnType].push(this.columnSettings(this, table, header, 'numeric'));
-      case 'Text_ID':
-        return this[columnType].push(this.columnSettings(this, table, header, 'numeric'));
+        return this[columnTableType].push(this.columnSettings(this, table, header, 'numeric'));
       default:
-        return this[columnType].push(this.columnSettings(this, table, header, 'text'));
+        return this[columnTableType].push(this.columnSettings(this, table, header, 'text'));
     }
   }
 
-  columnSettings (that: any, table: string, header: string, type: string, source?: string[] | number[] | ((this: Handsontable.CellProperties, query: string, callback: (items: string[]) => void) => void), renderer?: string) {
-    // console.log('I got in here!');
+  columnSettings (that: any, table: string, header: string, type: string, source?: string[] | number[] |
+    ((this: Handsontable.CellProperties, query: string,
+      callback: (items: string[]) => void) => void), renderer?: string) {
     // console.log({ that, table, header, type, source, renderer });
     const settingsObj: Handsontable.ColumnSettings = {
       data: header,
@@ -754,7 +779,7 @@ export class TableComponent implements OnInit {
                   search: false
                 };
               } else if (table === that.after && table === 'text' && prop === 'Text_ID') {
-                // If this is the after or search table
+                // If this is the after  text table
                 queryParams = {
                   page: 0,
                   limit: 0,
@@ -769,6 +794,7 @@ export class TableComponent implements OnInit {
                   (table === that.after && table === 'morphology')) &&
                 prop === 'Text_Unit_ID'
               ) {
+                // If this is the
                 queryParams = {
                   page: 0,
                   limit: 0,
@@ -843,8 +869,10 @@ export class TableComponent implements OnInit {
   }
 
   getColWidths (index: number, table: string) {
-    // console.log('Index: ', index + ' ' + that.dataTable['after'].headers[index]);
-    const indexTitle = table === 'search' ? this.searchTable.headers[index] : this.dataTable[table === this.after ? 'after' : 'before'].headers[index];
+    // console.log('Index: ', index + ' ' + that.tableData.tables['after'].headers[index]);
+    const indexTitle = table === 'search' ?
+      this.tableData.searchTable.headers[index]
+      : this.tableData.tables[table].headers[index];
     switch (indexTitle) {
       case 'Augm':
         return 75;
@@ -924,92 +952,103 @@ export class TableComponent implements OnInit {
   }
 
   getTableData (table: string) {
-    return table === 'search' ? this.searchTable.data : this.dataTable[table === this.after ? 'after' : 'before'].data;
+    return table === 'search' ? this.tableData.searchTable.data : this.tableData.tables[table === this.after ? 'after' : 'before'].data;
   }
 
   getRows (table: string | number) {
     return table === 'search' || (table === this.before && this.before !== this.after)
-      ? this.searchTable.data.map((_row: any, index: number) => index + 1)
-      : this.dataTable[table === this.after ? 'after' : 'before'].data.map((row: { Sort_ID: any }) => row.Sort_ID);
+      ? this.tableData.searchTable.data.map((_row: any, index: number) => index + 1)
+      : this.tableData.tables[table === this.after ? 'after' : 'before'].data.map((row: { Sort_ID: any }) => row.Sort_ID);
   }
 
   undo () {
-    this.hotInstance = this.hotRegisterer.getInstance(this.instance);
+    this.hotInstance = this.pagination.hotRegisterer.getInstance(this.instance);
     if ((this.hotInstance as any).isUndoAvailable()) {
       (this.hotInstance as any).undo();
     }
   }
 
   redo () {
-    this.hotInstance = this.hotRegisterer.getInstance(this.instance);
+    this.hotInstance = this.pagination.hotRegisterer.getInstance(this.instance);
     if ((this.hotInstance as any).isRedoAvailable()) {
       (this.hotInstance as any).redo();
     }
   }
 
   async refresh () {
-    await this.fetchedTable();
 
-    this.hotInstance = this.hotRegisterer.getInstance(this.instance);
-    this.hotInstance.loadData(this.getTableData(this.after));
-    this.hotInstance.render();
+    await this.fetchedTable();
+    this.hotInstance = this.pagination.hotRegisterer.getInstance(this.instance + 'Mini');
+    if (this.hotInstance) {
+      this.hotInstance.loadData(this.getTableData(this.after));
+      this.hotInstance.render();
+    }
+    this.hotInstance = this.pagination.hotRegisterer.getInstance(this.instance);
+    if (this.hotInstance) {
+      this.hotInstance.loadData(this.getTableData(this.after));
+      this.hotInstance.render();
+    }
   }
 
   toggleMode (variable: string) {
-    switch (variable) {
-      case 'edit':
-        this.edit = !this.edit;
-        this.hotInstance = this.hotRegisterer.getInstance(this.instance);
-        this.hotInstance.updateSettings({
-          manualRowMove: this.edit && !!this.before,
-          manualColumnFreeze: this.edit,
-          contextMenu: this.edit ? this.contextMenu[1] : this.contextMenu[0],
-          readOnly: !this.edit,
-          disableVisualSelection: !this.edit
-        });
-        this.columns.forEach(column => {
-          column.readOnly = !this.edit;
-        });
-        this.columnsMini.forEach(column => {
-          column.readOnly = !this.edit;
-        });
-        if (this.hotRegisterer.getInstance(this.instance + 'Mini')) {
-          this.hotRegisterer.getInstance(this.instance + 'Mini').updateSettings({
+    // console.log('I was here!');
+    try {
+      switch (variable) {
+        case 'edit':
+          this.edit = !this.edit;
+          this.hotInstance.updateSettings({
+            manualRowMove: this.edit && !!this.before,
             manualColumnFreeze: this.edit,
             contextMenu: this.edit ? this.contextMenu[1] : this.contextMenu[0],
             readOnly: !this.edit,
             disableVisualSelection: !this.edit
           });
-        }
-        break;
-      case 'sort':
-        this.sort = !this.sort;
-        this.hotInstance = this.hotRegisterer.getInstance(this.instance);
-        this.hotInstance.updateSettings({
-          manualRowMove: !this.filter && !this.sort && this.edit && !!this.before
-        });
-        this.fetchedTable();
-        break;
-      case 'ref':
-        this.ref = !this.ref;
-        this.fetchedTable();
-        break;
-      case 'filter':
-        this.filter = !this.filter;
-        this.hotInstance = this.hotRegisterer.getInstance(this.instance);
-        this.hotInstance.updateSettings({
-          manualRowMove: !this.filter && !this.sort && this.edit && !!this.before,
-        });
-        this.fetchedTable();
-        break;
-      case 'wordWrap':
-        this.wordWrap = !this.wordWrap;
-        this.fetchedTable();
-        break;
-      default:
-        break;
+          this.columns.forEach(column => {
+            column.readOnly = !this.edit;
+          });
+          this.columnsMini.forEach(column => {
+            column.readOnly = !this.edit;
+          });
+          if (this.pagination.hotRegisterer.getInstance(this.instance + 'Mini')) {
+            this.pagination.hotRegisterer.getInstance(this.instance + 'Mini').updateSettings({
+              manualColumnFreeze: this.edit,
+              contextMenu: this.edit ? this.contextMenu[1] : this.contextMenu[0],
+              readOnly: !this.edit,
+              disableVisualSelection: !this.edit
+            });
+          }
+          break;
+        case 'sort':
+          this.sort = !this.sort;
+          this.hotInstance.updateSettings({
+            manualRowMove: !this.filter && !this.sort && this.edit && !!this.before
+          });
+          this.fetchedTable();
+          break;
+        case 'ref':
+          this.ref = !this.ref;
+          this.fetchedTable();
+          break;
+        case 'filter':
+          // TODO: Find Out why hot instance is undefined
+          this.filter = !this.filter;
+          this.hotInstance.updateSettings({
+            manualRowMove: !this.filter && !this.sort && this.edit && !!this.before,
+          });
+          this.fetchedTable();
+          break;
+        case 'wordWrap':
+          this.wordWrap = !this.wordWrap;
+          this.fetchedTable();
+          break;
+        default:
+          break;
+      }
+      // console.log(variable, this[variable]);
+    } catch (error) {
+      console.log('Error:');
+      console.error(error);
     }
-    // console.log(variable, this[variable]);
   }
 
   changeID (direction: string) {

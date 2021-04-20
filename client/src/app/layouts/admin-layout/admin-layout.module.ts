@@ -25,7 +25,7 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
     NgbModule,
     MatInputModule,
     MatPaginatorModule,
-    HotTableModule,
+    HotTableModule.forRoot(),
     ClipboardModule
   ],
   declarations: [DashboardComponent, UserProfileComponent, TablesComponent, TableComponent]

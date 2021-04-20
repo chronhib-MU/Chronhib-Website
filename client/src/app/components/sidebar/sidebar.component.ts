@@ -70,9 +70,8 @@ export class SidebarComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit () {
-    this.tableData.fetchHeaders();
+    // console.log(ROUTES.filter(menuItem => menuItem));
     this.menuItems = ROUTES.filter(menuItem => menuItem);
-    // ROUTES[2].class = this.getTitle() === 'Register' ? 'd-none' : '';
     this.resetForm();
     this.searchQuerySub$ = this.tableData.searchQuerySub.subscribe(searchQueryVal => {
       const { tableColumns, conditions } = searchQueryVal;
@@ -94,6 +93,19 @@ export class SidebarComponent implements OnInit, OnDestroy {
     });
     this.router.events.subscribe(_event => {
       this.isCollapsed = true;
+    });
+    // ROUTES[2].class = this.getTitle() === 'Register' ? 'd-none' : '';
+    // console.log('apiQuery:', `${environment.apiUrl}tableNames`);
+    // Correct Table Names not hardcoded
+    this.http.get<{ data: string[] }>(`${environment.apiUrl}tableNames`).toPromise().then(({ data }) => {
+
+      data.map(names => names.toLowerCase()).forEach(name => {
+        if (!this.tableData.tables.names.includes(name)) {
+          this.tableData.tables.names.push(name);
+        }
+      });
+      // console.log(this.tableData.tables.names);
+      this.tableData.fetchHeaders();
     });
   }
   ngOnDestroy (): void {

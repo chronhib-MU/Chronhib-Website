@@ -80,9 +80,9 @@ var tableNames = [
 ];
 var tables = {
     text: 'SELECT * FROM `TEXT` ORDER BY `Sort_ID` ASC LIMIT 100',
-    lemmata: 'SELECT * FROM `SENTENCES` ORDER BY `Text_ID`, LENGTH(`Text_Unit_ID`), `Text_Unit_ID`, `Sort_ID` ASC LIMIT 100',
+    sentences: 'SELECT * FROM `SENTENCES` ORDER BY `Text_ID`, LENGTH(`Text_Unit_ID`), `Text_Unit_ID`, `Sort_ID` ASC LIMIT 100',
     morphology: 'SELECT * FROM `MORPHOLOGY` ORDER BY `Text_ID`, LENGTH(`Text_Unit_ID`), `Text_Unit_ID`, `Sort_ID`, `ID` ASC LIMIT 100',
-    sentences: 'SELECT * FROM `LEMMATA` ORDER BY `Lemma` COLLATE utf8mb4_unicode_ci , `Sort_ID` ASC LIMIT 100'
+    lemmata: 'SELECT * FROM `LEMMATA` ORDER BY `Lemma` COLLATE utf8mb4_unicode_ci , `Sort_ID` ASC LIMIT 100'
 };
 var dbconfig = {
     host: host,
@@ -98,23 +98,36 @@ connection.connect(function (err) {
     }
 });
 var tableStructures = {};
-tableNames.forEach(function (name) {
-    tableStructures[name] = {};
-    connection.query('SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?', [database, name], function (err, results) {
-        if (err) {
-            logger.error(err);
-            return err;
-        }
-        else {
-            // console.log('Table Column Structure', results);
-            var nullColumns_1 = ['ID', 'Sort_ID'];
-            var columns = results.map(function (result) { return result.COLUMN_NAME; });
-            columns.forEach(function (column) {
-                tableStructures[name][column] = nullColumns_1.includes(column) ? null : '';
+connection.query('SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = ? AND TABLE_SCHEMA = ?', ['BASE TABLE', database], function (err, results) {
+    if (err) {
+        logger.error(err);
+    }
+    else {
+        // Adds new tables that haven't been hard-coded yet
+        results.filter(function (result) { return !(['USERS', 'SEARCH', 'TEAM'].concat(tableNames).includes(result['TABLE_NAME'])); }).forEach(function (table) {
+            tableNames.push(table['TABLE_NAME']);
+            tables[table['TABLE_NAME'].toLowerCase()] = 'SELECT * FROM `' + table['TABLE_NAME'] + '` ORDER BY `Sort_ID` ASC LIMIT 100';
+        });
+        console.log("Table Name:", tableNames);
+        tableNames.forEach(function (name) {
+            tableStructures[name] = {};
+            connection.query('SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?', [database, name], function (err, results) {
+                if (err) {
+                    logger.error(err);
+                    return err;
+                }
+                else {
+                    // console.log('Table Column Structure', results);
+                    var nullColumns_1 = ['ID', 'Sort_ID'];
+                    var columns = results.map(function (result) { return result.COLUMN_NAME; });
+                    columns.forEach(function (column) {
+                        tableStructures[name][column] = nullColumns_1.includes(column) ? null : '';
+                    });
+                    return;
+                }
             });
-            return;
-        }
-    });
+        });
+    }
 });
 // console.log(connection);
 // logger.debug(connection);
@@ -225,7 +238,7 @@ app.get("/" + appName + "/api/tableColumnRows/", function (req, res, next) {
 app.get("/" + appName + "/api/:path/headers", function (req, res, next) {
     // console.log(req.params.path);
     var path = req.params.path;
-    if (path in tables) {
+    if (tableNames.includes(path.toUpperCase())) {
         tableDataQuery_1.getHeaders(connection, logger, path, database, res, next);
     }
     else {
@@ -234,13 +247,18 @@ app.get("/" + appName + "/api/:path/headers", function (req, res, next) {
         });
     }
 });
+app.get("/" + appName + "/api/tableNames", function (_req, res) {
+    res.status(200).send({
+        data: tableNames
+    });
+});
 // Gets the Table Data for the picture tables T,S,M,L
 app.get("/" + appName + "/api/:path", function (req, res, next) {
     // console.log(req.params.path);
     var path = req.params.path;
-    // console.log(tables[path]);
+    console.log(path);
     // logger.trace(req.params.path);
-    if (path in tables) {
+    if (tableNames.includes(path.toUpperCase())) {
         connection.query(tables[path], function (err, results) {
             if (err) {
                 logger.error(err);
