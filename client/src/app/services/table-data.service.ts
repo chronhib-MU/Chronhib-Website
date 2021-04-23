@@ -50,8 +50,9 @@ export class TableDataService {
         ) as Observable<any>;
         const { data } = await fetchedHeaders.toPromise();
         // console.log(data);
-        const excludeColumns = ['Sort_ID'];
-        this.allHeaders[name] = data.filter((column: string) => !excludeColumns.includes(column));
+        // const excludeColumns = ['Sort_ID'];
+        this.allHeaders[name] = data;
+        // .filter((column: string) => !excludeColumns.includes(column));
       });
       // console.log(this.allHeaders);
     } catch (error) {
@@ -72,7 +73,8 @@ export class TableDataService {
         data: { afterTable: []; beforeTable: []; numRows?: number };
       }>).toPromise();
       console.log('To be exported: ', data.afterTable);
-      return data.afterTable;
+      // Adds the index of the row to the exported data
+      return data.afterTable.map((row, index) => Object.assign({ Index: index + 1 }, row));
     }
     this.currentApiQuery = apiQuery;
 

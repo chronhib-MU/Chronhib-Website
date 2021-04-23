@@ -66,7 +66,6 @@ const searchTable = (
           Object.values(obj.column).forEach(column => selectedTableColumns.push(obj.table + '.' + column));
         });
         let selectedTables = tableColumns.map(tableColumn => tableColumn.table);
-
         // From
         if (!options.noConditions) selectedTables = selectedTables.concat(conditions.map(condition => condition.table));
         // Removes Duplicate Tables
@@ -77,9 +76,15 @@ const searchTable = (
          *  since it's the link to the other tables
          */
         const fromInnerJoins = [' FROM'];
+        console.log(selectedTables);
         if (selectedTables.length > 1) {
+          if (selectedTables.includes('BIBLIOGRAPHY')) {
+            const indexB = selectedTables.indexOf('BIBLIOGRAPHY');
+            selectedTables.splice(indexB, 1);
+            fromInnerJoins.push('BIBLIOGRAPHY,');
+          }
           fromInnerJoins.push(selectedTables[0]);
-          if (selectedTables.includes('LEMMATA') && !selectedTables.includes('MORPHOLOGY')) {
+          if ((selectedTables.includes('LEMMATA') || selectedTables.includes('VARIATIONS')) && !selectedTables.includes('MORPHOLOGY')) {
             selectedTables.push('MORPHOLOGY');
           }
           const innerJoinConnections: { [key: string]: { [key: string]: string } } = {
@@ -94,10 +99,14 @@ const searchTable = (
             MORPHOLOGY: {
               TEXT: `INNER JOIN TEXT ON MORPHOLOGY.Text_ID = TEXT.Text_ID`,
               SENTENCES: `INNER JOIN SENTENCES ON MORPHOLOGY.Text_Unit_ID = SENTENCES.Text_Unit_ID`,
-              LEMMATA: `INNER JOIN LEMMATA ON MORPHOLOGY.Lemma = LEMMATA.Lemma`
+              LEMMATA: `INNER JOIN LEMMATA ON MORPHOLOGY.Lemma = LEMMATA.Lemma`,
+              VARIATIONS: `INNER JOIN VARIATIONS ON MORPHOLOGY.Var_Status = VARIATIONS.ID_Status`
             },
             LEMMATA: {
               MORPHOLOGY: `INNER JOIN MORPHOLOGY ON LEMMATA.Lemma = MORPHOLOGY.Lemma`
+            },
+            VARIATIONS: {
+              MORPHOLOGY: `INNER JOIN MORPHOLOGY ON VARIATIONS.ID_Status = MORPHOLOGY.Var_Status`
             }
           };
           // This is to stop sql from complaining about non-unique tables/aliases
@@ -105,14 +114,15 @@ const searchTable = (
             TEXT: true,
             SENTENCES: true,
             MORPHOLOGY: true,
-            LEMMATA: true
+            LEMMATA: true,
+            VARIATIONS: true
           };
           if (selectedTables.length > 1) {
             for (let i = 0; i < selectedTables.length; i++) {
               const tableI = selectedTables[i];
               for (let j = 1; j < selectedTables.length; j++) {
                 const tableJ = selectedTables[j];
-                if (innerJoinConnections[tableI][tableJ]) {
+                if (innerJoinConnections[tableI] && innerJoinConnections[tableI][tableJ]) {
                   // Make sure the inner join is unique
                   if (unique[tableJ]) {
                     fromInnerJoins.push(innerJoinConnections[tableI][tableJ]);
@@ -221,11 +231,16 @@ const searchTable = (
         ) {
           // Handles Limit value based on limit specified
           const limit =
-            parseInt(query.limit) > 0
-              ? parseInt(query.limit)
-              : parseInt(options.limit) > 0
-                ? parseInt(options.limit)
-                : 100;
+            parseInt(query.limit) > 0 ?
+              parseInt(query.limit) :
+              parseInt(options.limit) > 0 ? parseInt(options.limit) : 100;
+          // Handles the order by value based on selected Tables
+          let orderBy = ' ORDER BY ';
+          if (selectedTables.includes('MORPHOLOGY')) {
+            orderBy += 'MORPHOLOGY.Text_Unit_ID';
+          } else {
+            orderBy += tableColumns.map(tableColumn => tableColumn.table)[0] + '.Sort_ID';
+          }
           // Handles Offset value based on page specified
           const page = parseInt(query.page) > 0 ? parseInt(query.page) : 0;
           // console.log(limit, page);
@@ -234,6 +249,7 @@ const searchTable = (
             selectedTableColumns.join(', ') +
             fromInnerJoins.join(' ') +
             (options.noConditions ? '' : whereConditions.join(' ')) +
+            orderBy +
             ' LIMIT ' +
             limit;
           logger.info('Search Query: ', finalQuery);
@@ -329,19 +345,24 @@ const navigateTable = (
 
     let beforeQuery = '',
       afterQuery = 'SELECT * FROM ?? ',
-      countQuery = 'SELECT * FROM ?? ';
+      countQuery = 'SELECT * FROM ?? '; // stores the sql command for counting the number of rows
 
     // Check if fieldProperty and fValue exist
     if (fieldProperty && fieldValue) {
-      // afterQuery
+      // afterQuery - Where SQL conditions
       afterQuery += 'WHERE ?? = ? ';
-      afterQueryValues.push(fieldProperty, fieldValue);
+      if (destinationTable === 'variations' && currentTable === 'morphology' && fieldProperty === 'Var_Status') {
+        afterQueryValues.push('ID_Status', fieldValue);
+      } else {
+        afterQueryValues.push(fieldProperty, fieldValue);
+        console.log('I got here!')
+      }
       countQuery = afterQuery;
-      // Reference Table
+      // Reference Table - If we're navigating to a table with a reference table
       if (currentTable !== destinationTable) {
-        // if not the same table
         beforeQuery = 'SELECT * FROM ?? WHERE ?? = ?';
-        if (currentTable === 'morphology' && destinationTable === 'lemmata') {
+        // Handles Morphology pagination on M > Lemmata and M > Variations table
+        if (currentTable === 'morphology' && (destinationTable === 'lemmata' || destinationTable === 'variations')) {
           countQuery = beforeQuery;
           beforeQuery += ' LIMIT ? OFFSET ?';
           beforeQueryValues.push(limit, page * limit);
@@ -363,6 +384,7 @@ const navigateTable = (
           afterQuery += 'ORDER BY `Lemma` COLLATE utf8mb4_unicode_ci, `Sort_ID` ASC';
           break;
         default:
+          afterQuery += 'ORDER BY `Sort_ID` ASC'
           break;
       }
     }

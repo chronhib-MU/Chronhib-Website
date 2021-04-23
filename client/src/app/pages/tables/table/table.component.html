@@ -190,8 +190,8 @@
         </div>
       </div>
       <ng-container *ngIf="this.after !== 'search'">
-        <!-- Shows when we're not on the letter tables and not on the Lemmata Table -->
-        <hot-table *ngIf="before && after !== 'text' && after !== 'lemmata' && ref"
+        <!-- Shows when we're not on the letter tables and not on the Lemmata or Variations Table -->
+        <hot-table *ngIf="before && after !== 'sentences' && after !== 'lemmata' && after !== 'variations' && ref"
                    #hotMini
                    [hotId]="instance + 'Mini'"
                    [columns]="columnsMini"
@@ -212,13 +212,13 @@
                    [colHeaders]="true"
                    [data]="getTableData(after)"
                    [settings]="hotSettings[edit ? 1 : 0]"
-                   [height]="before && after !== before && after === 'lemmata' ? 100 : '70vh'"
+                   [height]="before && after !== before && (after === 'lemmata' || after === 'variations') ? 100 : '70vh'"
                    className="htCenter"
                    licenseKey="non-commercial-and-evaluation"
                    [id]="instance">
         </hot-table>
         <!-- Shows on the Lemmata Table as the big Morphology reference table-->
-        <hot-table *ngIf="before && after !== before && after === 'lemmata'"
+        <hot-table *ngIf="before && after !== before && (after === 'lemmata' || after === 'variations')"
                    #hotMini
                    [hotId]="instance + 'Mini'"
                    [columns]="columnsMini"

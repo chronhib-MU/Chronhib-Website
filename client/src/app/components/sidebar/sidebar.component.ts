@@ -98,7 +98,6 @@ export class SidebarComponent implements OnInit, OnDestroy {
     // console.log('apiQuery:', `${environment.apiUrl}tableNames`);
     // Correct Table Names not hardcoded
     this.http.get<{ data: string[] }>(`${environment.apiUrl}tableNames`).toPromise().then(({ data }) => {
-
       data.map(names => names.toLowerCase()).forEach(name => {
         if (!this.tableData.tables.names.includes(name)) {
           this.tableData.tables.names.push(name);

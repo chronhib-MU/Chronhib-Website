@@ -2,10 +2,9 @@ import { PaginationService } from './../../../services/pagination.service';
 import { AuthService } from './../../../services/auth.service';
 import { Component, OnInit, Input, ElementRef, ViewChild, NgZone, OnDestroy } from '@angular/core';
 import { Location } from '@angular/common';
-import { Router, ActivatedRoute, NavigationEnd } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { TableDataService } from '../../../services/table-data.service';
 import Handsontable from 'handsontable';
-import { HotTableRegisterer } from '@handsontable/angular';
 import { ApiPostBody } from '../../../interfaces/api-post-body';
 import * as jsonexport from 'jsonexport/dist';
 import * as _ from 'lodash';
@@ -13,7 +12,7 @@ import * as $ from 'jquery';
 import { Validators } from '@angular/forms';
 import { MatPaginator } from '@angular/material/paginator';
 import { Subscription } from 'rxjs';
-import { shareReplay, last, first } from 'rxjs/operators';
+import { shareReplay, last } from 'rxjs/operators';
 
 @Component({
   selector: 'app-table',
@@ -31,15 +30,6 @@ export class TableComponent implements OnInit, OnDestroy {
   sort = false;
   ref = false;
   instance = 'hot';
-
-  headers: any;
-  searchTable: any = {
-    headers: [],
-    data: []
-  };
-
-  dataset: any[] = [];
-
   columns: Handsontable.ColumnSettings[] = [];
   columnsMini: Handsontable.ColumnSettings[] = [];
   hotInstance = this.pagination.hotRegisterer.getInstance(this.instance);
@@ -223,9 +213,7 @@ export class TableComponent implements OnInit, OnDestroy {
   ngAfterViewInit (): void {
     //Called after ngAfterContentInit when the component's view has been initialized. Applies to components only.
     //Add 'implements AfterViewInit' to the class.
-    console.log('hot table');
-    this.hotInstance = this.pagination.hotRegisterer.getInstance(this.instance);
-    console.log(this.hotInstance);
+
   }
   ngOnDestroy (): void {
     console.log('destroying');
@@ -236,6 +224,9 @@ export class TableComponent implements OnInit, OnDestroy {
 
   ngOnInit (): void {
     console.log('Initializing');
+    // console.log('hot table');
+    this.hotInstance = this.pagination.hotRegisterer.getInstance(this.instance);
+    // console.log(this.hotInstance);
     this.routeQueryParams = this.route.queryParamMap.subscribe(async paramMap => {
       console.log('RouteQueryParams Subscription ran!');
       console.log('CurrentApiQuery Dtable:', this.tableData.currentApiQuery.dtable);
@@ -276,14 +267,14 @@ export class TableComponent implements OnInit, OnDestroy {
             if (
               that.after !== 'search' ||
               (that.tableData.searchForm.get('tableColumns')['controls'].length === 1 &&
-                that.searchTable.headers.includes('ID'))
+                that.tableData.searchTable.headers.includes('ID'))
             ) {
               console.log(hook, arguments);
               const tableData = this.getData();
               const colHeaders: Array<string> = this.getColHeader();
               // console.log('TableData', tableData);
               // console.log('ColHeader', this.getColHeader());
-              // console.log(that.searchTable);
+              // console.log(that.tableData.searchTable);
               // Need to find the index of the id
               const ids = colHeaders.map((val, index) => ({ val, index })).filter(obj => obj.val === 'Id');
               // console.log('ids', ids);
@@ -329,13 +320,14 @@ export class TableComponent implements OnInit, OnDestroy {
                   // that.refresh();
                 });
               }
-            } else if (that.searchTable.headers.includes('ID')) {
+            } else if (that.tableData.searchTable.headers.includes('ID')) {
               that.authService.showToaster(
                 'Edits on cross-table search results are not allowed.',
                 'Invalid Edit!',
                 'error'
               );
             } else {
+              console.log(that.tableData.searchTable.headers);
               that.authService.showToaster('No ID column found on search table.', 'Invalid Edit!', 'error');
             }
           }
@@ -421,14 +413,14 @@ export class TableComponent implements OnInit, OnDestroy {
           if (
             that.after !== 'search' ||
             (that.tableData.searchForm.get('tableColumns')['controls'].length === 1 &&
-              that.searchTable.headers.includes('ID'))
+              that.tableData.searchTable.headers.includes('ID'))
           ) {
             console.log(hook, arguments);
             const tableData = this.getData();
             const colHeaders: Array<string> = this.getColHeader();
             console.log('TableData', tableData);
             // console.log('ColHeader', this.getColHeader());
-            // console.log(that.searchTable);
+            // console.log(that.tableData.searchTable);
             // Need to find the index of the id
             const ids = colHeaders.map((val, index) => ({ val, index })).filter(obj => obj.val === 'Id');
             console.log('ids', ids);
@@ -464,7 +456,7 @@ export class TableComponent implements OnInit, OnDestroy {
                 that.refresh();
               });
             }
-          } else if (that.searchTable.headers.includes('ID')) {
+          } else if (that.tableData.searchTable.headers.includes('ID')) {
             that.authService.showToaster(
               'Row Removal on cross-table search results are not allowed.',
               'Invalid Row Removal!',
@@ -498,12 +490,13 @@ export class TableComponent implements OnInit, OnDestroy {
       filename += '-' + this.tableData.currentApiQuery.fval;
     }
     filename += '.csv';
-    const tableName = this.before === 'morphology' ? this.before : this.after;
+    // const tableName = this.before === 'morphology' ? this.before : this.after;
     const apiQuery = Object.assign({ ...this.tableData.currentApiQuery });
     apiQuery.limit = '9999999999999999999';
     console.log(apiQuery);
     jsonexport(await this.tableData.fetchTable(apiQuery, true), (err: any, csv: string | number | boolean) => {
       this.exporting = 'idle';
+
       if (err) {
         this.exporting = 'failed';
         setTimeout(() => {
@@ -767,19 +760,13 @@ export class TableComponent implements OnInit, OnDestroy {
             let queryParams = {};
             if (value) {
               // console.table({ table, before: that.before, after: that.after, prop });
-              // If this is the Text_ID column and we're not on the text Table
-              if (that.after !== 'text' && prop === 'Text_ID') {
-                queryParams = {
-                  page: 0,
-                  limit: 0,
-                  fprop: '',
-                  fval: '',
-                  dtable: 'text',
-                  ctable: 'text',
-                  search: false
-                };
-              } else if (table === that.after && table === 'text' && prop === 'Text_ID') {
-                // If this is the after  text table
+
+              if (table === that.after && (table === 'text' || table === 'search') && prop === 'Text_ID') {
+                /*
+                If we're on the reference Text/Search table,
+                and the we're on the Text ID column,
+                go on to the Text > Sentences table
+                */
                 queryParams = {
                   page: 0,
                   limit: 0,
@@ -789,12 +776,31 @@ export class TableComponent implements OnInit, OnDestroy {
                   ctable: 'text',
                   search: false
                 };
+              } else if ((table === 'text' || table === 'sentences') && prop === 'Text_ID') {
+                /*
+                If we're on the reference Text or main/reference Sentences table,
+                and we're on the Text ID column,
+                go back to the Text table
+                */
+                queryParams = {
+                  page: 0,
+                  limit: 0,
+                  fprop: '',
+                  fval: '',
+                  dtable: 'text',
+                  ctable: 'text',
+                  search: false
+                };
               } else if (
                 ((table === that.before && table === 'sentences') ||
                   (table === that.after && table === 'morphology')) &&
                 prop === 'Text_Unit_ID'
               ) {
-                // If this is the
+                /*
+                If we're on the reference Sentences or Morphology table,
+                and we're on the Text Unit ID column,
+                go back to the Text > Sentences table
+                */
                 queryParams = {
                   page: 0,
                   limit: 0,
@@ -808,6 +814,11 @@ export class TableComponent implements OnInit, OnDestroy {
                 (table === 'morphology' || table === 'search' || table === 'sentences') &&
                 prop === 'Text_Unit_ID'
               ) {
+                /*
+                  If we're on the reference Morphology or Search or Sentences table,
+                  and we're on the Text Unit ID column,
+                  go on to the Sentences > Morphology table
+                */
                 queryParams = {
                   page: 0,
                   limit: 0,
@@ -818,6 +829,11 @@ export class TableComponent implements OnInit, OnDestroy {
                   search: false
                 };
               } else if ((table === 'morphology' || table === 'search' || table === 'lemmata') && prop === 'Lemma') {
+                /*
+                  If we're on the main/reference Morphology or Search or Lemmata table,
+                  and we're on the Lemma column,
+                  go on to the Morphology > Lemmata table
+                */
                 queryParams = {
                   page: 0,
                   limit: 0,
@@ -827,6 +843,24 @@ export class TableComponent implements OnInit, OnDestroy {
                   ctable: 'morphology',
                   search: false
                 };
+              } else if (
+                // Not all ID Status in the Variations table are in Morphology
+                // (table === 'variations' && prop === 'ID_Status') ||
+                (table === 'morphology' && prop === 'Var_Status')) {
+                /*
+                  If we're on the Morphology table,
+                  and we're on the Var Status column,
+                  go on to the Variations table
+                */
+                queryParams = {
+                  page: 0,
+                  limit: 0,
+                  fprop: 'Var_Status',
+                  fval: value.split('; ')[0],
+                  dtable: 'variations',
+                  ctable: 'morphology',
+                  search: false
+                }
               } else {
                 Handsontable.renderers.TextRenderer.apply(this, arguments);
                 td.style.whiteSpace = that.wordWrap ? 'pre-wrap' : 'nowrap';
@@ -874,6 +908,8 @@ export class TableComponent implements OnInit, OnDestroy {
       this.tableData.searchTable.headers[index]
       : this.tableData.tables[table].headers[index];
     switch (indexTitle) {
+      case 'Abbreviation':
+        return 150;
       case 'Augm':
         return 75;
       case 'Causing_Mut':
@@ -922,6 +958,8 @@ export class TableComponent implements OnInit, OnDestroy {
         return 175;
       case 'Reason_Of_MS_Choice_And_Editorial_Policy':
         return 350;
+      case 'Reference':
+        return 350;
       case 'Rel':
         return 75;
       case 'Secondary_Meaning':
@@ -935,6 +973,8 @@ export class TableComponent implements OnInit, OnDestroy {
       case 'Text_ID':
         return 75;
       case 'Textual_Unit':
+        return 300;
+      case 'Title':
         return 300;
       case 'Trans':
         return 75;

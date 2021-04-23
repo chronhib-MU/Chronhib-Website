@@ -55,6 +55,10 @@ export class TablesComponent implements OnInit, OnDestroy {
       console.log('Table Query:');
       console.log({ ...paramMap.keys, ...paramMap });
       console.log(this.tableQuery);
+      console.log(this.pagination.table);
+      // Corrects the page number upon navigating to a new table
+      this.tableData.page = parseInt(this.tableQuery.page, 10) ? parseInt(this.tableQuery.page, 10) : 0;
+      // this.pagination.table = this.tableQuery.dtable;
       // Checks if we're trying to go to a page when there is no table specified
       if (
         this.pagination.table == null &&
@@ -94,6 +98,8 @@ export class TablesComponent implements OnInit, OnDestroy {
         this.tableData.fetchTable(apiQuery);
       }
     });
+
+
   }
   ngOnDestroy () {
     this.routeParams.unsubscribe();

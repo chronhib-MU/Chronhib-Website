@@ -285,6 +285,7 @@ app.get(`/${appName}/*`, (_req, res) => {
   res.sendFile(path.resolve(__dirname, folderLoc + 'index.html'));
 });
 
+
 if (node_env?.toLowerCase() === 'production') {
   server.listen(() => console.log(`Chronhib server is running at http://chronhib.mucampus.net/${appName}/`));
 } else {
