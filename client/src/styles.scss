@@ -1,4 +1,29 @@
 /* You can add global styles to this file, and also import other style files */
+/* Formula for TranslateX Conversion:
+    left - (100-width)/2
+*/
+@keyframes increase {
+  from {
+    transform: translateX(-52.5%) scaleX(.05);
+  }
+  to {
+    transform: translateX(130%) scaleX(1);
+  }
+}
+@keyframes decrease {
+  from {
+    transform: translateX(-90%) scaleX(.8);
+  }
+  to {
+    transform: translateX(65%) scaleX(.1);
+  }
+}
+@keyframes blinker {
+  50% {
+    opacity: 0;
+  }
+}
+
 @keyframes spinner-border {
   to {
     transform: rotate(360deg);
@@ -15,6 +40,51 @@
   }
 }
 
+// Start of Progress Bar
+.slider {
+  position: fixed;
+  z-index: 999;
+
+  width: 100%;
+  height: 7.5px;
+  overflow-x: hidden;
+}
+
+.line {
+  position: absolute;
+
+  width: 100%;
+  height: 7.5px;
+
+  background: rgba(255, 255, 255, .5);
+
+  // opacity: .4;
+}
+
+.subline {
+  position: absolute;
+
+  width: 100%;
+  height: 10px;
+}
+
+.blue {
+  background: #0a67b2;
+}
+
+.red {
+  background: #9c2329;
+}
+.blink {
+  animation: blinker .25s linear infinite;
+}
+.inc {
+  animation: increase 2s infinite;
+}
+.dec {
+  animation: decrease 2s .5s infinite;
+}
+// End of Progress Bar styling
 .spinner-border {
   display: inline-block;
   width: .875rem;
@@ -106,6 +176,7 @@ h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
 
   // filter: blur(15px);
 }
+
 .btn-link {
   &:hover {
     cursor: pointer;

@@ -228,6 +228,7 @@ export class TableComponent implements OnInit, OnDestroy {
     this.hotInstance = this.pagination.hotRegisterer.getInstance(this.instance);
     // console.log(this.hotInstance);
     this.routeQueryParams = this.route.queryParamMap.subscribe(async paramMap => {
+      this.tableData.loadingTable++;
       console.log('RouteQueryParams Subscription ran!');
       console.log('CurrentApiQuery Dtable:', this.tableData.currentApiQuery.dtable);
       console.log('After:', this.after);
@@ -241,6 +242,7 @@ export class TableComponent implements OnInit, OnDestroy {
       // (this.tableData.currentApiQuery.dtable === this.after) ||
       // (paramMap.get('dtable') === null)) {
       await this.refresh();
+      this.tableData.loadingTable--;
       // } else {
       //   console.log('Cancelled Old Redundant Iteration!');
       // }

@@ -1,1 +1,20 @@
+<!-- Using Transform - TranslateX and ScaleX -->
+<div class="slider"
+     *ngIf="tableData.loadingTable">
+  <div class="line"></div>
+  <div class="subline inc"
+       [ngClass]="{blue: tableData.loadingTable > 0}"
+       [@simpleFadeAnimation]="'in'"></div>
+  <div class="subline dec"
+       [ngClass]="{blue: tableData.loadingTable > 0}"
+       [@simpleFadeAnimation]="'in'"></div>
+  <div class="subline blink"
+       [ngClass]="{red: tableData.loadingTable < 0}"
+       [@simpleFadeAnimation]="'in'"></div>
+</div>
+<!-- <div>
+  <h1 (click)="tableData.loadingTable = tableData.loadingTable == 0 ? 1 : 0"> Loading Table Status:
+    {{this.tableData.loadingTable}}
+  </h1>
+</div> -->
 <router-outlet></router-outlet>
