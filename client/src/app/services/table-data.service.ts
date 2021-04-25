@@ -9,7 +9,6 @@ import { FormGroup } from '@angular/forms';
 import { Router } from '@angular/router';
 import * as qs from 'qs';
 import Fuse from 'fuse.js';
-import { last, shareReplay } from 'rxjs/operators';
 @Injectable({
   providedIn: 'root'
 })
@@ -35,13 +34,19 @@ export class TableDataService {
   tableLength = 0;
   page = 0;
   columnVals: any;
-
+  /*
+  Error: -1
+  Idle: 0
+  Loading: 1+
+  */
+  loadingTable = 0;
   constructor (public router: Router, private http: HttpClient, private authService: AuthService) {
   }
 
   // Fetches the headers for each table (mainly for search)
   fetchHeaders = async () => {
     try {
+      this.loadingTable++;
       await this.tables.names.forEach(async (name: string) => {
         // console.log(name);
         // console.log('apiQuery:', `${environment.apiUrl}${name}/headers`);
@@ -54,8 +59,13 @@ export class TableDataService {
         this.allHeaders[name] = data;
         // .filter((column: string) => !excludeColumns.includes(column));
       });
+      this.loadingTable--;
       // console.log(this.allHeaders);
     } catch (error) {
+      this.loadingTable = -1;
+      setTimeout(() => {
+        this.loadingTable = 0;
+      }, 2000);
       console.log('Invalid request made!');
       return;
     }
@@ -84,6 +94,7 @@ export class TableDataService {
     // console.log(window.location.origin);
     // console.log(environment.apiUrl);
     try {
+      this.loadingTable++;
       // Checks if the query was a table name e.g. 'text', 'sentences' etc. else it has to be an API query object
       if (this.tables.names.indexOf(apiQuery) > -1 && typeof apiQuery === 'string') {
         console.log('apiQuery:', `${environment.apiUrl}${apiQuery}`);
@@ -133,9 +144,14 @@ export class TableDataService {
           // console.log(this.tables['after'].data);
         }
       }
+      this.loadingTable--;
     } catch (error) {
-      console.log('Error Fetching Table:');
-      console.log(error);
+      // console.log('Error Fetching Table:');
+      // console.log(error);
+      this.loadingTable = -1;
+      setTimeout(() => {
+        this.loadingTable = 0;
+      }, 2000);
       console.log('Invalid request made!');
       const { message, title, type } = error;
       this.authService.showToaster(message, title, type);
@@ -244,7 +260,10 @@ export class TableDataService {
           default:
             break;
         }
-        return await postedTable.toPromise();
+        this.loadingTable++
+        return await postedTable.toPromise().then(() => {
+          this.loadingTable--;
+        });
         // console.log('Table has finished updating!');
       } else {
         console.log('The values were the same! No changes made.');

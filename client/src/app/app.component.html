@@ -1,1 +1,17 @@
+<!-- Using Transform - TranslateX and ScaleX -->
+<div class="slider"
+     [hidden]="!tableData.loadingTable">
+  <div class="line"></div>
+  <div class="subline inc blue"
+       [hidden]="!(tableData.loadingTable > 0)"></div>
+  <div class="subline dec blue"
+       [hidden]="!(tableData.loadingTable > 0)"></div>
+  <div class="subline blink red"
+       [hidden]="!(tableData.loadingTable < 0)"></div>
+</div>
+<!-- <div>
+  <h1 (click)="tableData.loadingTable = tableData.loadingTable == 0 ? 1 : 0"> Loading Table Status:
+    {{this.tableData.loadingTable}}
+  </h1>
+</div> -->
 <router-outlet></router-outlet>
