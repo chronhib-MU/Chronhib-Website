@@ -412,15 +412,14 @@
                         <span class="btn-inner--icon"><i class="ni ni-fat-add"></i></span>
                         <span class="btn-inner--text">Add Condition</span>
                       </button>
-                      <div class="text-right">
+                      <div class="text-center">
                         <button type="submit"
                                 class="btn btn-primary mt-4"
                                 value="Skip Conditions"
                                 (click)="tableData.searchForm.get('options')['controls']['noConditions'].value = true">
                           Skip Conditions
                         </button>
-                        <button type="submit"
-                                class="btn btn-primary mt-4"
+                        <button class="btn btn-primary mt-4"
                                 value="Search"
                                 (click)="searchTable(c)"
                                 [disabled]="tableData.searchForm.invalid">

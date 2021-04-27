@@ -14,19 +14,18 @@ export class PaginationService {
   scrollToTableSub: Subject<any> = new Subject<void>();
   table: string;
   constructor (private tableData: TableDataService, private fb: FormBuilder) {
-    console.log('I started!');
     this.pageForm = fb.group({
       page: [
-        0,
+        this.tableData.page,
         [Validators.required, Validators.min(0), Validators.max(tableData.tableLength / this.getCurrentLimit())]
       ]
     });
   }
   // This was used to test pagination
   setPage () {
-    console.log('Page: ', this.tableData.page);
-    console.log('Limit: ', this.getCurrentLimit());
-    console.log('Length: ', this.tableData.tableLength);
+    // console.log('Page: ', this.tableData.page);
+    // console.log('Limit: ', this.getCurrentLimit());
+    // console.log('Length: ', this.tableData.tableLength);
     this.tableData.page = 1;
     return this.tableData.page;
   }

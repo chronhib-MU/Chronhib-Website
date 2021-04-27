@@ -75,16 +75,20 @@
 .red {
   background: #9c2329;
 }
+
 .blink {
   animation: blinker .25s linear infinite;
 }
+
 .inc {
   animation: increase 2s infinite;
 }
+
 .dec {
   animation: decrease 2s .5s infinite;
 }
 // End of Progress Bar styling
+
 .spinner-border {
   display: inline-block;
   width: .875rem;
@@ -122,7 +126,6 @@ body {
 h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
   color: rgba(77, 77, 77, 1);
 }
-
 .main-text {
   color: rgba(0, 153, 153, 1);
 }

@@ -22,5 +22,6 @@
     },
     "peacock.remoteColor": "#215732",
     "angular.enable-experimental-ivy-prompt": false,
-    "autoHide.autoHideSideBar": true
+    "autoHide.autoHideSideBar": false,
+    "autoHide.autoHidePanel": true
 }

@@ -73,16 +73,16 @@ export class TableDataService {
 
   // Fetches table data from the API
   fetchTable = async (apiQuery: ApiGetQuery, toBeExported = false) => {
-    console.log('Fetching from table data service:');
-    console.log(apiQuery);
+    // console.log('Fetching from table data service:');
+    // console.log(apiQuery);
     if (toBeExported) {
       const search = apiQuery.search === 'true' ? true : false;
       const queryString = qs.stringify(apiQuery);
-      console.log('apiQuery:', `${environment.apiUrl}${search ? 'search/' : 'tables/'}?${queryString}`);
+      // console.log('apiQuery:', `${environment.apiUrl}${search ? 'search/' : 'tables/'}?${queryString}`);
       const { data } = await (this.http.get(`${environment.apiUrl}${search ? 'search/' : 'tables/'}?${queryString}`) as Observable<{
         data: { afterTable: []; beforeTable: []; numRows?: number };
       }>).toPromise();
-      console.log('To be exported: ', data.afterTable);
+      // console.log('To be exported: ', data.afterTable);
       // Adds the index of the row to the exported data
       return data.afterTable.map((row, index) => Object.assign({ Index: index + 1 }, row));
     }

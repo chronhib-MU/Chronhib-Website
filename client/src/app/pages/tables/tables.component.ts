@@ -52,10 +52,10 @@ export class TablesComponent implements OnInit, OnDestroy {
     this.routeQueryParams = this.route.queryParamMap.subscribe(paramMap => {
       const tableParams: any = { ...paramMap };
       this.tableQuery = tableParams.params;
-      console.log('Table Query:');
-      console.log({ ...paramMap.keys, ...paramMap });
-      console.log(this.tableQuery);
-      console.log(this.pagination.table);
+      // console.log('Table Query:');
+      // console.log({ ...paramMap.keys, ...paramMap });
+      // console.log(this.tableQuery);
+      // console.log(this.pagination.table);
       // Corrects the page number upon navigating to a new table
       this.tableData.page = parseInt(this.tableQuery.page, 10) ? parseInt(this.tableQuery.page, 10) : 0;
       // this.pagination.table = this.tableQuery.dtable;

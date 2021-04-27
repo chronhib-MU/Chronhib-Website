@@ -100,44 +100,10 @@ export class TableComponent implements OnInit, OnDestroy {
     return div;
   };
   // tslint:disable-next-line: member-ordering
-  contextMenu: Handsontable.contextMenu.Settings[] =
-    [
-      {
-        callback: function (key, selection, clickEvent) {
-          // Common callback for all options
-          console.log(key, selection, clickEvent);
-        },
-        items: {
-          'copy': {},
-          'alignment': {}
-        }
-      },
-      {
-        callback: function (key, selection, clickEvent) {
-          // Common callback for all options
-          console.log(key, selection, clickEvent);
-        },
-        items:
-        {
-          'row_below': { name: 'Insert Row' },
-          'remove_row': {},
-          'sp0': { name: '---------' },
-          'hidden_columns_show': {},
-          'hidden_columns_hide': {},
-          'freeze_column': {},
-          'unfreeze_column': {},
-          'sp1': { name: '---------' },
-          'undo': {},
-          'redo': {},
-          'sp2': { name: '---------' },
-          'cut': {},
-          'copy': {},
-          'sp3': { name: '---------' },
-          'alignment': {},
-        }
-      }];
   // index 0 if edit mode false OR index 1 if edit mode true
   // tslint:disable-next-line: member-ordering
+  contextMenu: Handsontable.contextMenu.Settings[];
+  linkData: any = null;
   hotSettings: Handsontable.GridSettings[] = [
     { // Edit Off
       startRows: 0,
@@ -152,7 +118,7 @@ export class TableComponent implements OnInit, OnDestroy {
       manualRowMove: false,
       manualColumnMove: true,
       manualColumnFreeze: false,
-      contextMenu: this.contextMenu[0],
+      contextMenu: true,
       readOnly: true,
       // colWidths: 150,
       multiColumnSorting: false,
@@ -174,7 +140,7 @@ export class TableComponent implements OnInit, OnDestroy {
       manualRowMove: true,
       manualColumnMove: true,
       manualColumnFreeze: true,
-      contextMenu: this.contextMenu[1],
+      contextMenu: true,
       readOnly: false,
       // colWidths: 150,
       multiColumnSorting: false,
@@ -195,57 +161,140 @@ export class TableComponent implements OnInit, OnDestroy {
     private location: Location,
     private ngZone: NgZone
   ) {
+    const that = this;
+    const externalLinkSetting = {
+      callback: function (key, selection, clickEvent) {
+        setTimeout(function () {
+          if (that.linkData) {
+            that.openNewTab(that.linkData);
+          }
+        }, 0);
+      },
+      hidden: function () { return that.linkData === null }, // `hidden` can be a boolean or a function
+      renderer: function (hot, wrapper, row, col, prop, itemValue) {
+        // console.log('external link render', { hot, wrapper, row, col, prop, itemValue });
+        // console.log(that.hotInstance.getCell(that.hotInstance.getSelectedLast()[0], that.hotInstance.getSelectedLast()[1]));
+        // console.log(that.hotInstance.getColHeader(that.hotInstance.getSelectedLast()[1]));
+        const elem = document.createElement('div');
+
+        elem.textContent = 'Open link in new tab ';
+        elem.classList.add('btn-outline-primary');
+        elem.style.cssText = 'height: 100%; width: 100%; padding-left: 10px; padding-right: 6px;';
+        const icon = document.createElement('i');
+        icon.classList.add('fa', 'fa-external-link-alt');
+        elem.appendChild(icon);
+        return elem;
+      }
+    };
+    this.contextMenu =
+      [
+        {
+          callback: function (key, selection, clickEvent) {
+            // Common callback for all options
+            // console.log(key, selection, clickEvent);
+          },
+          items: {
+            'external_link': externalLinkSetting,
+            'sp0': Handsontable.plugins.ContextMenu.SEPARATOR,
+            'copy': {},
+            'alignment': {},
+            'sp1': Handsontable.plugins.ContextMenu.SEPARATOR,
+            'hidden_columns_show': {},
+            'hidden_columns_hide': {}
+          }
+        },
+        {
+          callback: function (key, selection, clickEvent) {
+            // Common callback for all options
+            // console.log(key, selection, clickEvent);
+          },
+          items:
+          {
+            'external_link': externalLinkSetting,
+            'sp0': Handsontable.plugins.ContextMenu.SEPARATOR,
+            'row_below': { name: 'Insert Row' },
+            'sp1': Handsontable.plugins.ContextMenu.SEPARATOR,
+            'hidden_columns_show': {},
+            'hidden_columns_hide': {},
+            'freeze_column': {},
+            'unfreeze_column': {},
+            'sp2': Handsontable.plugins.ContextMenu.SEPARATOR,
+            'undo': {},
+            'redo': {},
+            'sp3': Handsontable.plugins.ContextMenu.SEPARATOR,
+            'cut': {},
+            'copy': {},
+            'sp4': Handsontable.plugins.ContextMenu.SEPARATOR,
+            'alignment': {},
+            'sp5': Handsontable.plugins.ContextMenu.SEPARATOR,
+            'remove_row': {
+              renderer: function (hot, wrapper, row, col, prop, itemValue) {
+                const elem = document.createElement('div');
+                elem.classList.add('btn-default');
+                elem.style.cssText = 'height: 100%; width: 100%; padding-left: 10px; padding-right: 6px;';
+                elem.textContent = 'Remove Row';
+                return elem;
+              }
+            },
+          }
+        }];
+
     Handsontable.hooks.add('afterInit', () => {
       $('.htCore').addClass('table');
-
-      if (this.pagination.hotRegisterer.getInstance(this.instance + 'Mini')) {
-        this.pagination.hotRegisterer.getInstance(this.instance + 'Mini').updateSettings({
-          manualRowMove: false
-        });
-      }
     });
+    Handsontable.hooks.add('afterContextMenuHide', () => {
+      setTimeout(() => {
+        that.linkData = null;
+      }, 300)
+    });
+
     // Handsontable.hooks.add('afterChange', changes => {
     //   changes.forEach(([row, prop, oldValue, newValue]) => {
     //     // Some logic...
     //   });
     // });
   }
+
+  print (value) {
+    console.log('Printing:');
+    console.log(value);
+    return 'success';
+  }
   ngAfterViewInit (): void {
     //Called after ngAfterContentInit when the component's view has been initialized. Applies to components only.
     //Add 'implements AfterViewInit' to the class.
 
+    this.hotInstance = this.pagination.hotRegisterer.getInstance(this.instance);
+
+    if (this.hotInstance) {
+      this.hotInstance.updateSettings({
+        contextMenu: this.edit ? this.contextMenu[1] : this.contextMenu[0]
+      })
+    }
+    if (this.pagination.hotRegisterer.getInstance(this.instance + 'Mini')) {
+      this.pagination.hotRegisterer.getInstance(this.instance + 'Mini').updateSettings({
+        manualRowMove: false,
+        contextMenu: this.edit ? this.contextMenu[1] : this.contextMenu[0]
+      });
+    }
   }
   ngOnDestroy (): void {
-    console.log('destroying');
     this.routeQueryParams.unsubscribe();
     this.scrollToTableSub$.unsubscribe();
-    console.log('destroyed');
   }
 
   ngOnInit (): void {
-    console.log('Initializing');
     // console.log('hot table');
     this.hotInstance = this.pagination.hotRegisterer.getInstance(this.instance);
     // console.log(this.hotInstance);
     this.routeQueryParams = this.route.queryParamMap.subscribe(async paramMap => {
       this.tableData.loadingTable++;
-      console.log('RouteQueryParams Subscription ran!');
-      console.log('CurrentApiQuery Dtable:', this.tableData.currentApiQuery.dtable);
-      console.log('After:', this.after);
-      console.log('ParamMap Dtable:', paramMap.get('dtable'));
-      /** Check for duplicate loops on:
-       * 1. default linked table
-       * 2. main named tables (at top) with query parameters
-       * 3. main named tables (at top) without query parameters
-       */
-      // if ((this.tableData.currentApiQuery.dtable && this.tableData.currentApiQuery.ctable) ||
-      // (this.tableData.currentApiQuery.dtable === this.after) ||
-      // (paramMap.get('dtable') === null)) {
+      // console.log('RouteQueryParams Subscription ran!');
+      // console.log('CurrentApiQuery Dtable:', this.tableData.currentApiQuery.dtable);
+      // console.log('After:', this.after);
+      // console.log('ParamMap Dtable:', paramMap.get('dtable'));
       await this.refresh();
       this.tableData.loadingTable--;
-      // } else {
-      //   console.log('Cancelled Old Redundant Iteration!');
-      // }
     });
     const that = this;
     this.paginator._intl.itemsPerPageLabel = 'Results per page:';
@@ -383,7 +432,7 @@ export class TableComponent implements OnInit, OnDestroy {
               fval: that.tableData.currentApiQuery.fval
             });
           } else if (that.after === 'search') {
-            console.log(that.tableData.searchForm.get('tableColumns')['controls'][0].value.table);
+            // console.log(that.tableData.searchForm.get('tableColumns')['controls'][0].value.table);
             table = that.tableData.searchForm.get('tableColumns')['controls'][0].value.table;
           } else if (this.rootElement.id === 'hotMini') {
             table = that.before;
@@ -420,7 +469,7 @@ export class TableComponent implements OnInit, OnDestroy {
             console.log(hook, arguments);
             const tableData = this.getData();
             const colHeaders: Array<string> = this.getColHeader();
-            console.log('TableData', tableData);
+            // console.log('TableData', tableData);
             // console.log('ColHeader', this.getColHeader());
             // console.log(that.tableData.searchTable);
             // Need to find the index of the id
@@ -471,7 +520,6 @@ export class TableComponent implements OnInit, OnDestroy {
       }
     });
     // $hooksList = $('#hooksList');
-    console.log('Initialized');
   }
 
   copyToClipboard () {
@@ -495,7 +543,7 @@ export class TableComponent implements OnInit, OnDestroy {
     // const tableName = this.before === 'morphology' ? this.before : this.after;
     const apiQuery = Object.assign({ ...this.tableData.currentApiQuery });
     apiQuery.limit = '9999999999999999999';
-    console.log(apiQuery);
+    // console.log(apiQuery);
     jsonexport(await this.tableData.fetchTable(apiQuery, true), (err: any, csv: string | number | boolean) => {
       this.exporting = 'idle';
 
@@ -554,17 +602,17 @@ export class TableComponent implements OnInit, OnDestroy {
 
   async fetchedTable () {
     try {
-      console.log('Fetching from table component:');
-      console.log(this.tableData.currentApiQuery);
-      console.log(this.after);
+      // console.log('Fetching from table component:');
+      // console.log(this.tableData.currentApiQuery);
+      // console.log(this.after);
       const fetchedTableSub = this.tableData.fetchedTable.pipe(shareReplay(), last());
       const fetchedTableSub$ = fetchedTableSub.subscribe(async data => {
 
         this.updatePageForm();
         // console.table('After: ' + this.after);
         // console.table('Before: ' + this.before);
-        console.log(`Datatable[${this.after}]: `);
-        console.log(this.tableData.tables);
+        // console.log(`Datatable[${this.after}]: `);
+        // console.log(this.tableData.tables);
         // If this is a case where there is meant to be reference table
         if (this.before && this.before !== this.after) {
           this.tableData.tables['before'].headers = Object.keys(this.tableData.tables['before'].data[0]);
@@ -885,6 +933,12 @@ export class TableComponent implements OnInit, OnDestroy {
             a.addEventListener('click', () => {
               that.ngZone.run(() => that.router.navigate(['/tables'], { queryParams }));
             });
+            a.addEventListener('contextmenu', function (ev) {
+              that.linkData = queryParams;
+              // console.log(that.linkData);
+              ev.preventDefault();
+              return false;
+            }, false);
             td.appendChild(a);
             td.style.textAlign = 'center';
           }
@@ -1018,23 +1072,37 @@ export class TableComponent implements OnInit, OnDestroy {
   }
 
   async refresh () {
-
+    await this.tableData.fetchTable(this.tableData.currentApiQuery);
     await this.fetchedTable();
     this.hotInstance = this.pagination.hotRegisterer.getInstance(this.instance + 'Mini');
     if (this.hotInstance) {
       this.hotInstance.loadData(this.getTableData(this.after));
       this.hotInstance.render();
+      this.hotInstance.updateSettings({
+        contextMenu: this.edit ? this.contextMenu[1] : this.contextMenu[0]
+      });
     }
+
     this.hotInstance = this.pagination.hotRegisterer.getInstance(this.instance);
     if (this.hotInstance) {
       this.hotInstance.loadData(this.getTableData(this.after));
       this.hotInstance.render();
+      this.hotInstance.updateSettings({
+        contextMenu: this.edit ? this.contextMenu[1] : this.contextMenu[0]
+      });
     }
   }
 
+  openNewTab (queryParams) {
+    const url = this.router.serializeUrl(
+      this.router.createUrlTree(['/tables'], { queryParams })
+    );
+    window.open(url, '_blank');
+  }
   toggleMode (variable: string) {
     // console.log('I was here!');
     try {
+      this.hotInstance = this.pagination.hotRegisterer.getInstance(this.instance);
       switch (variable) {
         case 'edit':
           this.edit = !this.edit;

@@ -217,7 +217,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
           'condition-' + this.tableData.searchForm.get('conditions')['controls'].length
         ) {
           setTimeout(() => {
-            console.log(conditionsAcc);
+            // console.log(conditionsAcc);
 
             conditionsAcc.toggle('condition-' + (this.tableData.searchForm.get('conditions')['controls'].length - 1));
           }, 1);
@@ -270,19 +270,19 @@ export class SidebarComponent implements OnInit, OnDestroy {
     }
   }
   updateCaseSensitive (i: string | number) {
-    console.log(this.tableData.searchForm.get('conditions')['controls'][i].controls.accentSensitive.value, i);
+    // console.log(this.tableData.searchForm.get('conditions')['controls'][i].controls.accentSensitive.value, i);
     if (this.tableData.searchForm.get('conditions')['controls'][i].controls.accentSensitive.value === false) {
       this.tableData.searchForm.get('conditions')['controls'][i].controls.caseSensitive.patchValue(false);
       this.tableData.searchForm.get('conditions')['controls'][i].controls.caseSensitive.disable();
     } else {
       this.tableData.searchForm.get('conditions')['controls'][i].controls.caseSensitive.enable();
     }
-    console.log(this.tableData.searchForm.get('conditions')['controls'][i].controls.caseSensitive);
+    // console.log(this.tableData.searchForm.get('conditions')['controls'][i].controls.caseSensitive);
   }
 
   async searchTable (close: () => void) {
-    console.log(this.tableData.searchForm.value);
-    console.log('Users Email:', this.authService.user.email);
+    // console.log(this.tableData.searchForm.value);
+    // console.log('Users Email:', this.authService.user.email);
 
     const id = await this.http
       .post(
@@ -293,7 +293,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
         }
       )
       .toPromise();
-    console.log(id);
+    // console.log(id);
     this.router.navigateByUrl('/', { skipLocationChange: true }).then(() =>
       this.router
         .navigate(['/tables'], {

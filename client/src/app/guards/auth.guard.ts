@@ -7,8 +7,8 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class AuthGuard implements CanActivate {
-  constructor(private authService: AuthService, private router: Router) {}
-  canActivate(
+  constructor (private authService: AuthService, private router: Router) { }
+  canActivate (
     next: ActivatedRouteSnapshot,
     state: RouterStateSnapshot
   ): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree {
@@ -16,13 +16,13 @@ export class AuthGuard implements CanActivate {
       const token = localStorage[`${window.location.origin}token`];
       this.authService.isLoggedIn(token).then(_ => {
         if (!this.authService.authenticated) {
-          console.log('access denied');
+          // console.log('access denied');
           return this.router.navigate(['/login']);
         }
         return true;
       });
     } else if (!this.authService.authenticated) {
-      console.log('access denied');
+      // console.log('access denied');
       return this.router.navigate(['/login']);
     }
     return true;
