@@ -61,9 +61,9 @@ const tableNames = [
 
 const tables: { [key: string]: string } = {
   text: 'SELECT * FROM `TEXT` ORDER BY `Sort_ID` ASC LIMIT 100',
-  lemmata: 'SELECT * FROM `SENTENCES` ORDER BY `Text_ID`, LENGTH(`Text_Unit_ID`), `Text_Unit_ID`, `Sort_ID` ASC LIMIT 100',
+  sentences: 'SELECT * FROM `SENTENCES` ORDER BY `Text_ID`, LENGTH(`Text_Unit_ID`), `Text_Unit_ID`, `Sort_ID` ASC LIMIT 100',
   morphology: 'SELECT * FROM `MORPHOLOGY` ORDER BY `Text_ID`, LENGTH(`Text_Unit_ID`), `Text_Unit_ID`, `Sort_ID`, `ID` ASC LIMIT 100',
-  sentences: 'SELECT * FROM `LEMMATA` ORDER BY `Lemma` COLLATE utf8mb4_unicode_ci , `Sort_ID` ASC LIMIT 100'
+  lemmata: 'SELECT * FROM `LEMMATA` ORDER BY `Lemma` COLLATE utf8mb4_unicode_ci , `Sort_ID` ASC LIMIT 100'
 };
 
 const dbconfig = {
@@ -83,23 +83,37 @@ connection.connect((err) => {
 });
 
 const tableStructures: { [key: string]: { [key: string]: string | null; }; } = {};
-tableNames.forEach(name => {
-  tableStructures[name] = {};
-  connection.query('SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?', [database, name], (err, results) => {
-    if (err) {
-      logger.error(err);
-      return err;
-    } else {
-      // console.log('Table Column Structure', results);
-      const nullColumns = ['ID', 'Sort_ID'];
-      const columns = results.map((result: { COLUMN_NAME: string; }) => result.COLUMN_NAME);
-      columns.forEach((column: string) => {
-        tableStructures[name][column] = nullColumns.includes(column) ? null : '';
-      })
-      return;
-    }
-  });
-})
+
+connection.query('SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = ? AND TABLE_SCHEMA = ?', ['BASE TABLE', database], (err, results) => {
+  if (err) {
+    logger.error(err);
+  } else {
+    // Adds new tables that haven't been hard-coded yet
+    results.filter((result: { [x: string]: string; }) => !(['USERS', 'SEARCH', 'TEAM'].concat(tableNames).includes(result['TABLE_NAME']))).forEach((table: { [x: string]: string; }) => {
+      tableNames.push(table['TABLE_NAME']);
+      tables[table['TABLE_NAME'].toLowerCase()] = 'SELECT * FROM `' + table['TABLE_NAME'] + '` ORDER BY `Sort_ID` ASC LIMIT 100';
+    });
+    console.log("Table Name:", tableNames);
+    tableNames.forEach(name => {
+      tableStructures[name] = {};
+      connection.query('SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?', [database, name], (err, results) => {
+        if (err) {
+          logger.error(err);
+          return err;
+        } else {
+          // console.log('Table Column Structure', results);
+          const nullColumns = ['ID', 'Sort_ID'];
+          const columns = results.map((result: { COLUMN_NAME: string; }) => result.COLUMN_NAME);
+          columns.forEach((column: string) => {
+            tableStructures[name][column] = nullColumns.includes(column) ? null : '';
+          })
+          return;
+        }
+      });
+    })
+  }
+});
+
 // console.log(connection);
 // logger.debug(connection);
 // connection.query('SELECT `First_Name`,`Last_Name`,`Email`,`Password` FROM `USERS`', (err, results) => {
@@ -226,7 +240,7 @@ app.get(`/${appName}/api/tableColumnRows/`, (req, res, next) => {
 app.get(`/${appName}/api/:path/headers`, (req, res, next) => {
   // console.log(req.params.path);
   const path = req.params.path;
-  if (path in tables) {
+  if (tableNames.includes(path.toUpperCase())) {
     getHeaders(connection, logger, path, database, res, next);
   } else {
     res.status(404).send({
@@ -235,13 +249,19 @@ app.get(`/${appName}/api/:path/headers`, (req, res, next) => {
   }
 });
 
+app.get(`/${appName}/api/tableNames`, (_req, res) => {
+  res.status(200).send({
+    data: tableNames
+  });
+});
+
 // Gets the Table Data for the picture tables T,S,M,L
 app.get(`/${appName}/api/:path`, (req, res, next) => {
   // console.log(req.params.path);
   const path = req.params.path;
-  // console.log(tables[path]);
+  console.log(path);
   // logger.trace(req.params.path);
-  if (path in tables) {
+  if (tableNames.includes(path.toUpperCase())) {
     connection.query(tables[path], (err, results) => {
       if (err) {
         logger.error(err);
@@ -264,6 +284,7 @@ app.get(`/${appName}/api/:path`, (req, res, next) => {
 app.get(`/${appName}/*`, (_req, res) => {
   res.sendFile(path.resolve(__dirname, folderLoc + 'index.html'));
 });
+
 
 if (node_env?.toLowerCase() === 'production') {
   server.listen(() => console.log(`Chronhib server is running at http://chronhib.mucampus.net/${appName}/`));
