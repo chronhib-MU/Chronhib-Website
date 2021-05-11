@@ -7,12 +7,13 @@ import { TableDataService } from '../../../services/table-data.service';
 import Handsontable from 'handsontable';
 import { ApiPostBody } from '../../../interfaces/api-post-body';
 import * as jsonexport from 'jsonexport/dist';
-import * as _ from 'lodash';
-import * as $ from 'jquery';
+import _ from 'lodash';
+import $ from 'jquery';
 import { Validators } from '@angular/forms';
 import { MatPaginator } from '@angular/material/paginator';
 import { Subscription } from 'rxjs';
 import { shareReplay, last } from 'rxjs/operators';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-table',
@@ -1097,7 +1098,7 @@ export class TableComponent implements OnInit, OnDestroy {
     const url = this.router.serializeUrl(
       this.router.createUrlTree(['/tables'], { queryParams })
     );
-    window.open(url, '_blank');
+    window.open(environment.path + url, '_blank');
   }
   toggleMode (variable: string) {
     // console.log('I was here!');

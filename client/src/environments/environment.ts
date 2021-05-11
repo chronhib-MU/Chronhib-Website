@@ -5,7 +5,8 @@
 export const environment = {
   apiUrl: 'http://localhost:4001/chronhibWebsite/api/',
   production: false,
-  wsUrl: 'http://localhost:4001/chronhibWebsite/'
+  wsUrl: 'http://localhost:4001/chronhibWebsite/',
+  path: ''
 };
 
 /*
