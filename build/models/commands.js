@@ -20,7 +20,7 @@ var __spread = (this && this.__spread) || function () {
     return ar;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.insertSearchQuery = exports.updateRow = exports.removeRow = exports.createRow = exports.moveRow = void 0;
+exports.insertSearchQuery = exports.updateProfile = exports.updateRow = exports.removeRow = exports.createRow = exports.moveRow = void 0;
 var auth_1 = require("./auth");
 // Creates a row if a row is inserted
 function createRow(connection, logger, table, tableStructures, values, user, token, res, next) {
@@ -178,4 +178,24 @@ function updateRow(connection, logger, table, values, token, res, next) {
     });
 }
 exports.updateRow = updateRow;
+// Updates a team members profile
+function updateProfile(connection, logger, id, name, email, position, description, social_media, token, res, next) {
+    auth_1.isLoggedIn(logger, connection, token, res, true);
+    var updateQuery = 'UPDATE `TEAM` SET `Name` = ?, `Position` = ?, `Description` = ?, `Social_Media` = ? WHERE `ID` = ? AND `Email` = ?;';
+    console.log('Post Query: ', updateQuery);
+    logger.info('Post Query: ', __spread([updateQuery], [id, name, email, position, description, social_media]));
+    connection.query(updateQuery, [name, position, description, social_media, id, email], function (err, results) {
+        if (err) {
+            console.log('Error: ', err);
+            logger.error('Error: ', err);
+            next(err);
+        }
+        else {
+            logger.trace('Success: ', results);
+            res.status(200).end();
+        }
+        // console.log({ beforeTable, afterTable });
+    });
+}
+exports.updateProfile = updateProfile;
 //# sourceMappingURL=commands.js.map
