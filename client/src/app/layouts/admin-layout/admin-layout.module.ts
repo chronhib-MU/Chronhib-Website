@@ -9,8 +9,8 @@ import { ClipboardModule } from 'ngx-clipboard';
 import { MatInputModule } from '@angular/material/input';
 import { MatPaginatorModule } from '@angular/material/paginator';
 import { AdminLayoutRoutes } from './admin-layout.routing';
-import { DashboardComponent } from '../../pages/dashboard/dashboard.component';
-import { UserProfileComponent } from '../../pages/user-profile/user-profile.component';
+import { LandingComponent } from '../../pages/landing/landing.component';
+import { MeetTheTeamComponent } from '../../pages/meet-the-team/meet-the-team.component';
 import { TablesComponent } from '../../pages/tables/tables.component';
 import { TableComponent } from '../../pages/tables/table/table.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
@@ -28,6 +28,7 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
     HotTableModule.forRoot(),
     ClipboardModule
   ],
-  declarations: [DashboardComponent, UserProfileComponent, TablesComponent, TableComponent]
+  declarations: [LandingComponent, MeetTheTeamComponent, TablesComponent, TableComponent],
+  bootstrap: [MeetTheTeamComponent]
 })
 export class AdminLayoutModule { }

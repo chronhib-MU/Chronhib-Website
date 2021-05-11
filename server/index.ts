@@ -9,7 +9,7 @@ import compression from 'compression';
 import helmet from 'helmet';
 import log4js from 'log4js';
 import { register, login, isLoggedIn } from './models/auth';
-import { createRow, insertSearchQuery, moveRow, removeRow, updateRow } from './models/commands';
+import { createRow, insertSearchQuery, moveRow, removeRow, updateRow, updateProfile } from './models/commands';
 import { getHeaders, getTableColumnRows, navigateTable, searchTable } from './models/tableDataQuery';
 const currentDate = new Date();
 const formattedDate = `-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${currentDate.getFullYear()}`;
@@ -156,6 +156,12 @@ app.post(`/${appName}/isLoggedIn`, (req, res): void => {
   isLoggedIn(logger, connection, req.body.token, res);
 });
 
+app.patch(`/${appName}/api/profileUpdate/`, (req, res, next) => {
+  console.log('PATCH Variable: ', req.body);
+  logger.info('PATCH Variable: ', req.body);
+  const { id, name, email, position, social_media, description, token } = req.body;
+  updateProfile(connection, logger, id, name, email, position, description, social_media, token, res, next);
+});
 app.patch(`/${appName}/api/rows/`, (req, res, next) => {
   console.log('PATCH Variable: ', req.body);
   logger.info('PATCH Variable: ', req.body);
@@ -235,6 +241,34 @@ app.get(`/${appName}/api/tableColumnRows/`, (req, res, next) => {
     });
   }
 });
+
+// Gets all the Team Members from the database
+app.get(`/${appName}/api/allTeamMembers`, (_req, res, next) => {
+  const query = 'SELECT * FROM TEAM;'
+  connection.query(query, (err, results) => {
+    if (err) {
+      logger.error(err);
+      next(err);
+    } else {
+      results.map((result: { Image: Buffer; ImageURL: string; }) => {
+        // const arr = new Uint8Array(result.Image) //if it's an ArrayBuffer
+        const content = result.Image.toString();
+        if (content) {
+          const ImageURL = 'data:image/png;base64,' + result.Image.toString();
+          // console.log(ImageURL);
+          result.ImageURL = ImageURL;
+        } else { result.ImageURL = ''; }
+        return result;
+      })
+      // console.log(results);
+      // logger.info(results);
+      res.status(200).send({
+        data: results
+      });
+    }
+  })
+});
+
 
 // Gets the table headers / column names
 app.get(`/${appName}/api/:path/headers`, (req, res, next) => {

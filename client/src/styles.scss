@@ -123,6 +123,10 @@ body {
   height: 100vh;
 }
 
+.card-profile-image img {
+  width: 180px !important;
+}
+
 h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
   color: rgba(77, 77, 77, 1);
 }

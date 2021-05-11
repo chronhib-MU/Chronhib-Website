@@ -33,7 +33,7 @@ import { NgFuseService } from './services/ngfuse.service';
     MatInputModule,
     MatPaginatorModule,
     NgSelectModule,
-    // NgOptionHighlightModule,
+    NgOptionHighlightModule,
     RouterModule,
     AppRoutingModule,
     ToastrModule.forRoot({

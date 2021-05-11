@@ -165,6 +165,12 @@ app.post("/" + appName + "/login", function (req, res) {
 app.post("/" + appName + "/isLoggedIn", function (req, res) {
     auth_1.isLoggedIn(logger, connection, req.body.token, res);
 });
+app.patch("/" + appName + "/api/profileUpdate/", function (req, res, next) {
+    console.log('PATCH Variable: ', req.body);
+    logger.info('PATCH Variable: ', req.body);
+    var _a = req.body, id = _a.id, name = _a.name, email = _a.email, position = _a.position, social_media = _a.social_media, description = _a.description, token = _a.token;
+    commands_1.updateProfile(connection, logger, id, name, email, position, description, social_media, token, res, next);
+});
 app.patch("/" + appName + "/api/rows/", function (req, res, next) {
     console.log('PATCH Variable: ', req.body);
     logger.info('PATCH Variable: ', req.body);
@@ -233,6 +239,36 @@ app.get("/" + appName + "/api/tableColumnRows/", function (req, res, next) {
             data: []
         });
     }
+});
+// Gets all the Team Members from the database
+app.get("/" + appName + "/api/allTeamMembers", function (_req, res, next) {
+    var query = 'SELECT * FROM TEAM;';
+    connection.query(query, function (err, results) {
+        if (err) {
+            logger.error(err);
+            next(err);
+        }
+        else {
+            results.map(function (result) {
+                // const arr = new Uint8Array(result.Image) //if it's an ArrayBuffer
+                var content = result.Image.toString();
+                if (content) {
+                    var ImageURL = 'data:image/png;base64,' + result.Image.toString();
+                    // console.log(ImageURL);
+                    result.ImageURL = ImageURL;
+                }
+                else {
+                    result.ImageURL = '';
+                }
+                return result;
+            });
+            // console.log(results);
+            // logger.info(results);
+            res.status(200).send({
+                data: results
+            });
+        }
+    });
 });
 // Gets the table headers / column names
 app.get("/" + appName + "/api/:path/headers", function (req, res, next) {

@@ -14,8 +14,8 @@
     <!-- Brand -->
     <a class="navbar-brand pt-0"
        routerLinkActive="active"
-       [routerLink]="['/dashboard']">
-      <img src="./assets/img/brand/Logo1.png"
+       [routerLink]="['/landing']">
+      <img [src]="getTitle() === 'Corpus PalaeoHibernicum (CorPH)' ? './assets/img/brand/Logo4.png' : './assets/img/brand/Logo1.png'"
            class="navbar-brand-img"
            alt="ChronHib Logo" />
     </a>
@@ -555,25 +555,25 @@
             <h6 class="text-overflow m-0">Welcome!</h6>
           </div>
           <a routerLinkActive="active"
-             [routerLink]="['/user-profile']"
+             [routerLink]="['/meet-the-team']"
              class="dropdown-item">
             <i class="ni ni-single-02"></i>
             <span>My profile</span>
           </a>
           <a routerLinkActive="active"
-             [routerLink]="['/user-profile']"
+             [routerLink]="['/meet-the-team']"
              class="dropdown-item">
             <i class="ni ni-settings-gear-65"></i>
             <span>Settings</span>
           </a>
           <a routerLinkActive="active"
-             [routerLink]="['/user-profile']"
+             [routerLink]="['/meet-the-team']"
              class="dropdown-item">
             <i class="ni ni-calendar-grid-58"></i>
             <span>Activity</span>
           </a>
           <a routerLinkActive="active"
-             [routerLink]="['/user-profile']"
+             [routerLink]="['/meet-the-team']"
              class="dropdown-item">
             <i class="ni ni-support-16"></i>
             <span>Support</span>
@@ -593,8 +593,9 @@
         <div class="row">
           <div class="col-6 collapse-brand">
             <a routerLinkActive="active"
-               [routerLink]="['/dashboard']">
-              <img src="./assets/img/brand/Logo1.png" />
+               [routerLink]="['/landing']">
+              <img
+                   [src]="getTitle() === 'Corpus PalaeoHibernicum (CorPH)' ? './assets/img/brand/Logo4.png' : './assets/img/brand/Logo1.png'" />
             </a>
           </div>
           <div class="col-6 collapse-close">
@@ -614,8 +615,9 @@
             [ngClass]="{ 'd-none': authService.authenticated && menuItem.class === 'auth' }">
           <a routerLinkActive="active"
              [routerLink]="[menuItem.path]"
+             [queryParams]="menuItem.queryParams"
              class="nav-link">
-            <i class="ni {{ menuItem.icon }}"></i>
+            <i class="fas {{ menuItem.icon }}"></i>
             {{ menuItem.title }}
           </a>
         </li>

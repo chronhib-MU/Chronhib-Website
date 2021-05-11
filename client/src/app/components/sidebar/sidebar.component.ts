@@ -10,16 +10,47 @@ import { environment } from 'src/environments/environment';
 
 declare interface RouteInfo {
   path: string;
+  queryParams: {};
   title: string;
   icon: string;
   class: string;
 }
 export const ROUTES: RouteInfo[] = [
-  { path: '/dashboard', title: 'Dashboard', icon: 'ni-tv-2 text-marigold', class: '' },
-  { path: '/tables', title: 'Tables', icon: 'ni-bullet-list-67 text-marigold', class: '' },
-  { path: '/user-profile', title: 'User profile', icon: 'ni-single-02 text-marigold', class: '' },
-  { path: '/login', title: 'Login', icon: 'ni-key-25 text-marigold', class: 'auth' },
-  { path: '/register', title: 'Register', icon: 'ni-circle-08 text-marigold', class: 'auth' }
+  {
+    path: '/landing',
+    queryParams: {},
+    title: 'Landing',
+    icon: 'fa-home text-marigold',
+    class: ''
+  },
+  {
+    path: '/tables',
+    queryParams: { page: 0, limit: 0, fprop: '', fval: '', dtable: 'text', ctable: 'text', search: false },
+    title: 'Corpus PalaeoHibernicum (CorPH)',
+    icon: 'fa-table text-marigold',
+    class: ''
+  },
+  {
+    path: '/meet-the-team',
+    queryParams: {},
+    title: 'Meet the ChronHib Team',
+    icon: 'fa-users text-marigold',
+    class: ''
+  },
+  {
+    path: '/login',
+    queryParams: {},
+    title: 'Login',
+    icon: 'fa-key text-marigold',
+    class: 'auth'
+  },
+  {
+    path: '/register',
+    queryParams: {},
+    title: 'Register',
+    icon: 'fa-user-circle text-marigold',
+    class: 'auth'
+  }
 ];
 
 @Component({
@@ -328,6 +359,6 @@ export class SidebarComponent implements OnInit, OnDestroy {
         }
       }
     }
-    return 'Dashboard';
+    return 'Landing';
   }
 }

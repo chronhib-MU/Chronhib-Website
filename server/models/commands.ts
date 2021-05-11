@@ -170,6 +170,24 @@ function updateRow (connection: Connection, logger: Logger, table: string, value
     });
   });
 }
+// Updates a team members profile
+function updateProfile (connection: Connection, logger: Logger, id: string, name: string, email: string, position: string, description: string, social_media: string, token: string, res: Response, next: NextFunction): void {
+  isLoggedIn(logger, connection, token, res, true);
+  const updateQuery = 'UPDATE `TEAM` SET `Name` = ?, `Position` = ?, `Description` = ?, `Social_Media` = ? WHERE `ID` = ? AND `Email` = ?;';
+  console.log('Post Query: ', updateQuery);
+  logger.info('Post Query: ', [updateQuery, ...[id, name, email, position, description, social_media]]);
+  connection.query(updateQuery, [name, position, description, social_media, id, email], (err: unknown, results: unknown) => {
+    if (err) {
+      console.log('Error: ', err);
+      logger.error('Error: ', err);
+      next(err);
+    } else {
+      logger.trace('Success: ', results);
+      res.status(200).end();
+    }
+    // console.log({ beforeTable, afterTable });
+  });
+}
 
 
 export {
@@ -177,5 +195,6 @@ export {
   createRow,
   removeRow,
   updateRow,
+  updateProfile,
   insertSearchQuery,
 };

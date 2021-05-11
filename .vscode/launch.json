@@ -8,7 +8,7 @@
       "name": "Server & Client",
       "configurations": [
         "Run Script: Dev",
-        "Launch Chrome Debugger"
+        "Launch Firefox Debugger"
       ]
     }
   ],

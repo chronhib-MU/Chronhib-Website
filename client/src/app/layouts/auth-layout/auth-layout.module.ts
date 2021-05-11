@@ -11,4 +11,4 @@ import { RegisterComponent } from '../../pages/register/register.component';
   imports: [CommonModule, RouterModule.forChild(AuthLayoutRoutes), FormsModule, ReactiveFormsModule, NgbModule],
   declarations: [LoginComponent, RegisterComponent]
 })
-export class AuthLayoutModule {}
+export class AuthLayoutModule { }
