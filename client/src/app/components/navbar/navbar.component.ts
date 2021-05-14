@@ -35,6 +35,6 @@ export class NavbarComponent implements OnInit {
         return this.listTitles[item].title;
       }
     }
-    return 'Landing';
+    return 'Home';
   }
 }

@@ -1,0 +1,90 @@
+<div class="header bg-gradient-image pb-8 pt-5">
+  <div class="container-fluid pb-3">
+    <div class="header-body">
+      <h1 class="d-none d-sm-block display-1 text-white">
+        Chronologicon Hibernicum (ChronHib)
+        <span class="text-white subhead">
+          A Probabilistic Chronological Framework for Dating
+          Early Irish Language Developments
+          and Literature
+        </span>
+      </h1>
+      <h1 class="d-sm-none display-2 text-white">
+        Chronologicon Hibernicum (ChronHib)
+        <span class="text-white subhead">
+          A Probabilistic Chronological Framework for Dating
+          Early Irish Language Developments
+          and Literature
+        </span>
+      </h1>
+    </div>
+  </div>
+</div>
+<div class="container-fluid main mt--7 vh-100"
+     id="scrollSpyContainer">
+  <div class="row pt-5">
+    <div class="d-none d-sm-block col-12 col-sm-3 col-md-3 col-lg-2">
+      <!-- </div> -->
+      <!-- <div class="col-2 col-sm-2 col-md-3 position-fixed"> -->
+      <!-- <h1>Current Section : [{{currentSection}}]</h1> -->
+      <h1 class="ml-2 width-100">Menu <i class=" far fa-arrow-alt-circle-up right"
+           (click)="scrollTop()"></i></h1>
+      <ul class="list-group shadow">
+        <li *ngFor="let section of sections; let i = index;"
+            class="list-group-item"
+            (click)="scrollTo(section.replace(' ', ''))"
+            [ngClass]="{ 'active': currentSection === (section.replace(' ', '')) }">
+          <div [ngClass]="{ 'active': currentSection === (section.replace(' ', '')) }">{{section}}
+          </div>
+        </li>
+        <li class="list-group-item">
+          <a [routerLink]="['/tables']">CorPH</a>
+        </li>
+        <li class="list-group-item">
+          <a [routerLink]="['/meet-the-team']">Meet the ChronHib Team</a>
+        </li>
+      </ul>
+    </div>
+    <div id="scrollSpy"
+         class="col-12 col-sm-9 col-md-9 col-lg-10"
+         scrollSpy
+         [spiedTags]="['DIV']"
+         (sectionChange)="onSectionChange($event)">
+      <div *ngFor="let section of sections; let i = index;"
+           [id]="section.replace(' ', '')"
+           class="section">
+        <h1 class="display-3">{{section}}</h1>
+        <p class="lead"
+           *ngIf="section === sections[0]">
+          <strong>
+            Chronologicon Hibernicum (ChronHib) was a research project in the Maynooth University Department of Early
+            Irish,
+            led by Principal Investigator Prof David Stifter.
+            The project received funding from the European Union's Horizon 2020 research and innovation programme under
+            grant agreement no. 647351.
+            From 2015 ‒ 2021, the <a [routerLink]="['/meet-the-team']">ChronHib Team</a> was working on refining the
+            methodology for dating
+            Early Medieval Irish language developments (ca. 6th–mid 10th century A.D.) and on building a chronological
+            framework of linguistic changes that can then be used to date literary texts within the Early Irish period.
+            A major output of the project is the lexicographic database <a [routerLink]="['/tables']"> Corpus
+              PalaeoHibernicum (CorPH)</a> that currently includes over 70 deeply annotated Old and Middle Irish texts.
+          </strong>
+        </p>
+        <p class="lead"
+           *ngIf="section === sections[1]"><strong>
+            Guidelines on how to use Corpus PalaeoHibernicum can be found [link to
+            pdf] <a [routerLink]="['/']"
+               fragment="CorPHGuidelines">here</a>.
+          </strong>
+        </p>
+        <p class="lead"
+           *ngIf="section === sections[2]"><strong></strong></p>
+        <p class="lead"
+           *ngIf="section === sections[3]"><strong></strong></p>
+      </div>
+    </div>
+  </div>
+</div>
+<i id="goToTop"
+   class="d-block d-sm-none position-fixed far fa-arrow-alt-circle-up p-3"
+   (click)="scrollTop()"></i>

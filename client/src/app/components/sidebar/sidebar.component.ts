@@ -17,9 +17,9 @@ declare interface RouteInfo {
 }
 export const ROUTES: RouteInfo[] = [
   {
-    path: '/landing',
+    path: '/home',
     queryParams: {},
-    title: 'Landing',
+    title: 'Home',
     icon: 'fa-home text-marigold',
     class: ''
   },
@@ -359,6 +359,6 @@ export class SidebarComponent implements OnInit, OnDestroy {
         }
       }
     }
-    return 'Landing';
+    return 'Home';
   }
 }

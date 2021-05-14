@@ -46,7 +46,7 @@ export class TableDataService {
   // Fetches the headers for each table (mainly for search)
   fetchHeaders = async () => {
     try {
-      this.loadingTable++;
+      setTimeout(() => this.loadingTable++, 0);
       await this.tables.names.forEach(async (name: string) => {
         // console.log(name);
         // console.log('apiQuery:', `${environment.apiUrl}${name}/headers`);
@@ -59,7 +59,7 @@ export class TableDataService {
         this.allHeaders[name] = data;
         // .filter((column: string) => !excludeColumns.includes(column));
       });
-      this.loadingTable--;
+      setTimeout(() => this.loadingTable--, 0);
       // console.log(this.allHeaders);
     } catch (error) {
       this.loadingTable = -1;
@@ -94,7 +94,7 @@ export class TableDataService {
     // console.log(window.location.origin);
     // console.log(environment.apiUrl);
     try {
-      this.loadingTable++;
+      setTimeout(() => this.loadingTable++, 0);
       // Checks if the query was a table name e.g. 'text', 'sentences' etc. else it has to be an API query object
       if (this.tables.names.indexOf(apiQuery) > -1 && typeof apiQuery === 'string') {
         console.log('apiQuery:', `${environment.apiUrl}${apiQuery}`);
@@ -144,7 +144,7 @@ export class TableDataService {
           // console.log(this.tables['after'].data);
         }
       }
-      this.loadingTable--;
+      setTimeout(() => this.loadingTable--, 0);
     } catch (error) {
       // console.log('Error Fetching Table:');
       // console.log(error);
@@ -260,9 +260,9 @@ export class TableDataService {
           default:
             break;
         }
-        this.loadingTable++
+        setTimeout(() => this.loadingTable++, 0);
         return await postedTable.toPromise().then(() => {
-          this.loadingTable--;
+          setTimeout(() => this.loadingTable--, 0);
         });
         // console.log('Table has finished updating!');
       } else {

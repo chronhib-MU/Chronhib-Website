@@ -25,5 +25,9 @@ import { trigger, state, style, transition, animate } from '@angular/animations'
 export class AppComponent {
   title = 'ChronhibWebsite';
   constructor (public tableData: TableDataService, private authService: AuthService) { }
-
+  goToTop () {
+    document
+      .querySelector('#sidenav-main')
+      .scrollIntoView({ block: 'start', behavior: 'smooth' });
+  }
 }

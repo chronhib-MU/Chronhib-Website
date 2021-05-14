@@ -1,9 +1,12 @@
 .fas, .fab {
   font-size: 2.2rem;
-  &.fa-minus, &.fa-plus {
+  &.fa-minus, &.fa-plus, &.fa-edit, &.fa-link {
     font-size: inherit;
   }
 }
 .btn-danger.btn-icon {
   margin: .625rem .75rem;
+}
+.main {
+  min-height: 75vh;
 }

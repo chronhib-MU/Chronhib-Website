@@ -289,13 +289,14 @@ export class TableComponent implements OnInit, OnDestroy {
     this.hotInstance = this.pagination.hotRegisterer.getInstance(this.instance);
     // console.log(this.hotInstance);
     this.routeQueryParams = this.route.queryParamMap.subscribe(async paramMap => {
-      this.tableData.loadingTable++;
+      setTimeout(() => this.tableData.loadingTable++, 0);
       // console.log('RouteQueryParams Subscription ran!');
       // console.log('CurrentApiQuery Dtable:', this.tableData.currentApiQuery.dtable);
       // console.log('After:', this.after);
       // console.log('ParamMap Dtable:', paramMap.get('dtable'));
       await this.refresh();
-      this.tableData.loadingTable--;
+      setTimeout(() => this.tableData.loadingTable--, 0);
+
     });
     const that = this;
     this.paginator._intl.itemsPerPageLabel = 'Results per page:';

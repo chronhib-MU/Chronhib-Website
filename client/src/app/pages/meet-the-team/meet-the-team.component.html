@@ -1,6 +1,6 @@
 <div class="header pb-8 pt-5 d-flex align-items-center">
   <!-- Mask -->
-  <span class="mask bg-gradient-image opacity-8"></span>
+  <span class="mask bg-gradient-image"></span>
   <!-- Header container -->
   <div class="container-fluid d-flex align-items-center"
        *ngIf="authService.user">
@@ -17,17 +17,21 @@
         </ng-template>
         <button (click)="updateProfileForm()"
                 type="button"
-                class="btn btn-info"
+                class="btn btn-primary"
                 *ngIf="memberList && isTeamMember(authService.user.email, memberList )">Edit
-          Profile</button>
-        <button type="button"
-                class="btn btn-info">Project Publications</button>
+          Profile &nbsp;<i class="fas fa-edit"></i></button>
+        <a [routerLink]="['/landing']"
+           [fragment]="'ProjectOutput'"
+           type="
+             button"
+           class="btn btn-link btn-secondary">Project Output &nbsp;<i class="fas fa-link"></i></a>
       </div>
     </div>
   </div>
 </div>
 <div class="container-fluid pb-3 main mt--7">
   <div class="row">
+    <!-- Edit Profile Card -->
     <div class="col-xl-8 order-xl-1"
          *ngIf="edit">
       <div class="card bg-secondary shadow">
@@ -103,9 +107,9 @@
                   </div>
                 </div>
                 <button type="button"
-                        class="btn btn-primary"
-                        (click)="addSocialMedia()">Add Social Media Link &nbsp;<i
-                     class="fa-plus fas text-white"></i></button>
+                        class="btn btn-secondary"
+                        (click)="addSocialMedia()"><span class="btn-inner--icon"><i class="ni ni-fat-add"></i></span>
+                  <span class="btn-inner--text">Add Social Media Link</span></button>
               </ng-container>
             </div>
             <hr class="my-4" />
@@ -133,6 +137,7 @@
         </div>
       </div>
     </div>
+    <!-- Team Member Cards -->
     <div class="col-xl-4 order-xl-2 mt-7 mb-xl-0"
          *ngFor="let member of memberList; let i = index">
       <div class="card card-profile shadow">
