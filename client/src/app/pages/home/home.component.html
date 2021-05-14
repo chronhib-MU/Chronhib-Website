@@ -37,12 +37,16 @@
           <div [ngClass]="{ 'active': currentSection === (section.replace(' ', '')) }">{{section}}
           </div>
         </li>
-        <li class="list-group-item">
-          <a [routerLink]="['/tables']">CorPH</a>
-        </li>
-        <li class="list-group-item">
-          <a [routerLink]="['/meet-the-team']">Meet the ChronHib Team</a>
-        </li>
+        <a [routerLink]="['/tables']">
+          <li class="list-group-item">
+            CorPH
+          </li>
+        </a>
+        <a [routerLink]="['/meet-the-team']">
+          <li class="list-group-item">
+            Meet the ChronHib Team
+          </li>
+        </a>
       </ul>
     </div>
     <div id="scrollSpy"
@@ -79,8 +83,6 @@
         </p>
         <p class="lead"
            *ngIf="section === sections[2]"><strong></strong></p>
-        <p class="lead"
-           *ngIf="section === sections[3]"><strong></strong></p>
       </div>
     </div>
   </div>

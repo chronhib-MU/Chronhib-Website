@@ -11,8 +11,7 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   sections = [
     'About Us',
     'CorPH Guidelines',
-    'Project Output',
-    'Publications'
+    'Project Output'
   ]
   fragment$: Subscription;
   constructor (private route: ActivatedRoute) { }
