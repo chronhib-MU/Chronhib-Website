@@ -1,11 +1,43 @@
 <footer class="footer">
+  <div *ngIf="route === 'home'"
+       class="row align-items-center justify-content-between">
+    <div class="col-12 col-sm-12 col-lg pb-5">
+      <div class="text-center">
+        <a href="https://www.maynoothuniversity.ie"
+           class=""
+           target="_blank"
+           rel="noopener noreferrer"><img
+               src="../../../assets/img/team/cropped-Maynooth-University-Logo-colour-RGB-300dpi.png"
+               class=""></a>
+      </div>
+    </div>
+    <div class="col-12 col-sm pb-5">
+      <div class="text-center">
+        <a href="https://ec.europa.eu"
+           class=""
+           target="_blank"
+           rel="noopener noreferrer"><img src="../../../assets/img/team/cropped-europe-flag.png"
+               class=""></a>
+      </div>
+    </div>
+    <div class="col-12 col-sm pb-5">
+      <div class="text-center">
+        <a href="https://erc.europa.eu"
+           class=""
+           target="_blank"
+           rel="noopener noreferrer"><img src="../../../assets/img/team/cropped-erc_high_res.png"
+               class=""></a>
+      </div>
+    </div>
+
+  </div>
   <div class="row align-items-center justify-content-xl-between">
     <div class="col-xl-6">
       <div class="copyright text-center text-xl-left text-muted">
-        &copy; {{ test | date: 'yyyy' }}
+        &copy; 2020 - {{ currentDate | date: 'yyyy' }}
         <a href="https://www.maynoothuniversity.ie/chronologiconhibernicum"
            class="font-weight-bold ml-1 text-body"
-           target="_blank">Chronhib Maynooth University</a>
+           target="_blank">ChronHib Maynooth University</a>
       </div>
     </div>
     <div class="col-xl-6">
