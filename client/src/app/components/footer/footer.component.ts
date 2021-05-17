@@ -14,7 +14,7 @@ export class FooterComponent implements OnInit, OnDestroy {
   constructor (private router: Router) {
     this.routeParams = this.router.events.subscribe(val => {
 
-      if (val instanceof NavigationEnd) this.route = val.url.substring(1, val.url.length);// console.log(val.url);
+      if (val instanceof NavigationEnd) this.route = val.url.substring(1, val.url.length);// console.log(val.url); }
     });
   }
 

@@ -776,6 +776,8 @@ export class TableComponent implements OnInit, OnDestroy {
         ) {
           // console.log(that);
           const escaped = Handsontable.helper.stringify(value);
+          const alignExceptionsList = ['ID', 'Sort_ID', 'Text_ID', 'Text_Unit_ID', 'DIL_Headword', 'Digital_MSS']
+            .concat(['Created_Date', 'MS_Checked', 'Locus1', 'Locus2', 'Locus3', 'Augm', 'Rel', 'Trans', 'Depend', 'Contr', 'Hiat', 'Mut', 'Causing_Mut', 'Var_Status', 'Project_Related', 'ID_Status', 'ID_Variation']);
           // console.log('Renderer Variables: ', { _instance, td, _row, _col, prop, value, _cellProperties });
           // if (escaped.indexOf('http') === 0) {
           if (escaped.indexOf('http') === 0 || escaped.indexOf('www') === 0) {
@@ -806,13 +808,10 @@ export class TableComponent implements OnInit, OnDestroy {
                 td.appendChild(a);
               }
             }
-            // Make it centered
-            td.style.textAlign = 'center';
           } else {
             let queryParams = {};
             if (value) {
               // console.table({ table, before: that.before, after: that.after, prop });
-
               if (table === that.after && (table === 'text' || table === 'search') && prop === 'Text_ID') {
                 /*
                 If we're on the reference Text/Search table,
@@ -914,37 +913,64 @@ export class TableComponent implements OnInit, OnDestroy {
                   search: false
                 }
               } else {
-                Handsontable.renderers.TextRenderer.apply(this, arguments);
+                // All the normal rows that DO have a field value in the route
+                // Handsontable.renderers.TextRenderer.apply(this, arguments);
                 td.style.whiteSpace = that.wordWrap ? 'pre-wrap' : 'nowrap';
+                const span = document.createElement('span');
+                const spanText = document.createTextNode(value ? value : '');
+                span.appendChild(spanText);
+                Handsontable.dom.empty(td);
+                td.appendChild(span);
+
+                if (alignExceptionsList.includes(prop)) td.classList.add('htCenter', 'htMiddle', 'px-2')
+                else td.classList.add('htLeft', 'htMiddle', 'px-2');
+                if (!that.wordWrap) {
+                  td.classList.add('text-truncate');
+                }
                 return td;
               }
             } else {
-              Handsontable.renderers.TextRenderer.apply(this, arguments);
+              // All the normal rows that DON'T have a field value in the route
+              // Handsontable.renderers.TextRenderer.apply(this, arguments);
               td.style.whiteSpace = that.wordWrap ? 'pre-wrap' : 'nowrap';
+              const span = document.createElement('span');
+              const spanText = document.createTextNode(value ? value : '');
+              span.appendChild(spanText);
+              Handsontable.dom.empty(td);
+              td.appendChild(span);
+              if (alignExceptionsList.includes(prop)) td.classList.add('htCenter', 'htMiddle', 'px-2')
+              else td.classList.add('htLeft', 'htMiddle', 'px-2');
+              if (!that.wordWrap) {
+                td.classList.add('text-truncate');
+              }
               return td;
             }
-            const a = document.createElement('span');
-            const linkText = document.createTextNode(value);
-            a.appendChild(linkText);
-            a.className = 'btn-link';
-            // a.href = '/tables?' + queryString;
-            Handsontable.dom.addEvent(a, 'mousedown', function (event) {
+            const span = document.createElement('span');
+            const spanText = document.createTextNode(value);
+            span.appendChild(spanText);
+            span.className = 'btn-link';
+            // span.href = '/tables?' + queryString;
+            Handsontable.dom.addEvent(span, 'mousedown', function (event) {
               event.preventDefault();
             });
             Handsontable.dom.empty(td);
-            a.addEventListener('click', () => {
+            span.addEventListener('click', () => {
               that.ngZone.run(() => that.router.navigate(['/tables'], { queryParams }));
             });
-            a.addEventListener('contextmenu', function (ev) {
+            span.addEventListener('contextmenu', function (ev) {
               that.linkData = queryParams;
               // console.log(that.linkData);
               ev.preventDefault();
               return false;
             }, false);
-            td.appendChild(a);
-            td.style.textAlign = 'center';
+            td.appendChild(span);
           }
           td.style.whiteSpace = that.wordWrap ? 'pre-wrap' : 'nowrap';
+          if (alignExceptionsList.includes(prop)) td.classList.add('htCenter', 'htMiddle', 'px-2')
+          else td.classList.add('htLeft', 'htMiddle', 'px-2');
+          if (!that.wordWrap) {
+            td.classList.add('text-truncate');
+          }
           return td;
         }
     };
