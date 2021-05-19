@@ -8,7 +8,7 @@
           <div class="text-uppercase mb-0 col">
             <!-- Table Title -->
             <div class="row ">
-              <div class="col">
+              <div class="col pb-3">
                 <span *ngIf="before && after !== before"
                       class="h3 mb-0 font-weight-bold text-muted">
                   {{ before | titlecase }}
@@ -77,7 +77,12 @@
                     <button type="button"
                             class="btn btn-outline-primary btn-sm"
                             (click)="copyToClipboard()">
-                      <i class="fa fa-copy"></i> Copy Table Link
+                      <i class="fas fa-copy"></i> Copy Table Link
+                    </button>
+                    <button type="button"
+                            class="btn btn-outline-primary btn-sm"
+                            (click)="copyCitation()">
+                      <i class="fas fa-clipboard"></i> How to Cite
                     </button>
                     <button type="button"
                             class="btn btn-outline-primary btn-sm"

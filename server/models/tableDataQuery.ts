@@ -357,7 +357,6 @@ const navigateTable = (
         afterQueryValues.push('ID_Status', fieldValue);
       } else {
         afterQueryValues.push(fieldProperty, fieldValue);
-        console.log('I got here!')
       }
       countQuery = afterQuery;
       // Reference Table - If we're navigating to a table with a reference table

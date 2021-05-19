@@ -11,9 +11,11 @@ import _ from 'lodash';
 import $ from 'jquery';
 import { Validators } from '@angular/forms';
 import { MatPaginator } from '@angular/material/paginator';
-import { Subscription } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { shareReplay, last } from 'rxjs/operators';
+import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
+import qs from 'qs';
 
 @Component({
   selector: 'app-table',
@@ -160,7 +162,8 @@ export class TableComponent implements OnInit, OnDestroy {
     private router: Router,
     private route: ActivatedRoute,
     private location: Location,
-    private ngZone: NgZone
+    private ngZone: NgZone,
+    private http: HttpClient
   ) {
     const that = this;
     const externalLinkSetting = {
@@ -530,6 +533,30 @@ export class TableComponent implements OnInit, OnDestroy {
     document.execCommand('copy');
     $('#copyURL').remove();
     this.authService.showToaster('', 'Search Link Copied to Clipboard!', 'info');
+  }
+  async copyCitation () {
+    let citation = 'Stifter et al. 2021 David Stifter, Bernhard Bauer, Elliott Lash, Fangzhe Qiu, Nora White, Siobhán Barrett, Aaron Griffith, Romanas Bulatovas, Francesco Felici, Ellen Ganly, Truc Ha Nguyen, Lars Nooij, Corpus PalaeoHibernicum (CorPH) v1.0, 2021, online at http://chronhib.maynoothuniversity.ie.';
+    if (this.before && ['sentences', 'morphology'].includes(this.after)) {
+      const { fprop, fval } = this.tableData.currentApiQuery;
+      const reference = {
+        table: this.after,
+        fprop,
+        fval
+      };
+      // console.log(reference);
+      const queryString = qs.stringify(reference);
+      citation = (await (this.http
+        .get(`${environment.apiUrl}citation/?${queryString}`) as Observable<{
+          data: string;
+        }>)
+        .toPromise()).data;
+    };
+    console.log(citation);
+    $('body').append('<input id="copyCitation" type="text" value="" />');
+    $('#copyCitation').val(citation).trigger('select');
+    document.execCommand('copy');
+    $('#copyCitation').remove();
+    this.authService.showToaster('', 'Citation Copied to Clipboard!', 'info');
   }
 
   async exportToCSV () {

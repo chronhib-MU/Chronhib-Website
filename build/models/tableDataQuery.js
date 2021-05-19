@@ -347,7 +347,6 @@ var navigateTable = function (connection, logger, query, res, next) {
             }
             else {
                 afterQueryValues_1.push(fieldProperty, fieldValue);
-                console.log('I got here!');
             }
             countQuery = afterQuery_1;
             // Reference Table - If we're navigating to a table with a reference table

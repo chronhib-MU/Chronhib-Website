@@ -20,10 +20,10 @@ var __spread = (this && this.__spread) || function () {
     return ar;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.insertSearchQuery = exports.updateProfile = exports.updateRow = exports.removeRow = exports.createRow = exports.moveRow = void 0;
+exports.updateProfile = exports.updateRow = exports.removeRow = exports.moveRow = exports.insertSearchQuery = exports.getCitation = exports.createRow = void 0;
 var auth_1 = require("./auth");
 // Creates a row if a row is inserted
-function createRow(connection, logger, table, tableStructures, values, user, token, res, next) {
+var createRow = function (connection, logger, table, tableStructures, values, user, token, res, next) {
     auth_1.isLoggedIn(logger, connection, token, res, true);
     // console.log('Row Values: ', values);
     // console.log('Row Table: ', table);
@@ -90,10 +90,51 @@ function createRow(connection, logger, table, tableStructures, values, user, tok
             });
         }
     });
-}
+};
 exports.createRow = createRow;
+// Gets the citation of table
+var getCitation = function (connection, logger, query, res, next) {
+    // console.log(query);
+    if (typeof query.table === 'string' &&
+        typeof query.fprop === 'string' &&
+        typeof query.fval === 'string') {
+        var table = query.table, fprop = query.fprop, fval = query.fval;
+        var queryString = "SELECT DISTINCT(T.REFERENCE) FROM (SELECT BIBLIOGRAPHY.REFERENCE, ??.?? FROM ?? INNER JOIN TEXT ON ??.TEXT_ID = TEXT.TEXT_ID INNER JOIN BIBLIOGRAPHY ON TEXT.REFERENCE = BIBLIOGRAPHY.ABBREVIATION WHERE ??.?? = ?) AS T";
+        var queryValues = [
+            table.toUpperCase(),
+            fprop,
+            table.toUpperCase(),
+            table.toUpperCase(),
+            table.toUpperCase(),
+            fprop,
+            fval
+        ];
+        try {
+            connection.query(queryString, queryValues, function (error, results) {
+                var _a, _b;
+                // If there was an error in the Query, log the error
+                if (error) {
+                    // console.log(error);
+                    logger.error(error);
+                    next(error);
+                }
+                logger.info(results);
+                console.log(((_a = results[0]) === null || _a === void 0 ? void 0 : _a.REFERENCE) || 'Stifter et al. 2021 David Stifter, Bernhard Bauer, Elliott Lash, Fangzhe Qiu, Nora White, Siobhán Barrett, Aaron Griffith, Romanas Bulatovas, Francesco Felici, Ellen Ganly, Truc Ha Nguyen, Lars Nooij, Corpus PalaeoHibernicum (CorPH) v1.0, 2021, online at http://chronhib.maynoothuniversity.ie.');
+                res.status(200).send({
+                    data: ((_b = results[0]) === null || _b === void 0 ? void 0 : _b.REFERENCE) || 'Stifter et al. 2021 David Stifter, Bernhard Bauer, Elliott Lash, Fangzhe Qiu, Nora White, Siobhán Barrett, Aaron Griffith, Romanas Bulatovas, Francesco Felici, Ellen Ganly, Truc Ha Nguyen, Lars Nooij, Corpus PalaeoHibernicum (CorPH) v1.0, 2021, online at http://chronhib.maynoothuniversity.ie.'
+                });
+            });
+        }
+        catch (error) {
+            console.log('Error: ', error);
+            logger.error(error);
+            next(error);
+        }
+    }
+};
+exports.getCitation = getCitation;
 // Add Search Query to Database
-function insertSearchQuery(connection, logger, query, creator, res, next) {
+var insertSearchQuery = function (connection, logger, query, creator, res, next) {
     connection.query('INSERT INTO `SEARCH` SET ?', { Query: query, Creator: creator }, function (error, result) {
         if (error) {
             // console.log(error);
@@ -104,10 +145,10 @@ function insertSearchQuery(connection, logger, query, creator, res, next) {
             res.status(200).end(result.insertId.toString());
         }
     });
-}
+};
 exports.insertSearchQuery = insertSearchQuery;
 // Moves the row if the row is reordered
-function moveRow(connection, logger, table, values, user, token, res, next) {
+var moveRow = function (connection, logger, table, values, user, token, res, next) {
     auth_1.isLoggedIn(logger, connection, token, res, true);
     var updateQueries = [];
     values[0].forEach(function (rowData) {
@@ -131,10 +172,10 @@ function moveRow(connection, logger, table, values, user, token, res, next) {
             // console.log({ beforeTable, afterTable });
         });
     });
-}
+};
 exports.moveRow = moveRow;
 // Removes a row, if a row is deleted
-function removeRow(connection, logger, table, values, token, res, next) {
+var removeRow = function (connection, logger, table, values, token, res, next) {
     auth_1.isLoggedIn(logger, connection, token, res, true);
     console.log('Remove Row: ', values);
     var query = 'DELETE FROM ?? WHERE `ID` IN (?);';
@@ -149,10 +190,10 @@ function removeRow(connection, logger, table, values, token, res, next) {
             res.status(200).end();
         }
     });
-}
+};
 exports.removeRow = removeRow;
 // Updates a row if a row is edited
-function updateRow(connection, logger, table, values, token, res, next) {
+var updateRow = function (connection, logger, table, values, token, res, next) {
     auth_1.isLoggedIn(logger, connection, token, res, true);
     values.forEach(function (value) {
         // console.log(value);
@@ -176,10 +217,10 @@ function updateRow(connection, logger, table, values, token, res, next) {
             // console.log({ beforeTable, afterTable });
         });
     });
-}
+};
 exports.updateRow = updateRow;
 // Updates a team members profile
-function updateProfile(connection, logger, id, name, email, position, description, social_media, token, res, next) {
+var updateProfile = function (connection, logger, id, name, email, position, description, social_media, token, res, next) {
     auth_1.isLoggedIn(logger, connection, token, res, true);
     var updateQuery = 'UPDATE `TEAM` SET `Name` = ?, `Position` = ?, `Description` = ?, `Social_Media` = ? WHERE `ID` = ? AND `Email` = ?;';
     console.log('Post Query: ', updateQuery);
@@ -196,6 +237,6 @@ function updateProfile(connection, logger, id, name, email, position, descriptio
         }
         // console.log({ beforeTable, afterTable });
     });
-}
+};
 exports.updateProfile = updateProfile;
 //# sourceMappingURL=commands.js.map
