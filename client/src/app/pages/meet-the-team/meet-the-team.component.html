@@ -20,7 +20,7 @@
                 class="btn btn-primary"
                 *ngIf="memberList && isTeamMember(authService.user.email, memberList )">Edit
           Profile &nbsp;<i class="fas fa-edit"></i></button>
-        <a [routerLink]="['/landing']"
+        <a [routerLink]="['/home']"
            [fragment]="'ProjectOutput'"
            type="
              button"

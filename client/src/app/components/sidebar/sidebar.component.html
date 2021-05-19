@@ -14,7 +14,7 @@
     <!-- Brand -->
     <a class="navbar-brand pt-0"
        routerLinkActive="active"
-       [routerLink]="['/landing']">
+       [routerLink]="['/home']">
       <img [src]="getTitle() === 'Corpus PalaeoHibernicum (CorPH)' ? './assets/img/brand/Logo4.png' : './assets/img/brand/Logo1.png'"
            class="navbar-brand-img"
            alt="ChronHib Logo" />
@@ -147,7 +147,7 @@
                           </div>
                         </div>
                       </div>
-                      <button *ngIf="tableData.searchForm.get('tableColumns')['controls'].length < 4"
+                      <button *ngIf="tableData.searchForm.get('tableColumns')['controls'].length < tableData.tables.names.length"
                               type="button"
                               class="btn btn-secondary"
                               value="Add Table & Column"
@@ -593,7 +593,7 @@
         <div class="row">
           <div class="col-6 collapse-brand">
             <a routerLinkActive="active"
-               [routerLink]="['/landing']">
+               [routerLink]="['/home']">
               <img
                    [src]="getTitle() === 'Corpus PalaeoHibernicum (CorPH)' ? './assets/img/brand/Logo4.png' : './assets/img/brand/Logo1.png'" />
             </a>

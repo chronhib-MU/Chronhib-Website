@@ -48,6 +48,8 @@ var searchTable = function (connection, logger, query, res, next) {
             } // Check if the Search Query exists in the database
             else if (results[0] && JSON.parse((_a = results[0]) === null || _a === void 0 ? void 0 : _a.Query)) {
                 searchQuery = JSON.parse(results[0].Query); // Store the Search Query results
+                // Removes the possibility of the first condition having an operator (AND/OR)
+                searchQuery.conditions[0].operator = "";
                 // console.log('tableColumn', req.body);
                 console.log('Search Query:', searchQuery);
                 var conditions = searchQuery.conditions, options = searchQuery.options, tableColumns = searchQuery.tableColumns;
@@ -251,11 +253,11 @@ var searchTable = function (connection, logger, query, res, next) {
                     var countQuery = 'SELECT COUNT(';
                     if (!options.duplicateRows) {
                         countQuery += 'DISTINCT ' + selectedTableColumns_1.toString() +
-                            ') as numRows ';
+                            ') as numRows';
                     }
                     else {
                         countQuery += selectedTableColumns_1[0] +
-                            ') as numRows ';
+                            ') as numRows';
                     }
                     countQuery +=
                         fromInnerJoins.join(' ') +
@@ -265,7 +267,7 @@ var searchTable = function (connection, logger, query, res, next) {
                         connection.query(countQuery, function (error, result) {
                             if (error) {
                                 console.log('Error: ', error);
-                                logger.info({ id: query.id, searchQuery: searchQuery });
+                                logger.info(JSON.stringify({ id: query.id, searchQuery: searchQuery }));
                                 logger.error(error);
                                 next(error);
                             }

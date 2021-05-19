@@ -62,10 +62,8 @@ export class TableDataService {
       setTimeout(() => this.loadingTable--, 0);
       // console.log(this.allHeaders);
     } catch (error) {
-      this.loadingTable = -1;
-      setTimeout(() => {
-        this.loadingTable = 0;
-      }, 2000);
+      setTimeout(() => this.loadingTable = -1);
+      setTimeout(() => this.loadingTable = 0, 2000);
       console.log('Invalid request made!');
       return;
     }
@@ -148,10 +146,8 @@ export class TableDataService {
     } catch (error) {
       // console.log('Error Fetching Table:');
       // console.log(error);
-      this.loadingTable = -1;
-      setTimeout(() => {
-        this.loadingTable = 0;
-      }, 2000);
+      setTimeout(() => this.loadingTable = -1, 0);
+      setTimeout(() => this.loadingTable = 0, 2000);
       console.log('Invalid request made!');
       const { message, title, type } = error;
       this.authService.showToaster(message, title, type);

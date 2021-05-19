@@ -4,7 +4,7 @@ import { Component, OnInit, ElementRef, OnDestroy } from '@angular/core';
 import { Location, LocationStrategy, PathLocationStrategy } from '@angular/common';
 import { Router } from '@angular/router';
 import { AbstractControl, FormArray, FormBuilder, FormGroup, ValidatorFn, Validators } from '@angular/forms';
-import { NgbModal, ModalDismissReasons } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, ModalDismissReasons, NgbAccordion } from '@ng-bootstrap/ng-bootstrap';
 import { HttpClient } from '@angular/common/http';
 import { environment } from 'src/environments/environment';
 
@@ -107,12 +107,13 @@ export class SidebarComponent implements OnInit, OnDestroy {
     this.searchQuerySub$ = this.tableData.searchQuerySub.subscribe(searchQueryVal => {
       const { tableColumns, conditions } = searchQueryVal;
       tableColumns.forEach((_tableColumn: any, index: number) => {
-        if (index > 0) {
+        if (index >= this.tableData.searchForm.get('tableColumns')['controls'].length) {
           this.addFormGroup('tableColumns');
         }
       });
       conditions.forEach((condition: { accentSensitive: any }, index: number) => {
-        if (index > 0) {
+        // need to check that the length isn't already greater
+        if (index >= this.tableData.searchForm.get('conditions')['controls'].length) {
           this.addFormGroup('conditions');
         }
         if (condition.accentSensitive) {
@@ -155,6 +156,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
     // console.log(item);
     this.tableData.searchForm.get('tableColumns')['controls'][index].controls.column.patchValue(['ID']);
   }
+  // Selects all columns from the specified table
   selectAll (i: string | number) {
     return this.tableData.searchForm
       .get('tableColumns')
@@ -165,20 +167,26 @@ export class SidebarComponent implements OnInit, OnDestroy {
     );
   }
 
+  // Unselects all columns from the specified table
   unselectAll (i: string | number) {
     return this.tableData.searchForm.get('tableColumns')['controls'][i].controls.column.patchValue([]);
   }
 
+  // Removes table names that have already been added to the search query in Tables & Columns
   excludePreviousTableOptions (i: any) {
     return this.tableData.tables.names.filter((table: string) => {
       if (this.tableData.searchForm) {
+        // Stores a list of all the selected tables prior to current one
         const searchFormTables = this.tableData.searchForm
-          .get('tableColumns')
-        ['controls'].map((val: { controls: { table: { value: any } } }) => val.controls.table.value)
-          .filter((_val: any, index: any) => index !== i);
+          .get('tableColumns')['controls']
+          .map((val: { controls: { table: { value: any } } }) => val.controls.table.value)
+          .filter((_val: any, index: any) => index !== i); // Don't take the current table into account since it can be changed
         if (!searchFormTables.includes(table.toUpperCase())) {
           return true;
-        }
+        } else {
+          // Has already been selected
+          return false
+        };
       } else {
         // Form has not been created yet!
         return true;
@@ -211,7 +219,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
     };
   }
 
-  addFormGroup (column: string, conditionsAcc?: { toggle: (arg0: string) => void }) {
+  addFormGroup (column: string, conditionsAcc?: NgbAccordion) {
     switch (column) {
       case 'tableColumns':
         (this.tableData.searchForm.controls[column] as FormArray).push(
@@ -222,11 +230,9 @@ export class SidebarComponent implements OnInit, OnDestroy {
         (this.tableData.searchForm.controls[column] as FormArray).push(
           this.createConditions((this.tableData.searchForm.controls[column] as FormArray).length)
         );
-        if (conditionsAcc) {
-          setTimeout(() => {
-            conditionsAcc.toggle('condition-' + (this.tableData.searchForm.get('conditions')['controls'].length - 1));
-          }, 1);
-        }
+        setTimeout(() => {
+          conditionsAcc?.expand('condition-' + (this.tableData.searchForm.get('conditions')['controls'].length - 1));
+        }, 0);
         break;
       default:
         break;
@@ -235,7 +241,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
   removeFormGroup (
     column: string | number,
     index: number,
-    conditionsAcc?: { activeIds: string[]; toggle: (arg0: string) => void }
+    conditionsAcc?: NgbAccordion
   ) {
     switch (column) {
       case 'tableColumns':
@@ -243,15 +249,17 @@ export class SidebarComponent implements OnInit, OnDestroy {
         break;
       case 'conditions':
         (this.tableData.searchForm.controls[column] as FormArray).removeAt(index);
+        // console.log(conditionsAcc);
+        // Checks if the only active ID was the last condition
         if (
-          conditionsAcc.activeIds[0] ===
+          conditionsAcc?.activeIds[0] ===
           'condition-' + this.tableData.searchForm.get('conditions')['controls'].length
         ) {
+          // Re-assign active ID to the new last condition
           setTimeout(() => {
             // console.log(conditionsAcc);
-
             conditionsAcc.toggle('condition-' + (this.tableData.searchForm.get('conditions')['controls'].length - 1));
-          }, 1);
+          }, 0);
         }
         break;
       default:

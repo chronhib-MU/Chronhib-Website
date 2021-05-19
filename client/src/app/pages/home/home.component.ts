@@ -14,14 +14,7 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
     'Project Output'
   ]
   fragment$: Subscription;
-  constructor (private route: ActivatedRoute) { }
-
-  ngOnInit () {
-
-  }
-  ngAfterViewInit (): void {
-    //Called after ngAfterContentInit when the component's view has been initialized. Applies to components only.
-    //Add 'implements AfterViewInit' to the class.
+  constructor (private route: ActivatedRoute) {
     this.fragment$ = this.route.fragment.subscribe(fragment => {
       // console.log(fragment)
       const element = document.querySelector("#" + fragment)
@@ -31,7 +24,16 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
           this.currentSection = fragment;
         }, 50)
       };
-    })
+    });
+  }
+
+  ngOnInit () {
+
+  }
+  ngAfterViewInit (): void {
+    //Called after ngAfterContentInit when the component's view has been initialized. Applies to components only.
+    //Add 'implements AfterViewInit' to the class.
+
   }
 
   ngOnDestroy (): void {
@@ -51,7 +53,7 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
       .querySelector('#sidenav-main')
       .scrollIntoView({ block: 'start', behavior: 'smooth' });
   }
-  scrollTo (section) {
+  scrollTo (section: string) {
     document
       .querySelector('#' + section)
       .scrollIntoView({ block: 'start', behavior: 'smooth' });
