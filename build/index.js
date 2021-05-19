@@ -224,6 +224,11 @@ app.get("/" + appName + "/api/tables/", function (req, res, next) {
     logger.trace(req.query);
     tableDataQuery_1.navigateTable(connection, logger, req.query, res, next);
 });
+app.get("/" + appName + "/api/citation/", function (req, res, next) {
+    console.table(req.query);
+    logger.trace(req.query);
+    commands_1.getCitation(connection, logger, req.query, res, next);
+});
 app.get("/" + appName + "/api/tableColumnRows/", function (req, res, next) {
     console.table(req.query);
     logger.trace(req.query);

@@ -55,6 +55,8 @@ const searchTable = (
       } // Check if the Search Query exists in the database
       else if (results[0] && JSON.parse(results[0]?.Query)) {
         searchQuery = JSON.parse(results[0].Query); // Store the Search Query results
+        // Removes the possibility of the first condition having an operator (AND/OR)
+        searchQuery.conditions[0].operator = "";
         // console.log('tableColumn', req.body);
         console.log('Search Query:', searchQuery)
         const { conditions, options, tableColumns } = searchQuery;
@@ -256,11 +258,11 @@ const searchTable = (
           let countQuery = 'SELECT COUNT(';
           if (!options.duplicateRows) {
             countQuery += 'DISTINCT ' + selectedTableColumns.toString() +
-              ') as numRows ';
+              ') as numRows';
 
           } else {
             countQuery += selectedTableColumns[0] +
-              ') as numRows ';
+              ') as numRows';
           }
           countQuery +=
             fromInnerJoins.join(' ') +
@@ -270,7 +272,7 @@ const searchTable = (
             connection.query(countQuery, (error, result) => {
               if (error) {
                 console.log('Error: ', error);
-                logger.info({ id: query.id, searchQuery });
+                logger.info(JSON.stringify({ id: query.id, searchQuery }));
                 logger.error(error);
                 next(error);
               }
@@ -355,7 +357,6 @@ const navigateTable = (
         afterQueryValues.push('ID_Status', fieldValue);
       } else {
         afterQueryValues.push(fieldProperty, fieldValue);
-        console.log('I got here!')
       }
       countQuery = afterQuery;
       // Reference Table - If we're navigating to a table with a reference table

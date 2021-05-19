@@ -9,7 +9,7 @@ import compression from 'compression';
 import helmet from 'helmet';
 import log4js from 'log4js';
 import { register, login, isLoggedIn } from './models/auth';
-import { createRow, insertSearchQuery, moveRow, removeRow, updateRow, updateProfile } from './models/commands';
+import { createRow, getCitation, insertSearchQuery, moveRow, removeRow, updateRow, updateProfile } from './models/commands';
 import { getHeaders, getTableColumnRows, navigateTable, searchTable } from './models/tableDataQuery';
 const currentDate = new Date();
 const formattedDate = `-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${currentDate.getFullYear()}`;
@@ -223,6 +223,12 @@ app.get(`/${appName}/api/tables/`, (req, res, next) => {
   logger.trace(req.query);
   navigateTable(connection, logger, req.query, res, next);
 });
+
+app.get(`/${appName}/api/citation/`, (req, res, next) => {
+  console.table(req.query);
+  logger.trace(req.query);
+  getCitation(connection, logger, req.query, res, next);
+})
 
 app.get(`/${appName}/api/tableColumnRows/`, (req, res, next) => {
   console.table(req.query);
