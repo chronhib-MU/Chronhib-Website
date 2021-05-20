@@ -39,7 +39,7 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   ngOnDestroy (): void {
     //Called once, before the instance is destroyed.
     //Add 'implements OnDestroy' to the class.
-    this.fragment$.unsubscribe();
+    this.fragment$?.unsubscribe();
   }
   onSectionChange (sectionId: string) {
     this.currentSection = sectionId;

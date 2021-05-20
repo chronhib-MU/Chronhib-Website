@@ -9,6 +9,6 @@ import { AuthGuard } from '../../guards/auth.guard';
 export const AdminLayoutRoutes: Routes = [
   { path: 'home', component: HomeComponent },
   { path: 'meet-the-team', component: MeetTheTeamComponent },
-  { path: 'tables/:table', canActivate: [AuthGuard], pathMatch: 'full', component: TablesComponent },
-  { path: 'tables', canActivate: [AuthGuard], component: TablesComponent }
+  { path: 'tables/:table', pathMatch: 'full', component: TablesComponent },
+  { path: 'tables', component: TablesComponent }
 ];

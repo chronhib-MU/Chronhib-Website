@@ -45,7 +45,7 @@
               </div>
               <!-- Edit Buttons -->
               <div class="btn-group col-auto py-2">
-                <ng-container *ngIf="edit">
+                <ng-container *ngIf="(edit && authService.authenticated)">
                   <button type="button"
                           class="btn btn-sm btn-outline-primary"
                           (click)="undo()"
@@ -58,7 +58,7 @@
                 <button type="button"
                         class="btn btn-sm btn-outline-primary"
                         (click)="toggleMode('edit')"
-                        *ngIf="after !== 'search' || tableData.searchForm.get('tableColumns')['controls'].length === 1">
+                        *ngIf="authService.authenticated && (after !== 'search' || tableData.searchForm.get('tableColumns')['controls'].length === 1)">
                   Edit
                   <span class="custom-toggle">
                     <input type="checkbox"
@@ -211,7 +211,7 @@
                    [rowHeaders]="getRows(before)"
                    [colHeaders]="true"
                    [data]="getTableData(before)"
-                   [settings]="hotSettings[edit ? 1 : 0]"
+                   [settings]="hotSettings[(edit && authService.authenticated) ? 1 : 0]"
                    [height]="110"
                    className="htCenter"
                    licenseKey="non-commercial-and-evaluation"
@@ -224,7 +224,7 @@
                    [rowHeaders]="getRows(after)"
                    [colHeaders]="true"
                    [data]="getTableData(after)"
-                   [settings]="hotSettings[edit ? 1 : 0]"
+                   [settings]="hotSettings[(edit && authService.authenticated) ? 1 : 0]"
                    [height]="before && after !== before && (after === 'lemmata' || after === 'variations') ? 100 : '70vh'"
                    className="htLeft htMiddle"
                    licenseKey="non-commercial-and-evaluation"
@@ -238,7 +238,7 @@
                    [rowHeaders]="getRows(before)"
                    [colHeaders]="true"
                    [data]="getTableData(before)"
-                   [settings]="hotSettings[edit ? 1 : 0]"
+                   [settings]="hotSettings[(edit && authService.authenticated) ? 1 : 0]"
                    [height]="'70vh'"
                    className="htLeft htMiddle"
                    licenseKey="non-commercial-and-evaluation"
@@ -253,7 +253,7 @@
                    [rowHeaders]="getRows(after)"
                    [colHeaders]="true"
                    [data]="getTableData(after)"
-                   [settings]="hotSettings[edit ? 1 : 0]"
+                   [settings]="hotSettings[(edit && authService.authenticated) ? 1 : 0]"
                    [height]="'70vh'"
                    className="htLeft htMiddle"
                    licenseKey="non-commercial-and-evaluation"

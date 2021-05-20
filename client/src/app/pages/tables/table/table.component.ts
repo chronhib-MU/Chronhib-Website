@@ -158,7 +158,7 @@ export class TableComponent implements OnInit, OnDestroy {
   constructor (
     public tableData: TableDataService,
     public pagination: PaginationService,
-    private authService: AuthService,
+    public authService: AuthService,
     private router: Router,
     private route: ActivatedRoute,
     private location: Location,
