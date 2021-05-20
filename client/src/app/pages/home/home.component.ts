@@ -15,6 +15,15 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   ]
   fragment$: Subscription;
   constructor (private route: ActivatedRoute) {
+
+  }
+
+  ngOnInit () {
+
+  }
+  ngAfterViewInit (): void {
+    //Called after ngAfterContentInit when the component's view has been initialized. Applies to components only.
+    //Add 'implements AfterViewInit' to the class.
     this.fragment$ = this.route.fragment.subscribe(fragment => {
       // console.log(fragment)
       const element = document.querySelector("#" + fragment)
@@ -25,15 +34,6 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
         }, 50)
       };
     });
-  }
-
-  ngOnInit () {
-
-  }
-  ngAfterViewInit (): void {
-    //Called after ngAfterContentInit when the component's view has been initialized. Applies to components only.
-    //Add 'implements AfterViewInit' to the class.
-
   }
 
   ngOnDestroy (): void {

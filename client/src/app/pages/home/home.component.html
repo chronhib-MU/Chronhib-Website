@@ -60,29 +60,32 @@
         <h1 class="display-3">{{section}}</h1>
         <p class="lead"
            *ngIf="section === sections[0]">
-          <strong>
-            Chronologicon Hibernicum (ChronHib) was a research project in the Maynooth University Department of Early
-            Irish,
-            led by Principal Investigator Prof. David Stifter.
-            The project received funding from the European Union's Horizon 2020 research and innovation programme under
-            grant agreement no. 647351.
-            From 2015 ‒ 2021, the <a [routerLink]="['/meet-the-team']">ChronHib Team</a> was working on refining the
-            methodology for dating
-            Early Medieval Irish language developments (ca. 6th–mid 10th century A.D.) and on building a chronological
-            framework of linguistic changes that can then be used to date literary texts within the Early Irish period.
-            A major output of the project is the lexicographic database <a [routerLink]="['/tables']"> Corpus
-              PalaeoHibernicum (CorPH)</a> that currently includes over 70 deeply annotated Old and Middle Irish texts.
-          </strong>
+
+          Chronologicon Hibernicum (ChronHib) was a research project in the Maynooth University Department of Early
+          Irish,
+          led by Principal Investigator Prof. David Stifter.
+          The project received funding from the European Union's Horizon 2020 research and innovation programme under
+          grant agreement no. 647351.
+          From 2015 ‒ 2021, the <a [routerLink]="['/meet-the-team']">ChronHib Team</a> was working on refining the
+          methodology for dating
+          Early Medieval Irish language developments (ca. 6th–mid 10th century A.D.) and on building a chronological
+          framework of linguistic changes that can then be used to date literary texts within the Early Irish period.
+          A major output of the project is the lexicographic database <a [routerLink]="['/tables']"> Corpus
+            PalaeoHibernicum (CorPH)</a> that currently includes over 70 deeply annotated Old and Middle Irish texts.
+
         </p>
         <p class="lead"
-           *ngIf="section === sections[1]"><strong>
-            Guidelines on how to use Corpus PalaeoHibernicum can be found [link to
-            pdf] <a [routerLink]="['/']"
-               fragment="CorPHGuidelines">here</a>.
-          </strong>
+           *ngIf="section === sections[1]">
+          Guidelines on how to use Corpus PalaeoHibernicum can be found <a
+             href="../../../assets/docs/Provisional Guidelines for the CorPH database.pdf"
+             target="_blank"
+             fragment="CorPHGuidelines">here</a>.
+
         </p>
-        <p class="lead"
-           *ngIf="section === sections[2]"><strong></strong></p>
+        <div class="lead"
+             *ngIf="section === sections[2]">
+          <app-output></app-output>
+        </div>
       </div>
     </div>
   </div>

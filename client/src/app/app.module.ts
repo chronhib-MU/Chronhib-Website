@@ -23,6 +23,7 @@ import { AuthService } from './services/auth.service';
 import { ToastrModule } from 'ngx-toastr';
 import { NgFusePipe } from './pipe/ngfuse.pipe';
 import { NgFuseService } from './services/ngfuse.service';
+import { OutputComponent } from './pages/home/output/output.component';
 @NgModule({
   imports: [
     BrowserAnimationsModule,
